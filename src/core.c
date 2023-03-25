@@ -33,6 +33,7 @@ OpalResult OpalCreateState(OpalCreateStateInfo _info,  OpalState* _outState)
 
   default: break;
   }
+  newState->api = _info.api;
 
   *_outState = newState;
   return Opal_Success;

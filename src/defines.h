@@ -18,14 +18,26 @@
   }                                     \
 }
 
+#define OPAL_LOG_VK(type, msg, ...) \
+  LapisConsolePrintMessage(         \
+    type,                           \
+    "Opal :: Vk :: " msg,           \
+    __VA_ARGS__)
+
+#define OPAL_LOG_VK_ERROR(msg, ...) \
+  LapisConsolePrintMessage(         \
+    Lapis_Console_Error,            \
+    "Opal :: Vk :: " msg,           \
+    __VA_ARGS__)
+
 typedef struct OpalState_T
 {
+  OpalApi api;
+
   struct
   {
     void* state;
   } backend;
-
-
 } OpalState_T;
 
 #endif // !GEM_OPAL_DEFINES_H_PRIVATE

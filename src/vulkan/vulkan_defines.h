@@ -9,6 +9,9 @@
 typedef struct OvkState_T
 {
   VkInstance instance;
+  VkSurfaceKHR surface;
+  VkPhysicalDevice physicalDevice;
+  VkDevice device;
 
 } OvkState_T;
 
