@@ -9,6 +9,10 @@
 
 #include <stdint.h>
 
+// =====
+// Opal Generic
+// =====
+
 #define OPAL_ATTEMPT(fn, failureAction) \
 {                                       \
   OpalResult attemptResult = (fn);      \
@@ -18,6 +22,11 @@
   }                                     \
 }
 
+// =====
+// Console
+// =====
+
+// TODO : Define a way to change print settings when using Opal binaries (Enabled, output location)
 #define OPAL_LOG_VK(type, msg, ...) \
   LapisConsolePrintMessage(         \
     type,                           \
@@ -30,6 +39,10 @@
     "Opal :: Vk :: " msg,           \
     __VA_ARGS__)
 
+// =====
+// State
+// =====
+
 typedef struct OpalState_T
 {
   OpalApi api;
@@ -37,6 +50,7 @@ typedef struct OpalState_T
   struct
   {
     void* state;
+    void(*ShutdownState)(OpalState _state);
   } backend;
 } OpalState_T;
 

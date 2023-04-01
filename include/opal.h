@@ -10,6 +10,9 @@ extern "C" {
 #include "include/opal_defines.h"
 
 OpalResult OpalCreateState(OpalCreateStateInfo _info, OpalState* _outState);
+void OpalDestroyState(OpalState* _state);
+
+// TODO : Opal create/destroy window (If not headless)
 
 
 #ifdef __cplusplus

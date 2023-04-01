@@ -27,8 +27,9 @@ OpalResult OpalCreateState(OpalCreateStateInfo _info,  OpalState* _outState)
   case Opal_Api_Vulkan:
   {
     // Define vulkan backend functions
+    newState->backend.ShutdownState = OvkShutdownState;
 
-    OPAL_ATTEMPT(OvkInitState(_info, newState), return Opal_Backend_Failure);
+    OPAL_ATTEMPT(OvkInitState(_info, newState), return Opal_Failure_Backend);
   } break;
 
   default: break;
@@ -37,4 +38,14 @@ OpalResult OpalCreateState(OpalCreateStateInfo _info,  OpalState* _outState)
 
   *_outState = newState;
   return Opal_Success;
+}
+
+void OpalDestroyState(OpalState* _state)
+{
+  OpalState_T* state = *_state;
+
+  state->backend.ShutdownState(state);
+
+  LapisMemFree(state);
+  *_state = NULL;
 }

@@ -15,6 +15,7 @@
 }
 
 OpalResult OvkInitState(OpalCreateStateInfo _createInfo, OpalState _state);
+void OvkShutdownState(OpalState _state);
 
 
 #endif // !GEM_OPAL_VULKAN_VULKAN_H

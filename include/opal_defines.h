@@ -12,8 +12,8 @@
 typedef enum OpalResult
 {
   Opal_Success,
-  Opal_Backend_Failure,
-  Opal_Vk_Init_Failure,
+  Opal_Failure_Backend,
+  Opal_Failure_Vk_Init,
   Opal_Unknown
 } OpalResult;
 
