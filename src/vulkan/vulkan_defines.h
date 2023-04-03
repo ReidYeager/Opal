@@ -40,6 +40,20 @@ typedef struct OvkState_T
     VkPresentModeKHR presentMode;
   } swapchain;
 
+  struct {
+    uint32_t count;
+    uint32_t maxFlightSlotCount;
+    uint32_t currentFlightIndex;
+
+    VkFence* fenceFlightSlotAvailable;
+    VkSemaphore* semaphoreRenderingComplete;
+    VkSemaphore* semaphoreImageAvailable;
+  } sync;
+
+  VkCommandBuffer* graphicsCommandBuffers;
+
+  VkRenderPass renderpass;
+  VkFramebuffer* framebuffers;
 } OvkState_T;
 
 #endif // !GEM_OPAL_VULKAN_DEFINES_H

@@ -104,8 +104,9 @@ OvkGpu_T CreateGpuInfo(VkPhysicalDevice _device)
   vkGetPhysicalDeviceMemoryProperties(_device, &gpu.memoryProperties);
 
   vkGetPhysicalDeviceQueueFamilyProperties(_device, &gpu.queueFamilyPropertiesCount, NULL);
-  gpu.queueFamilyProperties = (VkQueueFamilyProperties*)LapisMemAlloc(
-    sizeof(VkQueueFamilyProperties) * gpu.queueFamilyPropertiesCount);
+  gpu.queueFamilyProperties =
+    (VkQueueFamilyProperties*)LapisMemAlloc(
+      sizeof(VkQueueFamilyProperties) * gpu.queueFamilyPropertiesCount);
   vkGetPhysicalDeviceQueueFamilyProperties(
     _device,
     &gpu.queueFamilyPropertiesCount,
@@ -384,6 +385,180 @@ OpalResult CreateSwapchain(OvkState_T* _state, LapisWindow _window)
   return Opal_Success;
 }
 
+uint32_t syncMaxFlightSlotCount = 3;
+OpalResult CreateSyncObjects(OvkState_T* _state)
+{
+  _state->sync.fenceFlightSlotAvailable =
+    (VkFence*)LapisMemAlloc(sizeof(VkFence) * syncMaxFlightSlotCount);
+  _state->sync.semaphoreImageAvailable =
+    (VkSemaphore*)LapisMemAlloc(sizeof(VkSemaphore) * syncMaxFlightSlotCount);
+  _state->sync.semaphoreRenderingComplete =
+    (VkSemaphore*)LapisMemAlloc(sizeof(VkSemaphore) * syncMaxFlightSlotCount);
+
+  VkSemaphoreCreateInfo semaphoreCreateInfo = { 0 };
+  semaphoreCreateInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+
+  VkFenceCreateInfo fenceCreateInfo = { 0 };
+  fenceCreateInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+  fenceCreateInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
+
+  for (uint32_t i = 0; i < syncMaxFlightSlotCount; i++)
+  {
+    OVK_ATTEMPT(
+      vkCreateFence(
+        _state->device,
+        &fenceCreateInfo,
+        NULL,
+        &_state->sync.fenceFlightSlotAvailable[i]),
+      {
+        OPAL_LOG_VK_ERROR("Failed to create flight slot fence %d\n", i);
+        return Opal_Failure_Vk_Init;
+      });
+
+    OVK_ATTEMPT(
+      vkCreateSemaphore(
+        _state->device,
+        &semaphoreCreateInfo,
+        NULL,
+        &_state->sync.semaphoreRenderingComplete[i]),
+      {
+        OPAL_LOG_VK_ERROR("Failed to create render complete semaphore %d\n", i);
+        return Opal_Failure_Vk_Init;
+      });
+
+    OVK_ATTEMPT(
+      vkCreateSemaphore(
+        _state->device,
+        &semaphoreCreateInfo,
+        NULL,
+        &_state->sync.semaphoreImageAvailable[i]),
+      {
+        OPAL_LOG_VK_ERROR("Failed to create image available semaphore %d\n", i);
+        return Opal_Failure_Vk_Init;
+      });
+  }
+
+  return Opal_Success;
+}
+
+OpalResult CreateGraphicsCommandBuffers(OvkState_T* _state)
+{
+  _state->graphicsCommandBuffers =
+    (VkCommandBuffer*)LapisMemAlloc(sizeof(VkCommandBuffer) * _state->swapchain.imageCount);
+
+  VkCommandBufferAllocateInfo allocInfo = { 0 };
+  allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+  allocInfo.pNext = NULL;
+  allocInfo.commandBufferCount = _state->swapchain.imageCount;
+  allocInfo.commandPool = _state->graphicsCommandPool;
+  allocInfo.level = 0;
+
+  OVK_ATTEMPT(
+    vkAllocateCommandBuffers(_state->device, &allocInfo, _state->graphicsCommandBuffers),
+    return Opal_Failure_Vk_Init);
+
+  return Opal_Success;
+}
+
+// TODO : Allow renderpass to be headless
+OpalResult CreateRenderpass(OvkState_T* _state)
+{
+  // Attachments =====
+#define tmpAttachmentCount 1
+  VkAttachmentDescription attachments[tmpAttachmentCount] = { 0 };
+  // Swapchain
+  attachments[0].flags = 0;
+  attachments[0].format = _state->swapchain.format.format;
+  attachments[0].samples = VK_SAMPLE_COUNT_1_BIT;
+  attachments[0].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+  attachments[0].finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+  attachments[0].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+  attachments[0].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+  attachments[0].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+  attachments[0].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+
+  // Attachment references =====
+  VkAttachmentReference attachmentRefs[tmpAttachmentCount] = { 0 };
+  // Swapchain
+  attachmentRefs[0].attachment = 0;
+  attachmentRefs[0].layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+  // Subpasses =====
+  VkSubpassDescription subpass = { 0 };
+  subpass.flags = 0;
+  subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+  subpass.colorAttachmentCount = 1;
+  subpass.pColorAttachments = &attachmentRefs[0];
+  subpass.pDepthStencilAttachment = NULL;
+  subpass.inputAttachmentCount = 0;
+  subpass.pInputAttachments = NULL;
+  subpass.preserveAttachmentCount = 0;
+  subpass.pPreserveAttachments = NULL;
+  subpass.pResolveAttachments = NULL;
+
+  // Dependencies =====
+  // None needed
+
+  // Creation =====
+  VkRenderPassCreateInfo createInfo = { 0 };
+  createInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+  createInfo.pNext = NULL;
+  createInfo.flags = 0;
+  createInfo.attachmentCount = tmpAttachmentCount;
+  createInfo.pAttachments = attachments;
+  createInfo.dependencyCount = 0;
+  createInfo.pDependencies = NULL;
+  createInfo.subpassCount = 1;
+  createInfo.pSubpasses = &subpass;
+
+  OVK_ATTEMPT(
+    vkCreateRenderPass(_state->device, &createInfo, NULL, &_state->renderpass),
+    return Opal_Failure_Vk_Init);
+
+#undef tmpAttachmentCount
+  return Opal_Success;
+}
+
+OpalResult CreateFramebuffers(OvkState_T* _state)
+{
+  const uint32_t framebufferCount = _state->swapchain.imageCount;
+  const uint32_t viewsPerFramebuffer = 1; // Just swapchain color
+
+  _state->framebuffers = (VkFramebuffer*)LapisMemAlloc(sizeof(VkFramebuffer) * framebufferCount);
+
+  VkImageView* viewAttachments =
+    (VkImageView*)LapisMemAlloc(sizeof(VkImageView) * framebufferCount);
+
+  for (uint32_t i = 0; i < framebufferCount; i++)
+  {
+    viewAttachments[i * viewsPerFramebuffer + 0] = _state->swapchain.imageViews[i];
+    // Add depth, etc. here
+  }
+
+  VkFramebufferCreateInfo createInfo = { 0 };
+  createInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+  createInfo.pNext = NULL;
+  createInfo.flags = 0;
+  createInfo.width = _state->swapchain.extents.width;
+  createInfo.height = _state->swapchain.extents.height;
+  createInfo.layers = 1;
+  createInfo.renderPass = _state->renderpass;
+  createInfo.attachmentCount = viewsPerFramebuffer;
+
+  for (uint32_t i = 0; i < framebufferCount; i++)
+  {
+    createInfo.pAttachments = &viewAttachments[i * viewsPerFramebuffer];
+    OVK_ATTEMPT(
+      vkCreateFramebuffer(_state->device, &createInfo, NULL, &_state->framebuffers[i]),
+      {
+        OPAL_LOG_VK_ERROR("Failed to create framebuffer %d\n", i);
+        return Opal_Failure_Vk_Init;
+      });
+  }
+
+  return Opal_Success;
+}
+
 OpalResult OvkInitState(OpalCreateStateInfo _createInfo, OpalState _state)
 {
   OvkState_T* vkState = (OvkState_T*)LapisMemAllocZero(sizeof(OvkState_T));
@@ -439,10 +614,34 @@ OpalResult OvkInitState(OpalCreateStateInfo _createInfo, OpalState _state)
       return Opal_Failure_Vk_Init;
     });
 
-  // Fences/semaphores
-  // Command buffers
-  // Renderpass
-  // Framebuffers
+  // TODO : Modify sync objects to accommodate headless rendering
+  OPAL_ATTEMPT(
+    CreateSyncObjects(vkState),
+    {
+      OPAL_LOG_VK_ERROR("Failed to create sync objects\n");
+      return Opal_Failure_Vk_Init;
+    });
+
+  OPAL_ATTEMPT(
+    CreateGraphicsCommandBuffers(vkState),
+    {
+      OPAL_LOG_VK_ERROR("Failed to create graphics command buffers\n");
+      return Opal_Failure_Vk_Init;
+    });
+
+  OPAL_ATTEMPT(
+    CreateRenderpass(vkState),
+    {
+      OPAL_LOG_VK_ERROR("Failed to create renderpass\n");
+      return Opal_Failure_Vk_Init;
+    });
+
+  OPAL_ATTEMPT(
+    CreateFramebuffers(vkState),
+    {
+      OPAL_LOG_VK_ERROR("Failed to create framebuffers\n");
+      return Opal_Failure_Vk_Init;
+    });
 
   OPAL_LOG_VK(Lapis_Console_Info, "Init complete\n");
 
@@ -454,6 +653,31 @@ void OvkShutdownState(OpalState _state)
 {
   OpalState_T* state = _state;
   OvkState_T* vkState = (OvkState_T*)state->backend.state;
+
+  for (uint32_t i = 0; i < vkState->swapchain.imageCount; i++)
+  {
+    vkDestroyFramebuffer(vkState->device, vkState->framebuffers[i], NULL);
+  }
+  LapisMemFree(vkState->framebuffers);
+
+  vkDestroyRenderPass(vkState->device, vkState->renderpass, NULL);
+
+  vkFreeCommandBuffers(
+    vkState->device,
+    vkState->graphicsCommandPool,
+    vkState->swapchain.imageCount,
+    vkState->graphicsCommandBuffers);
+  LapisMemFree(vkState->graphicsCommandBuffers);
+
+  for (uint32_t i = 0; i < syncMaxFlightSlotCount; i++)
+  {
+    vkDestroyFence(vkState->device, vkState->sync.fenceFlightSlotAvailable[i], NULL);
+    vkDestroySemaphore(vkState->device, vkState->sync.semaphoreImageAvailable[i], NULL);
+    vkDestroySemaphore(vkState->device, vkState->sync.semaphoreRenderingComplete[i], NULL);
+  }
+  LapisMemFree(vkState->sync.fenceFlightSlotAvailable);
+  LapisMemFree(vkState->sync.semaphoreImageAvailable);
+  LapisMemFree(vkState->sync.semaphoreRenderingComplete);
 
   for (uint32_t i = 0; i < vkState->swapchain.imageCount; i++)
   {
