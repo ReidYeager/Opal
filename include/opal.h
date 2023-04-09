@@ -15,6 +15,12 @@ OpalResult OpalRenderFrame(OpalState _state);
 
 // TODO : Opal create/destroy window (If not headless)
 
+OpalResult OpalCreateShaders(
+  OpalState _state,
+  uint32_t _createCount,
+  OpalCreateShaderInfo* _pCreateInfos,
+  OpalShader* _pOutShaders);
+void OpalDestroyShader(OpalState _state, OpalShader* _shader);
 
 #ifdef __cplusplus
 }

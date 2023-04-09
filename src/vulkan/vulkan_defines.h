@@ -63,6 +63,19 @@ typedef struct OvkState_T
   VkFramebuffer* framebuffers;
 } OvkState_T;
 
+typedef struct OvkShader_T
+{
+  VkShaderModule module;
+} OvkShader_T;
+
+typedef struct OvkMaterial_T
+{
+  VkPipelineLayout pipelineLayout;
+  VkPipeline pipeline;
+  VkDescriptorSetLayout descriptorSetLayout;
+  VkDescriptorSet descriptorSet;
+} OvkMaterial_T;
+
 #define maxFlightSlotCount 3
 
 #endif // !GEM_OPAL_VULKAN_DEFINES_H

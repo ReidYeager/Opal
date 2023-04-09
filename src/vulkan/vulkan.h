@@ -14,8 +14,14 @@
   }                                    \
 }
 
-OpalResult OvkInitState(OpalCreateStateInfo _createInfo, OpalState _state);
-void OvkShutdownState(OpalState _state);
+OpalResult OvkInitState(OpalCreateStateInfo _createInfo, OpalState _oState);
+void OvkShutdownState(OpalState _oState);
+
+OpalResult OvkCreateShader(
+  OpalState _oState,
+  OpalCreateShaderInfo _createInfo,
+  OpalShader _oShader);
+void OvkDestroyShader(OpalState _oState, OpalShader _oShader);
 
 
 #endif // !GEM_OPAL_VULKAN_VULKAN_H

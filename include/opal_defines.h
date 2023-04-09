@@ -12,10 +12,11 @@
 typedef enum OpalResult
 {
   Opal_Success,
+  Opal_Failure,
   Opal_Failure_Backend,
+  Opal_Failure_Vk_Create,
   Opal_Failure_Vk_Init,
   Opal_Failure_Vk_Render,
-  Opal_Failure_Vk_Record,
   Opal_Unknown
 } OpalResult;
 
@@ -36,5 +37,31 @@ typedef struct OpalCreateStateInfo
   OpalApi api;
   LapisWindow window; // TODO : Allow headless when nullptr
 } OpalCreateStateInfo;
+
+// =====
+// Material
+// =====
+
+typedef struct OpalShader_T* OpalShader;
+typedef struct OpalMaterial_T* OpalMaterial;
+
+typedef enum OpalShaderTypes
+{
+  Opal_Shader_Vertex,
+  Opal_Shader_Fragment
+} OpalShaderTypes;
+
+typedef struct OpalCreateShaderInfo
+{
+  OpalShaderTypes type;
+  const char* sourceCode;
+  uint64_t sourceSize;
+} OpalCreateShaderInfo;
+
+typedef struct OpalCreateMaterialInfo
+{
+  uint32_t shaderCount;
+  OpalShader* pShaders;
+} OpalCreateMaterialInfo;
 
 #endif // !GEM_OPAL_DEFINES_H

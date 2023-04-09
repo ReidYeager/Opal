@@ -46,7 +46,9 @@ OpalResult CreateInstance(OvkState_T* _state)
   createInfo.ppEnabledLayerNames = layers;
   createInfo.pApplicationInfo = &appInfo;
 
-  OVK_ATTEMPT(vkCreateInstance(&createInfo, NULL, &_state->instance), return Opal_Failure_Vk_Init);
+  OVK_ATTEMPT(
+    vkCreateInstance(&createInfo, NULL, &_state->instance),
+    return Opal_Failure_Vk_Create);
 
   LapisMemFree(layers);
   LapisMemFree(extensions);
@@ -58,7 +60,7 @@ OpalResult CreateSurface(LapisWindow _window, OvkState_T* _state)
   LapisResult result = LapisWindowVulkanCreateSurface(_window, _state->instance, &_state->surface);
   if (result != Lapis_Success)
   {
-    return Opal_Failure_Vk_Init;
+    return Opal_Failure_Vk_Create;
   }
 
   return Opal_Success;
@@ -244,7 +246,7 @@ OpalResult CreateDevice(OvkState_T* _state)
 
   OVK_ATTEMPT(
     vkCreateDevice(_state->gpu.device, &createInfo, NULL, &_state->device),
-    return Opal_Failure_Vk_Init);
+    return Opal_Failure_Vk_Create);
 
   vkGetDeviceQueue(_state->device, _state->gpu.queueIndexGraphics, 0, &_state->queueGraphics);
   vkGetDeviceQueue(_state->device, _state->gpu.queueIndexTransfer, 0, &_state->queueTransfer);
@@ -279,7 +281,7 @@ OpalResult CreateCommandPool(OvkState_T* _state, uint32_t _isTransient)
 
   OVK_ATTEMPT(
     vkCreateCommandPool(_state->device, &createInfo, NULL, outPool),
-    return Opal_Failure_Vk_Init);
+    return Opal_Failure_Vk_Create);
 
   return Opal_Success;
 }
@@ -378,7 +380,7 @@ OpalResult CreateSwapchain(OvkState_T* _state, LapisWindow _window)
 
   OVK_ATTEMPT(
     vkCreateSwapchainKHR(_state->device, &createInfo, NULL, &_state->swapchain.swapchain),
-    return Opal_Failure_Vk_Init);
+    return Opal_Failure_Vk_Create);
 
   // Images =====
   vkGetSwapchainImagesKHR(_state->device, _state->swapchain.swapchain, &imageCount, NULL);
@@ -409,7 +411,7 @@ OpalResult CreateSwapchain(OvkState_T* _state, LapisWindow _window)
 
     OVK_ATTEMPT(
       vkCreateImageView(_state->device, &ivCreateInfo, NULL, &_state->swapchain.imageViews[i]),
-      return Opal_Failure_Vk_Init);
+      return Opal_Failure_Vk_Create);
   }
 
   _state->swapchain.format = format;
@@ -441,21 +443,21 @@ OpalResult CreateSyncObjects(OvkState_T* _state)
       vkCreateFence(_state->device, &fenceCreateInfo, NULL, &slot->fenceFrameAvailable),
       {
         OPAL_LOG_VK_ERROR("Failed to create flight slot fence %d\n", i);
-        return Opal_Failure_Vk_Init;
+        return Opal_Failure_Vk_Create;
       });
 
     OVK_ATTEMPT(
       vkCreateSemaphore(_state->device, &semaphoreCreateInfo, NULL, &slot->semRenderComplete),
       {
         OPAL_LOG_VK_ERROR("Failed to create render complete semaphore %d\n", i);
-        return Opal_Failure_Vk_Init;
+        return Opal_Failure_Vk_Create;
       });
 
     OVK_ATTEMPT(
       vkCreateSemaphore(_state->device, &semaphoreCreateInfo, NULL, &slot->semImageAvailable),
       {
         OPAL_LOG_VK_ERROR("Failed to create image available semaphore %d\n", i);
-        return Opal_Failure_Vk_Init;
+        return Opal_Failure_Vk_Create;
       });
   }
 
@@ -477,7 +479,7 @@ OpalResult CreateGraphicsCommandBuffers(OvkState_T* _state)
   {
     OVK_ATTEMPT(
       vkAllocateCommandBuffers(_state->device, &allocInfo, &_state->frameSlots[i].cmd),
-      return Opal_Failure_Vk_Init);
+      return Opal_Failure_Vk_Create);
   }
 
   return Opal_Success;
@@ -536,7 +538,7 @@ OpalResult CreateRenderpass(OvkState_T* _state)
 
   OVK_ATTEMPT(
     vkCreateRenderPass(_state->device, &createInfo, NULL, &_state->renderpass),
-    return Opal_Failure_Vk_Init);
+    return Opal_Failure_Vk_Create);
 
 #undef tmpAttachmentCount
   return Opal_Success;
@@ -575,7 +577,7 @@ OpalResult CreateFramebuffers(OvkState_T* _state)
       vkCreateFramebuffer(_state->device, &createInfo, NULL, &_state->framebuffers[i]),
       {
         OPAL_LOG_VK_ERROR("Failed to create framebuffer %d\n", i);
-        return Opal_Failure_Vk_Init;
+        return Opal_Failure_Vk_Create;
       });
   }
 

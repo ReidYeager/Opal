@@ -33,7 +33,7 @@ OpalResult RecordCommandBuffer(OvkState_T* _state, OvkFrameSlot_T* _frame)
     vkBeginCommandBuffer(cmd, &cmdBeginInfo),
     {
       OPAL_LOG_VK_ERROR("Failed to begin command buffer : %u\n", index);
-      return Opal_Failure_Vk_Record;
+      return Opal_Failure_Vk_Render;
     });
 
   vkCmdBeginRenderPass(cmd, &rpBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
@@ -44,7 +44,7 @@ OpalResult RecordCommandBuffer(OvkState_T* _state, OvkFrameSlot_T* _frame)
     vkEndCommandBuffer(cmd),
     {
       OPAL_LOG_VK_ERROR("Failed to end command buffer : %u\n", index);
-      return Opal_Failure_Vk_Record;
+      return Opal_Failure_Vk_Render;
     });
 
   return Opal_Success;

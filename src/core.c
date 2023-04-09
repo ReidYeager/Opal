@@ -28,6 +28,8 @@ OpalResult OpalCreateState(OpalCreateStateInfo _info,  OpalState* _outState)
   {
     // Define vulkan backend functions
     newState->backend.ShutdownState = OvkShutdownState;
+    newState->backend.CreateShader = OvkCreateShader;
+    newState->backend.DestroyShader = OvkDestroyShader;
 
     OPAL_ATTEMPT(OvkInitState(_info, newState), return Opal_Failure_Backend);
   } break;
@@ -48,4 +50,54 @@ void OpalDestroyState(OpalState* _state)
 
   LapisMemFree(state);
   *_state = NULL;
+}
+OpalResult CreateSingleShader(
+  OpalState _state,
+  OpalCreateShaderInfo _createInfo,
+  OpalShader* _outShader)
+{
+  if (_createInfo.sourceCode == NULL || _createInfo.sourceSize == 0)
+  {
+    OPAL_LOG_ERROR("Invalid shader sourceCode or sourceSize\n");
+    return Opal_Failure;
+  }
+
+  OpalShader_T* newShader = (OpalShader_T*)LapisMemAllocZero(sizeof(OpalShader_T));
+
+  OPAL_ATTEMPT(
+    _state->backend.CreateShader(_state, _createInfo, newShader),
+    {
+      OPAL_LOG_ERROR("Failed to create shader backend\n");
+      LapisMemFree(newShader);
+      return Opal_Failure_Backend;
+    });
+
+  *_outShader = newShader;
+  return Opal_Success;
+}
+
+OpalResult OpalCreateShaders(
+  OpalState _state,
+  uint32_t _createCount,
+  OpalCreateShaderInfo* _pCreateInfos,
+  OpalShader* _pOutShaders)
+{
+  for (uint32_t i = 0; i < _createCount; i++)
+  {
+    OPAL_ATTEMPT(
+      CreateSingleShader(_state, _pCreateInfos[i], &_pOutShaders[i]),
+      return attemptResult);
+  }
+
+  return Opal_Success;
+}
+
+void OpalDestroyShader(OpalState _state, OpalShader* _shader)
+{
+  OpalShader_T* shader = *_shader;
+
+  _state->backend.DestroyShader(_state, shader);
+
+  LapisMemFree(shader);
+  *_shader = NULL;
 }
