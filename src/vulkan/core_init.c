@@ -93,7 +93,38 @@ uint32_t GetFamilyIndexForQueue(const OvkGpu_T* const _gpu, VkQueueFlags _flags)
   return bestFit;
 }
 
-OvkGpu_T CreateGpuInfo(VkPhysicalDevice _device)
+uint32_t GetFamilyIndexForPresent(const OvkGpu_T* const _gpu, VkSurfaceKHR _surface)
+{
+  VkBool32 canPresent = VK_FALSE;
+  uint32_t bestFit = ~0u;
+
+  for (uint32_t i = 0; i < _gpu->queueFamilyPropertiesCount; i++)
+  {
+    vkGetPhysicalDeviceSurfaceSupportKHR(_gpu->device, i, _surface, &canPresent);
+
+    if (canPresent == VK_TRUE)
+    {
+      if (i != _gpu->queueIndexGraphics && i != _gpu->queueIndexTransfer)
+      {
+        return i;
+      }
+      else if (i != _gpu->queueIndexTransfer)
+      {
+        bestFit = i;
+      }
+    }
+  }
+
+  if (bestFit == ~0u)
+  {
+    OPAL_LOG_VK_ERROR("Failed to find a queue family for presentation\n");
+  }
+
+  return bestFit;
+}
+
+
+OvkGpu_T CreateGpuInfo(OvkState_T* _state, VkPhysicalDevice _device)
 {
   OvkGpu_T gpu = { 0 };
 
@@ -114,17 +145,19 @@ OvkGpu_T CreateGpuInfo(VkPhysicalDevice _device)
 
   gpu.queueIndexGraphics = GetFamilyIndexForQueue(&gpu, VK_QUEUE_GRAPHICS_BIT);
   gpu.queueIndexTransfer = GetFamilyIndexForQueue(&gpu, VK_QUEUE_TRANSFER_BIT);
+  gpu.queueIndexPresent = GetFamilyIndexForPresent(&gpu, _state->surface);
 
   return gpu;
 }
 
-int32_t RatePhysicalDeviceSuitability(VkPhysicalDevice _device)
+int32_t RatePhysicalDeviceSuitability(OvkState_T* _state, VkPhysicalDevice _device)
 {
-  OvkGpu_T gpu = CreateGpuInfo(_device);
+  OvkGpu_T gpu = CreateGpuInfo(_state, _device);
 
-  int score = 0;
+  int32_t score = 0;
 
   score += 100 * ( gpu.properties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU );
+  score -= ( 1 << 16 ) * ( gpu.queueIndexPresent == ~0u );
 
   OPAL_LOG_VK(Lapis_Console_Debug, "\"%s\" final score = %d\n", gpu.properties.deviceName, score);
 
@@ -144,7 +177,7 @@ OpalResult SelectPhysicalDevice(OvkState_T* _state)
 
   for (uint32_t i = 0; i < deviceCount; i++)
   {
-    int32_t score = RatePhysicalDeviceSuitability(devices[i]);
+    int32_t score = RatePhysicalDeviceSuitability(_state, devices[i]);
 
     if (score > winningScore)
     {
@@ -153,7 +186,7 @@ OpalResult SelectPhysicalDevice(OvkState_T* _state)
     }
   }
 
-  _state->gpu = CreateGpuInfo(devices[winningIndex]);
+  _state->gpu = CreateGpuInfo(_state, devices[winningIndex]);
   OPAL_LOG_VK(Lapis_Console_Info, "Using \"%s\"\n", _state->gpu.properties.deviceName);
 
   LapisMemFree(devices);
@@ -165,15 +198,15 @@ OpalResult CreateDevice(OvkState_T* _state)
   VkPhysicalDeviceFeatures enabledFeatures = { 0 };
 
   // Queues =====
-#define tmpQueueCount 2
+#define tmpDefineQueueCount 3
   const float queuePriority = 1.0f;
-  const uint32_t queueCount = tmpQueueCount;
-  uint32_t queueIndices[tmpQueueCount] = {
+  uint32_t queueIndices[tmpDefineQueueCount] = {
     _state->gpu.queueIndexGraphics,
-    _state->gpu.queueIndexTransfer
+    _state->gpu.queueIndexTransfer,
+    _state->gpu.queueIndexPresent
   };
-  VkDeviceQueueCreateInfo queueCreateInfos[tmpQueueCount] = { 0 };
-  for (uint32_t i = 0; i < tmpQueueCount; i++)
+  VkDeviceQueueCreateInfo queueCreateInfos[tmpDefineQueueCount] = { 0 };
+  for (uint32_t i = 0; i < tmpDefineQueueCount; i++)
   {
     queueCreateInfos[i].sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
     queueCreateInfos[i].pNext = NULL;
@@ -182,23 +215,18 @@ OpalResult CreateDevice(OvkState_T* _state)
     queueCreateInfos[i].queueFamilyIndex = queueIndices[i];
     queueCreateInfos[i].pQueuePriorities = &queuePriority;
   }
-#undef tmpQueueCount
 
   // Extensions =====
-#define tmpExtensionCount 1
-  const uint32_t extensionCount = tmpExtensionCount;
-  const char* extensions[tmpExtensionCount] = {
+#define tmpDefineExtensionCount 1
+  const char* extensions[tmpDefineExtensionCount] = {
     VK_KHR_SWAPCHAIN_EXTENSION_NAME
   };
-#undef tmpExtensionCount
 
   // Layers =====
-#define tmpLayerCount 1
-  const uint32_t layerCount = tmpLayerCount;
-  const char* layers[tmpLayerCount] = {
+#define tmpDefineLayerCount 1
+  const char* layers[tmpDefineLayerCount] = {
     "VK_LAYER_KHRONOS_validation"
   };
-#undef tmpLayerCount
 
   // Creation =====
   VkDeviceCreateInfo createInfo = { 0 };
@@ -206,18 +234,25 @@ OpalResult CreateDevice(OvkState_T* _state)
   createInfo.pNext = NULL;
   createInfo.flags = 0;
   createInfo.pEnabledFeatures = &enabledFeatures;
-  createInfo.queueCreateInfoCount = queueCount;
+  createInfo.queueCreateInfoCount = tmpDefineQueueCount;
   createInfo.pQueueCreateInfos = queueCreateInfos;
-  createInfo.enabledExtensionCount = extensionCount;
+  createInfo.enabledExtensionCount = tmpDefineExtensionCount;
   createInfo.ppEnabledExtensionNames = extensions;
-  createInfo.enabledLayerCount = layerCount;
+  createInfo.enabledLayerCount = tmpDefineLayerCount;
   createInfo.ppEnabledLayerNames = layers;
 
   OVK_ATTEMPT(
     vkCreateDevice(_state->gpu.device, &createInfo, NULL, &_state->device),
     return Opal_Failure_Vk_Init);
 
+  vkGetDeviceQueue(_state->device, _state->gpu.queueIndexGraphics, 0, &_state->queueGraphics);
+  vkGetDeviceQueue(_state->device, _state->gpu.queueIndexTransfer, 0, &_state->queueTransfer);
+  vkGetDeviceQueue(_state->device, _state->gpu.queueIndexPresent, 0, &_state->queuePresent);
+
   return Opal_Success;
+#undef tmpDefineQueueCount
+#undef tmpDefineExtensionCount
+#undef tmpDefineLayerCount
 }
 
 OpalResult CreateCommandPool(OvkState_T* _state, uint32_t _isTransient)
@@ -559,12 +594,12 @@ OpalResult CreateFramebuffers(OvkState_T* _state)
   return Opal_Success;
 }
 
-OpalResult OvkInitState(OpalCreateStateInfo _createInfo, OpalState _state)
+OpalResult OvkInitState(OpalCreateStateInfo _createInfo, OpalState _oState)
 {
-  OvkState_T* vkState = (OvkState_T*)LapisMemAllocZero(sizeof(OvkState_T));
+  OvkState_T* state = (OvkState_T*)LapisMemAllocZero(sizeof(OvkState_T));
 
   OPAL_ATTEMPT(
-    CreateInstance(vkState),
+    CreateInstance(state),
     {
       OPAL_LOG_VK_ERROR("Failed to create vulkan instance\n");
       return Opal_Failure_Vk_Init;
@@ -572,35 +607,35 @@ OpalResult OvkInitState(OpalCreateStateInfo _createInfo, OpalState _state)
 
   // TODO : Move surface creation to window setup
   OPAL_ATTEMPT(
-    CreateSurface(_createInfo.window, vkState),
+    CreateSurface(_createInfo.window, state),
     {
       OPAL_LOG_VK_ERROR("Failed to create vulkan surface\n");
       return Opal_Failure_Vk_Init;
     });
 
   OPAL_ATTEMPT(
-    SelectPhysicalDevice(vkState),
+    SelectPhysicalDevice(state),
     {
       OPAL_LOG_VK_ERROR("Failed to select a physical device\n");
       return Opal_Failure_Vk_Init;
     });
 
   OPAL_ATTEMPT(
-    CreateDevice(vkState),
+    CreateDevice(state),
     {
       OPAL_LOG_VK_ERROR("Failed to create vkDevice\n");
       return Opal_Failure_Vk_Init;
     });
 
   OPAL_ATTEMPT(
-    CreateCommandPool(vkState, 0),
+    CreateCommandPool(state, 0),
     {
       OPAL_LOG_VK_ERROR("Failed to create graphics command pool\n");
       return Opal_Failure_Vk_Init;
     });
 
   OPAL_ATTEMPT(
-    CreateCommandPool(vkState, 1),
+    CreateCommandPool(state, 1),
     {
       OPAL_LOG_VK_ERROR("Failed to create transient command pool\n");
       return Opal_Failure_Vk_Init;
@@ -608,7 +643,7 @@ OpalResult OvkInitState(OpalCreateStateInfo _createInfo, OpalState _state)
 
   // TODO : Move swapchain creation to window setup
   OPAL_ATTEMPT(
-    CreateSwapchain(vkState, _createInfo.window),
+    CreateSwapchain(state, _createInfo.window),
     {
       OPAL_LOG_VK_ERROR("Failed to create swapchain\n");
       return Opal_Failure_Vk_Init;
@@ -616,28 +651,28 @@ OpalResult OvkInitState(OpalCreateStateInfo _createInfo, OpalState _state)
 
   // TODO : Modify sync objects to accommodate headless rendering
   OPAL_ATTEMPT(
-    CreateSyncObjects(vkState),
+    CreateSyncObjects(state),
     {
       OPAL_LOG_VK_ERROR("Failed to create sync objects\n");
       return Opal_Failure_Vk_Init;
     });
 
   OPAL_ATTEMPT(
-    CreateGraphicsCommandBuffers(vkState),
+    CreateGraphicsCommandBuffers(state),
     {
       OPAL_LOG_VK_ERROR("Failed to create graphics command buffers\n");
       return Opal_Failure_Vk_Init;
     });
 
   OPAL_ATTEMPT(
-    CreateRenderpass(vkState),
+    CreateRenderpass(state),
     {
       OPAL_LOG_VK_ERROR("Failed to create renderpass\n");
       return Opal_Failure_Vk_Init;
     });
 
   OPAL_ATTEMPT(
-    CreateFramebuffers(vkState),
+    CreateFramebuffers(state),
     {
       OPAL_LOG_VK_ERROR("Failed to create framebuffers\n");
       return Opal_Failure_Vk_Init;
@@ -645,59 +680,60 @@ OpalResult OvkInitState(OpalCreateStateInfo _createInfo, OpalState _state)
 
   OPAL_LOG_VK(Lapis_Console_Info, "Init complete\n");
 
-  _state->backend.state = (void*)vkState;
+  _oState->backend.state = (void*)state;
   return Opal_Success;
 }
 
-void OvkShutdownState(OpalState _state)
+void OvkShutdownState(OpalState _oState)
 {
-  OpalState_T* state = _state;
-  OvkState_T* vkState = (OvkState_T*)state->backend.state;
+  OvkState_T* state = (OvkState_T*)_oState->backend.state;
 
-  for (uint32_t i = 0; i < vkState->swapchain.imageCount; i++)
+  vkDeviceWaitIdle(state->device);
+
+  for (uint32_t i = 0; i < state->swapchain.imageCount; i++)
   {
-    vkDestroyFramebuffer(vkState->device, vkState->framebuffers[i], NULL);
+    vkDestroyFramebuffer(state->device, state->framebuffers[i], NULL);
   }
-  LapisMemFree(vkState->framebuffers);
+  LapisMemFree(state->framebuffers);
 
-  vkDestroyRenderPass(vkState->device, vkState->renderpass, NULL);
+  vkDestroyRenderPass(state->device, state->renderpass, NULL);
 
   vkFreeCommandBuffers(
-    vkState->device,
-    vkState->graphicsCommandPool,
-    vkState->swapchain.imageCount,
-    vkState->graphicsCommandBuffers);
-  LapisMemFree(vkState->graphicsCommandBuffers);
+    state->device,
+    state->graphicsCommandPool,
+    state->swapchain.imageCount,
+    state->graphicsCommandBuffers);
+  LapisMemFree(state->graphicsCommandBuffers);
 
   for (uint32_t i = 0; i < syncMaxFlightSlotCount; i++)
   {
-    vkDestroyFence(vkState->device, vkState->sync.fenceFlightSlotAvailable[i], NULL);
-    vkDestroySemaphore(vkState->device, vkState->sync.semaphoreImageAvailable[i], NULL);
-    vkDestroySemaphore(vkState->device, vkState->sync.semaphoreRenderingComplete[i], NULL);
+    vkDestroyFence(state->device, state->sync.fenceFlightSlotAvailable[i], NULL);
+    vkDestroySemaphore(state->device, state->sync.semaphoreImageAvailable[i], NULL);
+    vkDestroySemaphore(state->device, state->sync.semaphoreRenderingComplete[i], NULL);
   }
-  LapisMemFree(vkState->sync.fenceFlightSlotAvailable);
-  LapisMemFree(vkState->sync.semaphoreImageAvailable);
-  LapisMemFree(vkState->sync.semaphoreRenderingComplete);
+  LapisMemFree(state->sync.fenceFlightSlotAvailable);
+  LapisMemFree(state->sync.semaphoreImageAvailable);
+  LapisMemFree(state->sync.semaphoreRenderingComplete);
 
-  for (uint32_t i = 0; i < vkState->swapchain.imageCount; i++)
+  for (uint32_t i = 0; i < state->swapchain.imageCount; i++)
   {
-    vkDestroyImageView(vkState->device, vkState->swapchain.imageViews[i], NULL);
+    vkDestroyImageView(state->device, state->swapchain.imageViews[i], NULL);
     // Images destroyed with the swapchain itself
   }
-  vkDestroySwapchainKHR(vkState->device, vkState->swapchain.swapchain, NULL);
-  LapisMemFree(vkState->swapchain.images);
-  LapisMemFree(vkState->swapchain.imageViews);
+  vkDestroySwapchainKHR(state->device, state->swapchain.swapchain, NULL);
+  LapisMemFree(state->swapchain.images);
+  LapisMemFree(state->swapchain.imageViews);
 
-  vkDestroyCommandPool(vkState->device, vkState->transientCommantPool, NULL);
-  vkDestroyCommandPool(vkState->device, vkState->graphicsCommandPool, NULL);
-  vkDestroyDevice(vkState->device, NULL);
-  vkDestroySurfaceKHR(vkState->instance, vkState->surface, NULL);
-  vkDestroyInstance(vkState->instance, NULL);
+  vkDestroyCommandPool(state->device, state->transientCommantPool, NULL);
+  vkDestroyCommandPool(state->device, state->graphicsCommandPool, NULL);
+  vkDestroyDevice(state->device, NULL);
+  vkDestroySurfaceKHR(state->instance, state->surface, NULL);
+  vkDestroyInstance(state->instance, NULL);
 
-  LapisMemFree(vkState->gpu.queueFamilyProperties);
+  LapisMemFree(state->gpu.queueFamilyProperties);
 
   OPAL_LOG_VK(Lapis_Console_Info, "Shutdown complete\n");
 
-  LapisMemFree(state->backend.state);
-  state->backend.state = NULL;
+  LapisMemFree(state);
+  _oState->backend.state = NULL;
 }

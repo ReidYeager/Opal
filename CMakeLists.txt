@@ -16,7 +16,7 @@ add_library (Opal STATIC
   "src/vulkan/vulkan.h"
   "src/vulkan/vulkan_defines.h"
   "src/vulkan/core_init.c"
-)
+ "src/vulkan/core_update.c")
 
 set_target_properties(Opal PROPERTIES LINKER_LANGUAGE C)
 

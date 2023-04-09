@@ -18,6 +18,7 @@ typedef struct OvkGpu_T
 
   uint32_t queueIndexGraphics;
   uint32_t queueIndexTransfer;
+  uint32_t queueIndexPresent;
 } OvkGpu_T;
 
 typedef struct OvkState_T
@@ -29,6 +30,9 @@ typedef struct OvkState_T
 
   VkCommandPool graphicsCommandPool;
   VkCommandPool transientCommantPool;
+  VkQueue queueGraphics;
+  VkQueue queuePresent;
+  VkQueue queueTransfer;
 
   struct {
     VkSwapchainKHR swapchain;
@@ -42,8 +46,8 @@ typedef struct OvkState_T
 
   struct {
     uint32_t count;
-    uint32_t maxFlightSlotCount;
     uint32_t currentFlightIndex;
+    uint32_t currentSwapchainImageIndex;
 
     VkFence* fenceFlightSlotAvailable;
     VkSemaphore* semaphoreRenderingComplete;
@@ -55,5 +59,7 @@ typedef struct OvkState_T
   VkRenderPass renderpass;
   VkFramebuffer* framebuffers;
 } OvkState_T;
+
+#define maxFlightSlotCount 3
 
 #endif // !GEM_OPAL_VULKAN_DEFINES_H

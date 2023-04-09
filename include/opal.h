@@ -11,6 +11,7 @@ extern "C" {
 
 OpalResult OpalCreateState(OpalCreateStateInfo _info, OpalState* _outState);
 void OpalDestroyState(OpalState* _state);
+OpalResult OpalRenderFrame(OpalState _state);
 
 // TODO : Opal create/destroy window (If not headless)
 
