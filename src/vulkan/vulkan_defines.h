@@ -21,6 +21,17 @@ typedef struct OvkGpu_T
   uint32_t queueIndexPresent;
 } OvkGpu_T;
 
+typedef struct OvkFrameSlot_T
+{
+  uint32_t swapchainImageIndex;
+
+  VkFence fenceFrameAvailable;
+  VkSemaphore semImageAvailable;
+  VkSemaphore semRenderComplete;
+
+  VkCommandBuffer cmd;
+} OvkFrameSlot_T;
+
 typedef struct OvkState_T
 {
   VkInstance instance;
@@ -44,17 +55,9 @@ typedef struct OvkState_T
     VkPresentModeKHR presentMode;
   } swapchain;
 
-  struct {
-    uint32_t count;
-    uint32_t currentFlightIndex;
-    uint32_t currentSwapchainImageIndex;
-
-    VkFence* fenceFlightSlotAvailable;
-    VkSemaphore* semaphoreRenderingComplete;
-    VkSemaphore* semaphoreImageAvailable;
-  } sync;
-
-  VkCommandBuffer* graphicsCommandBuffers;
+  uint32_t currentFrameSlotIndex;
+  uint32_t frameSlotCount;
+  OvkFrameSlot_T* frameSlots;
 
   VkRenderPass renderpass;
   VkFramebuffer* framebuffers;

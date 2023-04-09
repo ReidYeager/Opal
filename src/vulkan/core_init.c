@@ -88,7 +88,7 @@ uint32_t GetFamilyIndexForQueue(const OvkGpu_T* const _gpu, VkQueueFlags _flags)
 
   if (bestFit == ~0U)
   {
-    OPAL_LOG_VK_ERROR("Failed to find a queue family with the flag %u", _flags);
+    OPAL_LOG_VK_ERROR("Failed to find a queue family with the flag %u\n", _flags);
   }
   return bestFit;
 }
@@ -117,7 +117,7 @@ uint32_t GetFamilyIndexForPresent(const OvkGpu_T* const _gpu, VkSurfaceKHR _surf
 
   if (bestFit == ~0u)
   {
-    OPAL_LOG_VK_ERROR("Failed to find a queue family for presentation\n");
+    OPAL_LOG_VK(Lapis_Console_Warning, "Failed to find a queue family for presentation\n");
   }
 
   return bestFit;
@@ -156,13 +156,14 @@ int32_t RatePhysicalDeviceSuitability(OvkState_T* _state, VkPhysicalDevice _devi
 
   int32_t score = 0;
 
-  score += 100 * ( gpu.properties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU );
-  score -= ( 1 << 16 ) * ( gpu.queueIndexPresent == ~0u );
+#define FatalFeatureAssert(x) { if (!(x)) {return 0x80000000;} }
 
-  OPAL_LOG_VK(Lapis_Console_Debug, "\"%s\" final score = %d\n", gpu.properties.deviceName, score);
+  score += 100 * ( gpu.properties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU );
+  FatalFeatureAssert(gpu.queueIndexPresent != ~0u);
 
   LapisMemFree(gpu.queueFamilyProperties);
   return score;
+#undef FatalFeatureAssert
 }
 
 OpalResult SelectPhysicalDevice(OvkState_T* _state)
@@ -420,15 +421,10 @@ OpalResult CreateSwapchain(OvkState_T* _state, LapisWindow _window)
   return Opal_Success;
 }
 
-uint32_t syncMaxFlightSlotCount = 3;
 OpalResult CreateSyncObjects(OvkState_T* _state)
 {
-  _state->sync.fenceFlightSlotAvailable =
-    (VkFence*)LapisMemAlloc(sizeof(VkFence) * syncMaxFlightSlotCount);
-  _state->sync.semaphoreImageAvailable =
-    (VkSemaphore*)LapisMemAlloc(sizeof(VkSemaphore) * syncMaxFlightSlotCount);
-  _state->sync.semaphoreRenderingComplete =
-    (VkSemaphore*)LapisMemAlloc(sizeof(VkSemaphore) * syncMaxFlightSlotCount);
+  _state->frameSlots = (OvkFrameSlot_T*)LapisMemAlloc(sizeof(OvkFrameSlot_T) * maxFlightSlotCount);
+  _state->frameSlotCount = maxFlightSlotCount;
 
   VkSemaphoreCreateInfo semaphoreCreateInfo = { 0 };
   semaphoreCreateInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
@@ -437,36 +433,26 @@ OpalResult CreateSyncObjects(OvkState_T* _state)
   fenceCreateInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
   fenceCreateInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
 
-  for (uint32_t i = 0; i < syncMaxFlightSlotCount; i++)
+  for (uint32_t i = 0; i < maxFlightSlotCount; i++)
   {
+    OvkFrameSlot_T* slot = &_state->frameSlots[i];
+
     OVK_ATTEMPT(
-      vkCreateFence(
-        _state->device,
-        &fenceCreateInfo,
-        NULL,
-        &_state->sync.fenceFlightSlotAvailable[i]),
+      vkCreateFence(_state->device, &fenceCreateInfo, NULL, &slot->fenceFrameAvailable),
       {
         OPAL_LOG_VK_ERROR("Failed to create flight slot fence %d\n", i);
         return Opal_Failure_Vk_Init;
       });
 
     OVK_ATTEMPT(
-      vkCreateSemaphore(
-        _state->device,
-        &semaphoreCreateInfo,
-        NULL,
-        &_state->sync.semaphoreRenderingComplete[i]),
+      vkCreateSemaphore(_state->device, &semaphoreCreateInfo, NULL, &slot->semRenderComplete),
       {
         OPAL_LOG_VK_ERROR("Failed to create render complete semaphore %d\n", i);
         return Opal_Failure_Vk_Init;
       });
 
     OVK_ATTEMPT(
-      vkCreateSemaphore(
-        _state->device,
-        &semaphoreCreateInfo,
-        NULL,
-        &_state->sync.semaphoreImageAvailable[i]),
+      vkCreateSemaphore(_state->device, &semaphoreCreateInfo, NULL, &slot->semImageAvailable),
       {
         OPAL_LOG_VK_ERROR("Failed to create image available semaphore %d\n", i);
         return Opal_Failure_Vk_Init;
@@ -478,19 +464,21 @@ OpalResult CreateSyncObjects(OvkState_T* _state)
 
 OpalResult CreateGraphicsCommandBuffers(OvkState_T* _state)
 {
-  _state->graphicsCommandBuffers =
     (VkCommandBuffer*)LapisMemAlloc(sizeof(VkCommandBuffer) * _state->swapchain.imageCount);
 
   VkCommandBufferAllocateInfo allocInfo = { 0 };
   allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
   allocInfo.pNext = NULL;
-  allocInfo.commandBufferCount = _state->swapchain.imageCount;
+  allocInfo.commandBufferCount = 1;
   allocInfo.commandPool = _state->graphicsCommandPool;
   allocInfo.level = 0;
 
-  OVK_ATTEMPT(
-    vkAllocateCommandBuffers(_state->device, &allocInfo, _state->graphicsCommandBuffers),
-    return Opal_Failure_Vk_Init);
+  for (uint32_t i = 0; i < _state->frameSlotCount; i++)
+  {
+    OVK_ATTEMPT(
+      vkAllocateCommandBuffers(_state->device, &allocInfo, &_state->frameSlots[i].cmd),
+      return Opal_Failure_Vk_Init);
+  }
 
   return Opal_Success;
 }
@@ -649,7 +637,7 @@ OpalResult OvkInitState(OpalCreateStateInfo _createInfo, OpalState _oState)
       return Opal_Failure_Vk_Init;
     });
 
-  // TODO : Modify sync objects to accommodate headless rendering
+  // TODO : Modify frames objects to accommodate headless rendering
   OPAL_ATTEMPT(
     CreateSyncObjects(state),
     {
@@ -698,22 +686,15 @@ void OvkShutdownState(OpalState _oState)
 
   vkDestroyRenderPass(state->device, state->renderpass, NULL);
 
-  vkFreeCommandBuffers(
-    state->device,
-    state->graphicsCommandPool,
-    state->swapchain.imageCount,
-    state->graphicsCommandBuffers);
-  LapisMemFree(state->graphicsCommandBuffers);
-
-  for (uint32_t i = 0; i < syncMaxFlightSlotCount; i++)
+  for (uint32_t i = 0; i < state->frameSlotCount; i++)
   {
-    vkDestroyFence(state->device, state->sync.fenceFlightSlotAvailable[i], NULL);
-    vkDestroySemaphore(state->device, state->sync.semaphoreImageAvailable[i], NULL);
-    vkDestroySemaphore(state->device, state->sync.semaphoreRenderingComplete[i], NULL);
+    OvkFrameSlot_T* slot = &state->frameSlots[i];
+    vkDestroyFence(state->device, slot->fenceFrameAvailable, NULL);
+    vkDestroySemaphore(state->device, slot->semImageAvailable, NULL);
+    vkDestroySemaphore(state->device, slot->semRenderComplete, NULL);
+    vkFreeCommandBuffers(state->device, state->graphicsCommandPool, 1, &slot->cmd);
   }
-  LapisMemFree(state->sync.fenceFlightSlotAvailable);
-  LapisMemFree(state->sync.semaphoreImageAvailable);
-  LapisMemFree(state->sync.semaphoreRenderingComplete);
+  LapisMemFree(state->frameSlots);
 
   for (uint32_t i = 0; i < state->swapchain.imageCount; i++)
   {
