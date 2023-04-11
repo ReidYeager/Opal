@@ -21,6 +21,12 @@ OpalResult OpalCreateShaders(
   OpalCreateShaderInfo* _pCreateInfos,
   OpalShader* _pOutShaders);
 void OpalDestroyShader(OpalState _state, OpalShader* _shader);
+OpalResult OpalCreateMaterial(
+  OpalState _state,
+  OpalCreateMaterialInfo _createInfo,
+  OpalMaterial* _outMaterial);
+void OpalDestroyMaterial(OpalState _state, OpalMaterial* _material);
+
 
 #ifdef __cplusplus
 }

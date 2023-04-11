@@ -57,6 +57,8 @@
 
 typedef struct OpalShader_T
 {
+  OpalShaderTypes type;
+
   struct {
     OvkShader_T vulkan;
   } backend;

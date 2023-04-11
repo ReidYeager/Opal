@@ -286,6 +286,29 @@ OpalResult CreateCommandPool(OvkState_T* _state, uint32_t _isTransient)
   return Opal_Success;
 }
 
+OpalResult CreateDescriptorPool(OvkState_T* _state)
+{
+  VkDescriptorPoolSize sizes[2] = { 0 };
+  sizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+  sizes[0].descriptorCount = 1024;
+  sizes[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+  sizes[1].descriptorCount = 1024;
+
+  VkDescriptorPoolCreateInfo createInfo = { 0 };
+  createInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+  createInfo.pNext = NULL;
+  createInfo.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
+  createInfo.maxSets = 1024;
+  createInfo.poolSizeCount = 2;
+  createInfo.pPoolSizes = sizes;
+
+  OVK_ATTEMPT(
+    vkCreateDescriptorPool(_state->device, &createInfo, NULL, &_state->descriptorPool),
+    return Opal_Failure_Vk_Create);
+
+  return Opal_Success;
+}
+
 OpalResult CreateSwapchain(OvkState_T* _state, LapisWindow _window)
 {
   // Collect hardware information =====
@@ -631,6 +654,13 @@ OpalResult OvkInitState(OpalCreateStateInfo _createInfo, OpalState _oState)
       return Opal_Failure_Vk_Init;
     });
 
+  OPAL_ATTEMPT(
+    CreateDescriptorPool(state),
+    {
+      OPAL_LOG_VK_ERROR("Failed to create descriptor pool\n");
+      return Opal_Failure_Vk_Init;
+    });
+
   // TODO : Move swapchain creation to window setup
   OPAL_ATTEMPT(
     CreateSwapchain(state, _createInfo.window),
@@ -707,6 +737,7 @@ void OvkShutdownState(OpalState _oState)
   LapisMemFree(state->swapchain.images);
   LapisMemFree(state->swapchain.imageViews);
 
+  vkDestroyDescriptorPool(state->device, state->descriptorPool, NULL);
   vkDestroyCommandPool(state->device, state->transientCommantPool, NULL);
   vkDestroyCommandPool(state->device, state->graphicsCommandPool, NULL);
   vkDestroyDevice(state->device, NULL);

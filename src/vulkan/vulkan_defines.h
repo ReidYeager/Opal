@@ -45,6 +45,8 @@ typedef struct OvkState_T
   VkQueue queuePresent;
   VkQueue queueTransfer;
 
+  VkDescriptorPool descriptorPool;
+
   struct {
     VkSwapchainKHR swapchain;
     uint32_t imageCount;
