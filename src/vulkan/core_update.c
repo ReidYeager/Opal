@@ -4,7 +4,10 @@
 
 #include <vulkan/vulkan.h>
 
-OpalResult RecordCommandBuffer(OvkState_T* _state, OvkFrameSlot_T* _frame)
+OpalResult RecordCommandBuffer(
+  OvkState_T* _state,
+  OvkFrameSlot_T* _frame,
+  const OpalFrameData* _data)
 {
   uint32_t index = _frame->swapchainImageIndex;
   VkCommandBuffer cmd = _frame->cmd;
@@ -36,9 +39,33 @@ OpalResult RecordCommandBuffer(OvkState_T* _state, OvkFrameSlot_T* _frame)
       return Opal_Failure_Vk_Render;
     });
 
+  // Commands start =====
+
   vkCmdBeginRenderPass(cmd, &rpBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
 
+  for (uint32_t materialIndex = 0; materialIndex < _data->materialCount; materialIndex++)
+  {
+    vkCmdBindPipeline(
+      cmd,
+      VK_PIPELINE_BIND_POINT_GRAPHICS,
+      _data->materials[materialIndex]->backend.vulkan.pipeline);
+
+    vkCmdBindDescriptorSets(
+      cmd,
+      VK_PIPELINE_BIND_POINT_GRAPHICS,
+      _data->materials[materialIndex]->backend.vulkan.pipelineLayout,
+      0,
+      1,
+      &_data->materials[materialIndex]->backend.vulkan.descriptorSet,
+      0,
+      NULL);
+
+    vkCmdDraw(cmd, 3, 1, 0, 0);
+  }
+
   vkCmdEndRenderPass(cmd);
+
+  // Commands end =====
 
   OVK_ATTEMPT(
     vkEndCommandBuffer(cmd),
@@ -50,7 +77,7 @@ OpalResult RecordCommandBuffer(OvkState_T* _state, OvkFrameSlot_T* _frame)
   return Opal_Success;
 }
 
-OpalResult OpalRenderFrame(OpalState _oState)
+OpalResult OvkRenderFrame(OpalState _oState, const OpalFrameData* _oFrameData)
 {
   OvkState_T* state = (OvkState_T*)_oState->backend.state;
   uint32_t slotIndex = state->currentFrameSlotIndex;
@@ -75,7 +102,7 @@ OpalResult OpalRenderFrame(OpalState _oState)
 
   // Record =====
 
-  OPAL_ATTEMPT(RecordCommandBuffer(state, frameSlot), return Opal_Failure_Vk_Render);
+  OPAL_ATTEMPT(RecordCommandBuffer(state, frameSlot, _oFrameData), return Opal_Failure_Vk_Render);
 
   // Render =====
 

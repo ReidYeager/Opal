@@ -27,18 +27,6 @@ typedef enum OpalApi
 } OpalApi;
 
 // =====
-// State
-// =====
-
-typedef struct OpalState_T* OpalState;
-
-typedef struct OpalCreateStateInfo
-{
-  OpalApi api;
-  LapisWindow window; // TODO : Allow headless when nullptr
-} OpalCreateStateInfo;
-
-// =====
 // Material
 // =====
 
@@ -63,5 +51,28 @@ typedef struct OpalCreateMaterialInfo
   uint32_t shaderCount;
   OpalShader* pShaders;
 } OpalCreateMaterialInfo;
+
+// =====
+// Core
+// =====
+
+typedef struct OpalState_T* OpalState;
+
+typedef struct OpalCreateStateInfo
+{
+  OpalApi api;
+  LapisWindow window; // TODO : Allow headless when nullptr
+} OpalCreateStateInfo;
+
+typedef struct OpalFrameData
+{
+  uint32_t materialCount;
+  OpalMaterial* materials;
+
+  uint32_t meshCount;
+  // OpalMesh* meshes;
+
+  uint32_t* meshToMaterialIndexMap;
+} OpalFrameData;
 
 #endif // !GEM_OPAL_DEFINES_H

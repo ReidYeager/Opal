@@ -82,6 +82,7 @@ typedef struct OpalState_T
   struct {
     void* state;
     void(*ShutdownState)(OpalState _state);
+    OpalResult(*RenderFrame)(OpalState _state, const OpalFrameData* _frameData);
     OpalResult(*CreateShader)(
       OpalState _state,
       OpalCreateShaderInfo _createInfo,

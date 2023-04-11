@@ -325,6 +325,8 @@ void OvkDestroyMaterial(OpalState _oState, OpalMaterial _oMaterial)
   OvkState_T* state = (OvkState_T*)_oState->backend.state;
   OvkMaterial_T* material = &_oMaterial->backend.vulkan;
 
+  vkDeviceWaitIdle(state->device);
+
   vkFreeDescriptorSets(state->device, state->descriptorPool, 1, &material->descriptorSet);
   vkDestroyDescriptorSetLayout(state->device, material->descriptorSetLayout, NULL);
   vkDestroyPipeline(state->device, material->pipeline, NULL);

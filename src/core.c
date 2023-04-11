@@ -28,6 +28,7 @@ OpalResult OpalCreateState(OpalCreateStateInfo _info,  OpalState* _outState)
   {
     // Define vulkan backend functions
     newState->backend.ShutdownState = OvkShutdownState;
+    newState->backend.RenderFrame = OvkRenderFrame;
     newState->backend.CreateShader = OvkCreateShader;
     newState->backend.DestroyShader = OvkDestroyShader;
     newState->backend.CreateMaterial = OvkCreateMaterial;
@@ -52,6 +53,13 @@ void OpalDestroyState(OpalState* _state)
 
   LapisMemFree(state);
   *_state = NULL;
+}
+
+OpalResult OpalRenderFrame(OpalState _state, const OpalFrameData const* _frameData)
+{
+  _state->backend.RenderFrame(_state, _frameData);
+
+  return Opal_Success;
 }
 
 OpalResult CreateSingleShader(
