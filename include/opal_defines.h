@@ -5,10 +5,6 @@
 #include <lapis.h>
 #include <stdint.h>
 
-// =====
-// Opal generic
-// =====
-
 typedef enum OpalResult
 {
   Opal_Success,
@@ -17,6 +13,7 @@ typedef enum OpalResult
   Opal_Failure_Vk_Create,
   Opal_Failure_Vk_Init,
   Opal_Failure_Vk_Render,
+  Opal_Failure_Vk_Misc,
   Opal_Unknown
 } OpalResult;
 
@@ -25,6 +22,30 @@ typedef enum OpalApi
   Opal_Api_Vulkan,
   Opal_Api_Unknown
 } OpalApi;
+
+// =====
+// Buffer
+// =====
+
+typedef struct OpalBuffer_T* OpalBuffer;
+
+typedef enum OpalBufferUsageBits
+{
+#define OPAL_BU(name, val) Opal_Buffer_Usage_##name = (val)
+  OPAL_BU(Cpu_Read      , 0x01),
+  OPAL_BU(Vertex        , 0x02),
+  OPAL_BU(Index         , 0x04),
+  OPAL_BU(Shader_Uniform, 0x08),
+  //OPAL_BU(Image         , 0x10)
+#undef OPAL_BU
+} OpalBufferUsageBits;
+typedef uint32_t OpalBufferUsageFlags;
+
+typedef struct OpalCreateBufferInfo
+{
+  uint64_t size;
+  OpalBufferUsageFlags usage;
+} OpalCreateBufferInfo;
 
 // =====
 // Material

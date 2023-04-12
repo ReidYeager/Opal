@@ -21,7 +21,7 @@ typedef struct OvkGpu_T
   uint32_t queueIndexPresent;
 } OvkGpu_T;
 
-typedef struct OvkFrameSlot_T
+typedef struct OvkFrame_T
 {
   uint32_t swapchainImageIndex;
 
@@ -30,7 +30,7 @@ typedef struct OvkFrameSlot_T
   VkSemaphore semRenderComplete;
 
   VkCommandBuffer cmd;
-} OvkFrameSlot_T;
+} OvkFrame_T;
 
 typedef struct OvkState_T
 {
@@ -41,6 +41,7 @@ typedef struct OvkState_T
 
   VkCommandPool graphicsCommandPool;
   VkCommandPool transientCommantPool;
+  VkCommandBuffer singleUseCommandBuffer;
   VkQueue queueGraphics;
   VkQueue queuePresent;
   VkQueue queueTransfer;
@@ -59,7 +60,7 @@ typedef struct OvkState_T
 
   uint32_t currentFrameSlotIndex;
   uint32_t frameSlotCount;
-  OvkFrameSlot_T* frameSlots;
+  OvkFrame_T* frameSlots;
 
   VkRenderPass renderpass;
   VkFramebuffer* framebuffers;
@@ -77,6 +78,13 @@ typedef struct OvkMaterial_T
   VkDescriptorSetLayout descriptorSetLayout;
   VkDescriptorSet descriptorSet;
 } OvkMaterial_T;
+
+typedef struct OvkBuffer_T
+{
+  VkBuffer buffer;
+  VkDeviceMemory memory;
+  // Usage?
+} OvkBuffer_T;
 
 #define maxFlightSlotCount 3
 

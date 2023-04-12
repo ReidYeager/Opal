@@ -9,12 +9,23 @@ extern "C" {
 
 #include "include/opal_defines.h"
 
-OpalResult OpalCreateState(OpalCreateStateInfo _info, OpalState* _outState);
+OpalResult OpalCreateState(OpalCreateStateInfo _info,  OpalState* _outState);
 void OpalDestroyState(OpalState* _state);
 OpalResult OpalRenderFrame(OpalState _state, const OpalFrameData* _frameData);
 
-// TODO : Opal create/destroy window (If not headless)
+// =====
+// Buffer
+// =====
+OpalResult OpalCreateBuffer(
+  OpalState _state,
+  OpalCreateBufferInfo _createInfo,
+  OpalBuffer* _outBuffer);
+void OpalDestroyBuffer(OpalState _state, OpalBuffer* _buffer);
+OpalResult OpalBufferPushData(OpalState _state, OpalBuffer _buffer, void* _data);
 
+// =====
+// Material
+// =====
 OpalResult OpalCreateShaders(
   OpalState _state,
   uint32_t _createCount,

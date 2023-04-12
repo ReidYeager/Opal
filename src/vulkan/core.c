@@ -268,7 +268,9 @@ OpalResult CreateCommandPool(OvkState_T* _state, uint32_t _isTransient)
 
   if (_isTransient)
   {
-    createInfo.flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT;
+    createInfo.flags =
+      VK_COMMAND_POOL_CREATE_TRANSIENT_BIT
+      | VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
     createInfo.queueFamilyIndex = _state->gpu.queueIndexTransfer;
     outPool = &_state->transientCommantPool;
   }
@@ -448,7 +450,7 @@ OpalResult CreateSwapchain(OvkState_T* _state, LapisWindow _window)
 
 OpalResult CreateSyncObjects(OvkState_T* _state)
 {
-  _state->frameSlots = (OvkFrameSlot_T*)LapisMemAlloc(sizeof(OvkFrameSlot_T) * maxFlightSlotCount);
+  _state->frameSlots = (OvkFrame_T*)LapisMemAlloc(sizeof(OvkFrame_T) * maxFlightSlotCount);
   _state->frameSlotCount = maxFlightSlotCount;
 
   VkSemaphoreCreateInfo semaphoreCreateInfo = { 0 };
@@ -460,7 +462,7 @@ OpalResult CreateSyncObjects(OvkState_T* _state)
 
   for (uint32_t i = 0; i < maxFlightSlotCount; i++)
   {
-    OvkFrameSlot_T* slot = &_state->frameSlots[i];
+    OvkFrame_T* slot = &_state->frameSlots[i];
 
     OVK_ATTEMPT(
       vkCreateFence(_state->device, &fenceCreateInfo, NULL, &slot->fenceFrameAvailable),
@@ -487,9 +489,11 @@ OpalResult CreateSyncObjects(OvkState_T* _state)
   return Opal_Success;
 }
 
-OpalResult CreateGraphicsCommandBuffers(OvkState_T* _state)
+OpalResult CreateCommandBuffers(OvkState_T* _state)
 {
-    (VkCommandBuffer*)LapisMemAlloc(sizeof(VkCommandBuffer) * _state->swapchain.imageCount);
+  // Graphics command buffers =====
+
+  (VkCommandBuffer*)LapisMemAlloc(sizeof(VkCommandBuffer) * _state->swapchain.imageCount);
 
   VkCommandBufferAllocateInfo allocInfo = { 0 };
   allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
@@ -504,6 +508,16 @@ OpalResult CreateGraphicsCommandBuffers(OvkState_T* _state)
       vkAllocateCommandBuffers(_state->device, &allocInfo, &_state->frameSlots[i].cmd),
       return Opal_Failure_Vk_Create);
   }
+
+  // Single use command buffer =====
+
+  allocInfo.commandBufferCount = 1;
+  allocInfo.commandPool = _state->transientCommantPool;
+  allocInfo.level = 0;
+
+  OVK_ATTEMPT(
+    vkAllocateCommandBuffers(_state->device, &allocInfo, &_state->singleUseCommandBuffer),
+    return Opal_Failure_Vk_Create);
 
   return Opal_Success;
 }
@@ -678,7 +692,7 @@ OpalResult OvkInitState(OpalCreateStateInfo _createInfo, OpalState _oState)
     });
 
   OPAL_ATTEMPT(
-    CreateGraphicsCommandBuffers(state),
+    CreateCommandBuffers(state),
     {
       OPAL_LOG_VK_ERROR("Failed to create graphics command buffers\n");
       return Opal_Failure_Vk_Init;
@@ -720,7 +734,7 @@ void OvkShutdownState(OpalState _oState)
 
   for (uint32_t i = 0; i < state->frameSlotCount; i++)
   {
-    OvkFrameSlot_T* slot = &state->frameSlots[i];
+    OvkFrame_T* slot = &state->frameSlots[i];
     vkDestroyFence(state->device, slot->fenceFrameAvailable, NULL);
     vkDestroySemaphore(state->device, slot->semImageAvailable, NULL);
     vkDestroySemaphore(state->device, slot->semRenderComplete, NULL);
@@ -750,4 +764,73 @@ void OvkShutdownState(OpalState _oState)
 
   LapisMemFree(state);
   _oState->backend.state = NULL;
+}
+
+OpalResult OvkRenderFrame(OpalState _oState, const OpalFrameData* _oFrameData)
+{
+  OvkState_T* state = (OvkState_T*)_oState->backend.state;
+  uint32_t slotIndex = state->currentFrameSlotIndex;
+  OvkFrame_T* frameSlot = &state->frameSlots[slotIndex];
+
+  // Setup =====
+
+  OVK_ATTEMPT(
+    // 3 sec timeout
+    vkWaitForFences(state->device, 1, &frameSlot->fenceFrameAvailable, VK_TRUE, 3000000000),
+    return Opal_Failure_Vk_Render);
+
+  OVK_ATTEMPT(
+    vkAcquireNextImageKHR(
+      state->device,
+      state->swapchain.swapchain,
+      UINT64_MAX,
+      frameSlot->semImageAvailable,
+      VK_NULL_HANDLE,
+      &frameSlot->swapchainImageIndex),
+    return Opal_Failure_Vk_Render);
+
+  // Record =====
+
+  OPAL_ATTEMPT(
+    OvkRecordCommandBuffer(state, frameSlot, _oFrameData),
+    return Opal_Failure_Vk_Render);
+
+  // Render =====
+
+  VkPipelineStageFlags waitStages[1] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
+  VkSubmitInfo submitInfo = { 0 };
+  submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+  submitInfo.pNext = NULL;
+  submitInfo.pWaitDstStageMask = waitStages;
+  submitInfo.waitSemaphoreCount = 1;
+  submitInfo.pWaitSemaphores = &frameSlot->semImageAvailable;
+  submitInfo.commandBufferCount = 1;
+  submitInfo.pCommandBuffers = &frameSlot->cmd;
+  submitInfo.signalSemaphoreCount = 1;
+  submitInfo.pSignalSemaphores = &frameSlot->semRenderComplete;
+
+  OVK_ATTEMPT(
+    vkResetFences(state->device, 1, &frameSlot->fenceFrameAvailable),
+    return Opal_Failure_Vk_Render);
+
+  OVK_ATTEMPT(
+    vkQueueSubmit(state->queueGraphics, 1, &submitInfo, frameSlot->fenceFrameAvailable),
+    return Opal_Failure_Vk_Render);
+
+  // Present =====
+
+  VkPresentInfoKHR presentInfo = { 0 };
+  presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+  presentInfo.pNext = NULL;
+  presentInfo.waitSemaphoreCount = 1;
+  presentInfo.pWaitSemaphores = &frameSlot->semRenderComplete;
+  presentInfo.swapchainCount = 1;
+  presentInfo.pSwapchains = &state->swapchain.swapchain;
+  presentInfo.pImageIndices = &frameSlot->swapchainImageIndex;
+
+  OVK_ATTEMPT(vkQueuePresentKHR(state->queuePresent, &presentInfo), return Opal_Failure_Vk_Render);
+
+  state->currentFrameSlotIndex = (state->currentFrameSlotIndex + 1) % maxFlightSlotCount;
+
+  return Opal_Success;
 }

@@ -52,6 +52,20 @@
     __VA_ARGS__)
 
 // =====
+// Buffer
+// =====
+
+typedef struct OpalBuffer_T
+{
+  uint64_t size;
+  uint64_t paddedSize;
+
+  struct {
+    OvkBuffer_T vulkan;
+  } backend;
+} OpalBuffer_T;
+
+// =====
 // Material
 // =====
 
@@ -83,6 +97,14 @@ typedef struct OpalState_T
     void* state;
     void(*ShutdownState)(OpalState _state);
     OpalResult(*RenderFrame)(OpalState _state, const OpalFrameData* _frameData);
+    // Buffer =====
+    OpalResult(*CreateBuffer)(
+      OpalState _state,
+      OpalCreateBufferInfo _createInfo,
+      OpalBuffer _buffer );
+    void(*DestroyBuffer)( OpalState _state, OpalBuffer _buffer);
+    OpalResult(*BufferPushData)(OpalState _state, OpalBuffer _buffer, void* _data);
+    // Material =====
     OpalResult(*CreateShader)(
       OpalState _state,
       OpalCreateShaderInfo _createInfo,

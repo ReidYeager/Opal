@@ -18,6 +18,15 @@ OpalResult OvkInitState(OpalCreateStateInfo _createInfo, OpalState _oState);
 void OvkShutdownState(OpalState _oState);
 OpalResult OvkRenderFrame(OpalState _oState, const OpalFrameData* _oFrameData);
 
+// Buffer =====
+OpalResult OvkCreateBuffer(
+  OpalState _oState,
+  OpalCreateBufferInfo _createInfo,
+  OpalBuffer _oBuffer);
+void OvkDestroyBuffer(OpalState _oState, OpalBuffer _oBuffer);
+OpalResult OvkBufferPushData(OpalState _oState, OpalBuffer _oBuffer, void* _data);
+
+// Material =====
 OpalResult OvkCreateShader(
   OpalState _oState,
   OpalCreateShaderInfo _createInfo,
@@ -28,6 +37,15 @@ OpalResult OvkCreateMaterial(
   OpalCreateMaterialInfo _createInfo,
   OpalMaterial _Material);
 void OvkDestroyMaterial(OpalState _oState, OpalMaterial _oMaterial);
+
+// =====
+// Vulkan internal
+// =====
+
+// Commands =====
+OpalResult OvkBeginSingleUseCommand(OvkState_T* _state);
+OpalResult OvkEndSingleUseCommand(OvkState_T* _state);
+OpalResult OvkRecordCommandBuffer(OvkState_T* _state, OvkFrame_T* _frame, const OpalFrameData* _data);
 
 
 #endif // !GEM_OPAL_VULKAN_VULKAN_H

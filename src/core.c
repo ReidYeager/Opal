@@ -29,12 +29,23 @@ OpalResult OpalCreateState(OpalCreateStateInfo _info,  OpalState* _outState)
     // Define vulkan backend functions
     newState->backend.ShutdownState = OvkShutdownState;
     newState->backend.RenderFrame = OvkRenderFrame;
+    // Buffer =====
+    newState->backend.CreateBuffer = OvkCreateBuffer;
+    newState->backend.DestroyBuffer = OvkDestroyBuffer;
+    newState->backend.BufferPushData = OvkBufferPushData;
+    // Material =====
     newState->backend.CreateShader = OvkCreateShader;
     newState->backend.DestroyShader = OvkDestroyShader;
     newState->backend.CreateMaterial = OvkCreateMaterial;
     newState->backend.DestroyMaterial = OvkDestroyMaterial;
 
-    OPAL_ATTEMPT(OvkInitState(_info, newState), return Opal_Failure_Backend);
+
+    OPAL_ATTEMPT(
+      OvkInitState(_info, newState),
+      {
+        OPAL_LOG_ERROR("Failed to initialize the Vulkan backend\n");
+        return Opal_Failure_Backend;
+      });
   } break;
 
   default: break;
@@ -55,91 +66,14 @@ void OpalDestroyState(OpalState* _state)
   *_state = NULL;
 }
 
-OpalResult OpalRenderFrame(OpalState _state, const OpalFrameData const* _frameData)
+OpalResult OpalRenderFrame(OpalState _state, const OpalFrameData* _frameData)
 {
-  _state->backend.RenderFrame(_state, _frameData);
-
-  return Opal_Success;
-}
-
-OpalResult CreateSingleShader(
-  OpalState _state,
-  OpalCreateShaderInfo _createInfo,
-  OpalShader* _outShader)
-{
-  if (_createInfo.sourceCode == NULL || _createInfo.sourceSize == 0)
-  {
-    OPAL_LOG_ERROR("Invalid shader sourceCode or sourceSize\n");
-    return Opal_Failure;
-  }
-
-  OpalShader_T* newShader = (OpalShader_T*)LapisMemAllocZero(sizeof(OpalShader_T));
-
-  newShader->type = _createInfo.type;
-
   OPAL_ATTEMPT(
-    _state->backend.CreateShader(_state, _createInfo, newShader),
+    _state->backend.RenderFrame(_state, _frameData),
     {
-      OPAL_LOG_ERROR("Failed to create shader backend\n");
-      LapisMemFree(newShader);
+      OPAL_LOG_ERROR("Failed to render the frame\n");
       return Opal_Failure_Backend;
     });
 
-  *_outShader = newShader;
   return Opal_Success;
-}
-
-OpalResult OpalCreateShaders(
-  OpalState _state,
-  uint32_t _createCount,
-  OpalCreateShaderInfo* _pCreateInfos,
-  OpalShader* _pOutShaders)
-{
-  for (uint32_t i = 0; i < _createCount; i++)
-  {
-    OPAL_ATTEMPT(
-      CreateSingleShader(_state, _pCreateInfos[i], &_pOutShaders[i]),
-      return attemptResult);
-  }
-
-  return Opal_Success;
-}
-
-void OpalDestroyShader(OpalState _state, OpalShader* _shader)
-{
-  OpalShader_T* shader = *_shader;
-
-  _state->backend.DestroyShader(_state, shader);
-
-  LapisMemFree(shader);
-  *_shader = NULL;
-}
-
-OpalResult OpalCreateMaterial(
-  OpalState _state,
-  OpalCreateMaterialInfo _createInfo,
-  OpalMaterial* _outMaterial)
-{
-  OpalMaterial_T* newMaterial = (OpalMaterial_T*)LapisMemAllocZero(sizeof(OpalMaterial_T));
-
-  OPAL_ATTEMPT(
-    _state->backend.CreateMaterial(_state, _createInfo, newMaterial),
-    {
-      OPAL_LOG_ERROR("Failed to create material backend\n");
-      LapisMemFree(newMaterial);
-      return Opal_Failure_Backend;
-    });
-
-  *_outMaterial = newMaterial;
-  return Opal_Success;
-}
-
-void OpalDestroyMaterial(OpalState _state, OpalMaterial* _material)
-{
-  OpalMaterial_T* material = *_material;
-
-  _state->backend.DestroyMaterial(_state, material);
-
-  LapisMemFree(material);
-  *_material = NULL;
 }
