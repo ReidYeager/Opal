@@ -268,9 +268,7 @@ OpalResult CreateCommandPool(OvkState_T* _state, uint32_t _isTransient)
 
   if (_isTransient)
   {
-    createInfo.flags =
-      VK_COMMAND_POOL_CREATE_TRANSIENT_BIT
-      | VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+    createInfo.flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT;
     createInfo.queueFamilyIndex = _state->gpu.queueIndexTransfer;
     outPool = &_state->transientCommantPool;
   }
@@ -500,7 +498,7 @@ OpalResult CreateCommandBuffers(OvkState_T* _state)
   allocInfo.pNext = NULL;
   allocInfo.commandBufferCount = 1;
   allocInfo.commandPool = _state->graphicsCommandPool;
-  allocInfo.level = 0;
+  allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
 
   for (uint32_t i = 0; i < _state->frameSlotCount; i++)
   {
@@ -508,16 +506,6 @@ OpalResult CreateCommandBuffers(OvkState_T* _state)
       vkAllocateCommandBuffers(_state->device, &allocInfo, &_state->frameSlots[i].cmd),
       return Opal_Failure_Vk_Create);
   }
-
-  // Single use command buffer =====
-
-  allocInfo.commandBufferCount = 1;
-  allocInfo.commandPool = _state->transientCommantPool;
-  allocInfo.level = 0;
-
-  OVK_ATTEMPT(
-    vkAllocateCommandBuffers(_state->device, &allocInfo, &_state->singleUseCommandBuffer),
-    return Opal_Failure_Vk_Create);
 
   return Opal_Success;
 }
@@ -627,10 +615,8 @@ OpalResult OvkInitState(OpalCreateStateInfo _createInfo, OpalState _oState)
 
   OPAL_ATTEMPT(
     CreateInstance(state),
-    {
       OPAL_LOG_VK_ERROR("Failed to create vulkan instance\n");
-      return Opal_Failure_Vk_Init;
-    });
+      return Opal_Failure_Vk_Init;);
 
   // TODO : Move surface creation to window setup
   OPAL_ATTEMPT(
@@ -775,8 +761,8 @@ OpalResult OvkRenderFrame(OpalState _oState, const OpalFrameData* _oFrameData)
   // Setup =====
 
   OVK_ATTEMPT(
-    // 3 sec timeout
-    vkWaitForFences(state->device, 1, &frameSlot->fenceFrameAvailable, VK_TRUE, 3000000000),
+    // 16 ms timeout
+    vkWaitForFences(state->device, 1, &frameSlot->fenceFrameAvailable, VK_TRUE, 16000000),
     return Opal_Failure_Vk_Render);
 
   OVK_ATTEMPT(

@@ -34,19 +34,36 @@ OpalResult CreateDescriptorSetLayout(
   OpalCreateMaterialInfo _createInfo,
   OvkMaterial_T* _material)
 {
-  //VkDescriptorSetLayoutBinding binding = { 0 };
-  //binding.binding = 0;
-  //binding.descriptorCount = 1;
-  //binding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-  //binding.pImmutableSamplers = NULL;
-  //binding.stageFlags = VK_SHADER_STAGE_ALL_GRAPHICS;
+  VkDescriptorSetLayoutBinding* bindings =
+    (VkDescriptorSetLayoutBinding*)LapisMemAllocZero(
+      sizeof(VkDescriptorSetLayoutBinding) * _createInfo.shaderArgCount);
+  VkDescriptorSetLayoutBinding newBinding = { 0 };
+  newBinding.descriptorCount = 1;
+  newBinding.pImmutableSamplers = NULL;
+  newBinding.stageFlags = VK_SHADER_STAGE_ALL_GRAPHICS;
+
+  for (uint32_t i = 0; i < _createInfo.shaderArgCount; i++)
+  {
+    OpalShaderArg argI = _createInfo.pShaderArgs[i];
+    newBinding.binding = argI.index;
+    switch (argI.type)
+    {
+    case Opal_Shader_Arg_Uniform_Buffer:
+    {
+      newBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    } break;
+    default: return Opal_Failure_Vk_Create;
+    }
+
+    bindings[i] = newBinding;
+  }
 
   VkDescriptorSetLayoutCreateInfo createInfo = { 0 };
   createInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
   createInfo.pNext = NULL;
   createInfo.flags = 0;
-  createInfo.bindingCount = 0;
-  createInfo.pBindings = NULL;
+  createInfo.bindingCount = _createInfo.shaderArgCount;
+  createInfo.pBindings = bindings;
 
   OVK_ATTEMPT(
     vkCreateDescriptorSetLayout(_state->device, &createInfo, NULL, &_material->descriptorSetLayout),
@@ -280,6 +297,72 @@ OpalResult CreatePipeline(
   return Opal_Success;
 }
 
+OpalResult UpdateShaderArguments(
+  OvkState_T* _state,
+  OpalCreateMaterialInfo _createInfo,
+  OvkMaterial_T* _material)
+{
+  uint32_t bufferInfoCount = 0;
+  VkDescriptorBufferInfo* bufferInfos =
+    (VkDescriptorBufferInfo*)LapisMemAllocZero(
+      sizeof(VkDescriptorBufferInfo) * _createInfo.shaderArgCount);
+  uint32_t imageInfoCount = 0;
+  VkDescriptorImageInfo* imageInfos =
+    (VkDescriptorImageInfo*)LapisMemAllocZero(
+      sizeof(VkDescriptorImageInfo) * _createInfo.shaderArgCount);
+  VkWriteDescriptorSet* writes =
+    (VkWriteDescriptorSet*)LapisMemAllocZero(
+      sizeof(VkWriteDescriptorSet) * _createInfo.shaderArgCount);
+
+  VkDescriptorBufferInfo newBuffer = { 0 };
+  VkDescriptorImageInfo newImage = { 0 };
+  VkWriteDescriptorSet newWrite = { 0 };
+  newWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+  newWrite.dstSet = _material->descriptorSet;
+  newWrite.dstArrayElement = 0;
+  newWrite.descriptorCount = 1;
+  newWrite.pTexelBufferView = NULL;
+
+  for (uint32_t i = 0; i < _createInfo.shaderArgCount; i++)
+  {
+    OpalShaderArg argI = _createInfo.pShaderArgs[i];
+    newWrite.dstBinding = argI.index;
+
+    switch (argI.type)
+    {
+    case Opal_Shader_Arg_Uniform_Buffer:
+    {
+      newBuffer.buffer = argI.bufferData.buffer->backend.vulkan.buffer;
+      newBuffer.offset = 0;
+      newBuffer.range = VK_WHOLE_SIZE;
+      bufferInfos[bufferInfoCount] = newBuffer;
+
+      newWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+      newWrite.pBufferInfo = &bufferInfos[bufferInfoCount];
+      newWrite.pImageInfo = NULL;
+
+      bufferInfoCount++;
+    } break;
+    default:
+    {
+      LapisMemFree(writes);
+      LapisMemFree(imageInfos);
+      LapisMemFree(bufferInfos);
+      return Opal_Failure_Vk_Create;
+    }
+    }
+
+    writes[i] = newWrite;
+  }
+
+  vkUpdateDescriptorSets(_state->device, _createInfo.shaderArgCount, writes, 0, NULL),
+
+  LapisMemFree(writes);
+  LapisMemFree(imageInfos);
+  LapisMemFree(bufferInfos);
+  return Opal_Success;
+}
+
 OpalResult OvkCreateMaterial(
   OpalState _oState,
   OpalCreateMaterialInfo _createInfo,
@@ -314,6 +397,13 @@ OpalResult OvkCreateMaterial(
     CreatePipeline(state, _createInfo, newMaterial),
     {
       OPAL_LOG_VK_ERROR("Failed to create material : pipeline\n");
+      return Opal_Failure_Vk_Create;
+    });
+
+  OPAL_ATTEMPT(
+    UpdateShaderArguments(state, _createInfo, newMaterial),
+    {
+      OPAL_LOG_VK_ERROR("Failed to bind one or more shader arguments\n");
       return Opal_Failure_Vk_Create;
     });
 

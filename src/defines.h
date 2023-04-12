@@ -18,6 +18,8 @@
   OpalResult attemptResult = (fn);      \
   if (attemptResult != Opal_Success)    \
   {                                     \
+    OPAL_LOG_ERROR("Attempt failed : Result %d : \"%s\"\n\t\"%s\" : %u\n", attemptResult, #fn, __FILE__, __LINE__); \
+    __debugbreak();                     \
     failureAction;                      \
   }                                     \
 }
@@ -30,25 +32,25 @@
 #define OPAL_LOG(type, msg, ...) \
   LapisConsolePrintMessage(      \
     type,                        \
-    "Opal :: " msg,              \
+    "Opal :: "##msg,             \
     __VA_ARGS__)
 
 #define OPAL_LOG_ERROR(msg, ...) \
   LapisConsolePrintMessage(      \
     Lapis_Console_Error,         \
-    "Opal :: " msg,              \
+    "Opal :: "##msg,              \
     __VA_ARGS__)
 
 #define OPAL_LOG_VK(type, msg, ...) \
   LapisConsolePrintMessage(         \
     type,                           \
-    "Opal :: Vk :: " msg,           \
+    "Opal :: Vk :: "##msg,           \
     __VA_ARGS__)
 
 #define OPAL_LOG_VK_ERROR(msg, ...) \
   LapisConsolePrintMessage(         \
     Lapis_Console_Error,            \
-    "Opal :: Vk :: " msg,           \
+    "Opal :: Vk :: "##msg,           \
     __VA_ARGS__)
 
 // =====

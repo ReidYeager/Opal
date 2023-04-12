@@ -43,7 +43,7 @@ OpalResult OpalCreateState(OpalCreateStateInfo _info,  OpalState* _outState)
     OPAL_ATTEMPT(
       OvkInitState(_info, newState),
       {
-        OPAL_LOG_ERROR("Failed to initialize the Vulkan backend\n");
+        //OPAL_LOG_ERROR("Failed to initialize the Vulkan backend\n");
         return Opal_Failure_Backend;
       });
   } break;

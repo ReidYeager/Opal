@@ -111,6 +111,8 @@ OpalResult OvkCreateBuffer(OpalState _oState, OpalCreateBufferInfo _createInfo, 
   OvkState_T* state = (OvkState_T*)_oState->backend.state;
   OvkBuffer_T* buffer = &_oBuffer->backend.vulkan;
 
+  vkDeviceWaitIdle(state->device);
+
   _oBuffer->paddedSize = PadBufferSize(state, _createInfo.usage, _createInfo.size);
   _createInfo.size = _oBuffer->paddedSize;
 
@@ -135,7 +137,8 @@ void OvkDestroyBuffer(OpalState _oState, OpalBuffer _oBuffer)
 
 OpalResult TransferBufferData(OvkState_T* _state, OpalBuffer _src, OpalBuffer _dst, uint64_t _size)
 {
-  OvkBeginSingleUseCommand(_state);
+  VkCommandBuffer cmd;
+  OvkBeginSingleUseCommand(_state, &cmd);
 
   VkBufferCopy region = { 0 };
   region.srcOffset = 0;
@@ -143,13 +146,13 @@ OpalResult TransferBufferData(OvkState_T* _state, OpalBuffer _src, OpalBuffer _d
   region.size = _size;
 
   vkCmdCopyBuffer(
-    _state->singleUseCommandBuffer,
+    cmd,
     _src->backend.vulkan.buffer,
     _dst->backend.vulkan.buffer,
     1,
     &region);
 
-  OvkEndSingleUseCommand(_state);
+  OvkEndSingleUseCommand(_state, cmd);
 
   return Opal_Success;
 }

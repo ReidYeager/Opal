@@ -10,6 +10,8 @@
   VkResult attemptResult = (fn);       \
   if (attemptResult != VK_SUCCESS)     \
   {                                    \
+    OPAL_LOG_ERROR("Vk attempt failed : Result %d : \"%s\"\n\t\"%s\" : %u\n", attemptResult, #fn, __FILE__, __LINE__); \
+    __debugbreak();                    \
     failureAction;                     \
   }                                    \
 }
@@ -43,8 +45,8 @@ void OvkDestroyMaterial(OpalState _oState, OpalMaterial _oMaterial);
 // =====
 
 // Commands =====
-OpalResult OvkBeginSingleUseCommand(OvkState_T* _state);
-OpalResult OvkEndSingleUseCommand(OvkState_T* _state);
+OpalResult OvkBeginSingleUseCommand(OvkState_T* _state, VkCommandBuffer* _cmd);
+OpalResult OvkEndSingleUseCommand(OvkState_T* _state, VkCommandBuffer _cmd);
 OpalResult OvkRecordCommandBuffer(OvkState_T* _state, OvkFrame_T* _frame, const OpalFrameData* _data);
 
 

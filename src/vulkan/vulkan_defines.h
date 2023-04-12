@@ -41,7 +41,6 @@ typedef struct OvkState_T
 
   VkCommandPool graphicsCommandPool;
   VkCommandPool transientCommantPool;
-  VkCommandBuffer singleUseCommandBuffer;
   VkQueue queueGraphics;
   VkQueue queuePresent;
   VkQueue queueTransfer;

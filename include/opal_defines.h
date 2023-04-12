@@ -54,6 +54,29 @@ typedef struct OpalCreateBufferInfo
 typedef struct OpalShader_T* OpalShader;
 typedef struct OpalMaterial_T* OpalMaterial;
 
+// Argument =====
+typedef enum OpalShaderArgTypes
+{
+  Opal_Shader_Arg_Uniform_Buffer
+} OpalShaderArgTypes;
+
+typedef struct OpalShaderArg
+{
+  uint32_t index;
+
+  OpalShaderArgTypes type;
+  union {
+    struct {
+      OpalBuffer buffer;
+    } bufferData;
+
+    struct {
+      int x;
+    } tmp;
+  };
+} OpalShaderArg;
+
+// Shader =====
 typedef enum OpalShaderTypes
 {
   Opal_Shader_Vertex,
@@ -67,10 +90,14 @@ typedef struct OpalCreateShaderInfo
   uint64_t sourceSize;
 } OpalCreateShaderInfo;
 
+// Material =====
 typedef struct OpalCreateMaterialInfo
 {
   uint32_t shaderCount;
   OpalShader* pShaders;
+
+  uint32_t shaderArgCount;
+  OpalShaderArg* pShaderArgs;
 } OpalCreateMaterialInfo;
 
 // =====
