@@ -23,6 +23,31 @@ typedef enum OpalApi
   Opal_Api_Unknown
 } OpalApi;
 
+typedef enum OpalFormat
+{
+  Opal_Format_8_Bit_Int_1,
+  Opal_Format_8_Bit_Int_2,
+  Opal_Format_8_Bit_Int_3,
+  Opal_Format_8_Bit_Int_4,
+  Opal_Format_8_Bit_Uint_1,
+  Opal_Format_8_Bit_Uint_2,
+  Opal_Format_8_Bit_Uint_3,
+  Opal_Format_8_Bit_Uint_4,
+
+  Opal_Format_32_Bit_Int_1,
+  Opal_Format_32_Bit_Int_2,
+  Opal_Format_32_Bit_Int_3,
+  Opal_Format_32_Bit_Int_4,
+  Opal_Format_32_Bit_Uint_1,
+  Opal_Format_32_Bit_Uint_2,
+  Opal_Format_32_Bit_Uint_3,
+  Opal_Format_32_Bit_Uint_4,
+  Opal_Format_32_Bit_Float_1,
+  Opal_Format_32_Bit_Float_2,
+  Opal_Format_32_Bit_Float_3,
+  Opal_Format_32_Bit_Float_4
+} OpalFormat;
+
 // =====
 // Buffer
 // =====
@@ -110,7 +135,7 @@ typedef struct OpalVertexLayoutInfo
 {
   uint32_t structSize;
   uint32_t elementCount;
-  uint32_t* pElementSizes; // TODO : Replace with a format enum (like Vulkan's)
+  OpalFormat* pElementFormats; // TODO : Replace with a format enum (like Vulkan's)
 } OpalVertexLayoutInfo;
 
 typedef struct OpalCreateMeshInfo

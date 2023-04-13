@@ -6,6 +6,34 @@
 #include <string.h>
 #include <stdlib.h>
 
+uint32_t OpalFormatToSize(OpalFormat _format)
+{
+  switch (_format)
+  {
+  case Opal_Format_8_Bit_Int_1: return 1;
+  case Opal_Format_8_Bit_Int_2: return 2;
+  case Opal_Format_8_Bit_Int_3: return 3;
+  case Opal_Format_8_Bit_Int_4: return 4;
+  case Opal_Format_8_Bit_Uint_1: return 1;
+  case Opal_Format_8_Bit_Uint_2: return 2;
+  case Opal_Format_8_Bit_Uint_3: return 3;
+  case Opal_Format_8_Bit_Uint_4: return 4;
+  case Opal_Format_32_Bit_Int_1: return 4;
+  case Opal_Format_32_Bit_Int_2: return 8;
+  case Opal_Format_32_Bit_Int_3: return 12;
+  case Opal_Format_32_Bit_Int_4: return 16;
+  case Opal_Format_32_Bit_Uint_1: return 4;
+  case Opal_Format_32_Bit_Uint_2: return 8;
+  case Opal_Format_32_Bit_Uint_3: return 12;
+  case Opal_Format_32_Bit_Uint_4: return 16;
+  case Opal_Format_32_Bit_Float_1: return 4;
+  case Opal_Format_32_Bit_Float_2: return 8;
+  case Opal_Format_32_Bit_Float_3: return 12;
+  case Opal_Format_32_Bit_Float_4: return 16;
+  default: return 0;
+  }
+}
+
 void PopulateVertexLayout(OpalState _state, OpalCreateStateInfo _createInfo)
 {
   OpalVertexLayoutInfo* stateLayout = &_state->vertexLayout;
@@ -14,12 +42,12 @@ void PopulateVertexLayout(OpalState _state, OpalCreateStateInfo _createInfo)
   if (inLayout == NULL)
   {
     stateLayout->elementCount = 3;
-    stateLayout->pElementSizes = (uint32_t*)LapisMemAlloc(
-      sizeof(uint32_t) * stateLayout->elementCount);
+    stateLayout->pElementFormats = (OpalFormat*)LapisMemAlloc(
+      sizeof(OpalFormat) * stateLayout->elementCount);
 
-    stateLayout->pElementSizes[0] = sizeof(uint32_t) * 3; // Vec3 Position
-    stateLayout->pElementSizes[1] = sizeof(uint32_t) * 3; // Vec3 Normal
-    stateLayout->pElementSizes[2] = sizeof(uint32_t) * 2; // Vec2 Uv
+    stateLayout->pElementFormats[0] = Opal_Format_32_Bit_Float_3; // Vec3 Position
+    stateLayout->pElementFormats[1] = Opal_Format_32_Bit_Float_3; // Vec3 Normal
+    stateLayout->pElementFormats[2] = Opal_Format_32_Bit_Float_2; // Vec2 Uv
 
     return;
   }
@@ -29,17 +57,17 @@ void PopulateVertexLayout(OpalState _state, OpalCreateStateInfo _createInfo)
   {
     for (uint32_t i = 0; i < inLayout->elementCount; i++)
     {
-      stateLayout->structSize += inLayout->pElementSizes[i];
+      stateLayout->structSize += OpalFormatToSize(inLayout->pElementFormats[i]);
     }
   }
 
   stateLayout->elementCount = inLayout->elementCount;
-  stateLayout->pElementSizes = (uint32_t*)LapisMemAlloc(
-    sizeof(uint32_t) * stateLayout->elementCount);
+  stateLayout->pElementFormats = (OpalFormat*)LapisMemAlloc(
+    sizeof(OpalFormat) * stateLayout->elementCount);
   LapisMemCopy(
-    inLayout->pElementSizes,
-    stateLayout->pElementSizes,
-    sizeof(uint32_t) * stateLayout->elementCount);
+    inLayout->pElementFormats,
+    stateLayout->pElementFormats,
+    sizeof(OpalFormat) * stateLayout->elementCount);
 }
 
 OpalResult OpalCreateState(OpalCreateStateInfo _info,  OpalState* _outState)

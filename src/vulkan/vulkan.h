@@ -16,6 +16,8 @@
   }                                    \
 }
 
+VkFormat OpalFormatToVkFormat(OpalFormat _inFormat);
+
 OpalResult OvkInitState(OpalCreateStateInfo _createInfo, OpalState _oState);
 void OvkShutdownState(OpalState _oState);
 OpalResult OvkRenderFrame(OpalState _oState, const OpalFrameData* _oFrameData);

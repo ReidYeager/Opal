@@ -8,6 +8,34 @@
 #include <stdlib.h>
 #include <string.h>
 
+VkFormat OpalFormatToVkFormat(OpalFormat _inFormat)
+{
+  switch (_inFormat)
+  {
+  case Opal_Format_8_Bit_Int_1: return VK_FORMAT_R8_SINT;
+  case Opal_Format_8_Bit_Int_2: return VK_FORMAT_R8G8_SINT;
+  case Opal_Format_8_Bit_Int_3: return VK_FORMAT_R8G8B8_SINT;
+  case Opal_Format_8_Bit_Int_4: return VK_FORMAT_R8G8B8A8_SINT;
+  case Opal_Format_8_Bit_Uint_1: return VK_FORMAT_R8_UINT;
+  case Opal_Format_8_Bit_Uint_2: return VK_FORMAT_R8G8_UINT;
+  case Opal_Format_8_Bit_Uint_3: return VK_FORMAT_R8G8B8_UINT;
+  case Opal_Format_8_Bit_Uint_4: return VK_FORMAT_R8G8B8A8_UINT;
+  case Opal_Format_32_Bit_Int_1: return VK_FORMAT_R32_SINT;
+  case Opal_Format_32_Bit_Int_2: return VK_FORMAT_R32G32_SINT;
+  case Opal_Format_32_Bit_Int_3: return VK_FORMAT_R32G32B32_SINT;
+  case Opal_Format_32_Bit_Int_4: return VK_FORMAT_R32G32B32A32_SINT;
+  case Opal_Format_32_Bit_Uint_1: return VK_FORMAT_R32_UINT;
+  case Opal_Format_32_Bit_Uint_2: return VK_FORMAT_R32G32_UINT;
+  case Opal_Format_32_Bit_Uint_3: return VK_FORMAT_R32G32B32_UINT;
+  case Opal_Format_32_Bit_Uint_4: return VK_FORMAT_R32G32B32A32_UINT;
+  case Opal_Format_32_Bit_Float_1: return VK_FORMAT_R32_SFLOAT;
+  case Opal_Format_32_Bit_Float_2: return VK_FORMAT_R32G32_SFLOAT;
+  case Opal_Format_32_Bit_Float_3: return VK_FORMAT_R32G32B32_SFLOAT;
+  case Opal_Format_32_Bit_Float_4: return VK_FORMAT_R32G32B32A32_SFLOAT;
+  default: return VK_FORMAT_UNDEFINED;
+  }
+}
+
 OpalResult CreateInstance(OvkState_T* _state)
 {
   // App info =====

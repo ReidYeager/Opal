@@ -9,6 +9,8 @@ extern "C" {
 
 #include "include/opal_defines.h"
 
+uint32_t OpalFormatToSize(OpalFormat _format);
+
 OpalResult OpalCreateState(OpalCreateStateInfo _info,  OpalState* _outState);
 void OpalDestroyState(OpalState* _state);
 OpalResult OpalRenderFrame(OpalState _state, const OpalFrameData* _frameData);

@@ -134,11 +134,9 @@ void BuildVertexAttributeDescriptions(
     {
       attribs[i].binding = 0;
       attribs[i].location = i;
-      // TODO : Select format type based on vertex attribute's Opal format
-      attribs[i].format =
-        (_layout.pElementSizes[i] == 12) ? VK_FORMAT_R32G32B32_SFLOAT : VK_FORMAT_R32G32_SFLOAT;
+      attribs[i].format = OpalFormatToVkFormat(_layout.pElementFormats[i]);
       attribs[i].offset = currentOffset;
-      currentOffset += _layout.pElementSizes[i];
+      currentOffset += OpalFormatToSize(_layout.pElementFormats[i]);
     }
   }
 
