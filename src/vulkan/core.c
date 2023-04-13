@@ -21,14 +21,19 @@ OpalResult CreateInstance(OvkState_T* _state)
   appInfo.applicationVersion = VK_MAKE_VERSION(0, 0, 1);
 
   // Extensions =====
-  uint32_t extensionCount = 0;
-  LapisWindowVulkanGetRequiredExtensions(&extensionCount, NULL);
-  extensionCount += 2;
-
+  uint32_t extensionCount = 1;
   const char** extensions = (char**)LapisMemAllocZero(sizeof(char*) * extensionCount);
-  LapisWindowVulkanGetRequiredExtensions(NULL, extensions);
-  extensions[1] = VK_KHR_SURFACE_EXTENSION_NAME;
-  extensions[2] = VK_EXT_DEBUG_UTILS_EXTENSION_NAME;
+  extensions[0] = VK_EXT_DEBUG_UTILS_EXTENSION_NAME;
+
+  if (!_state->isHeadless)
+  {
+    uint32_t windowExtensionCount = 0;
+    LapisWindowVulkanGetRequiredExtensions(&windowExtensionCount, NULL);
+    extensions =
+      (char**)LapisMemRealloc(extensions, sizeof(char*) * (extensionCount + windowExtensionCount));
+    LapisWindowVulkanGetRequiredExtensions(NULL, &extensions[extensionCount]);
+    extensionCount += windowExtensionCount;
+  }
 
   // Layers =====
   uint32_t layerCount = 1;
@@ -57,6 +62,11 @@ OpalResult CreateInstance(OvkState_T* _state)
 
 OpalResult CreateSurface(LapisWindow _window, OvkState_T* _state)
 {
+  if (_state->isHeadless)
+  {
+    return Opal_Success;
+  }
+
   LapisResult result = LapisWindowVulkanCreateSurface(_window, _state->instance, &_state->surface);
   if (result != Lapis_Success)
   {
@@ -612,6 +622,11 @@ OpalResult CreateFramebuffers(OvkState_T* _state)
 OpalResult OvkInitState(OpalCreateStateInfo _createInfo, OpalState _oState)
 {
   OvkState_T* state = (OvkState_T*)LapisMemAllocZero(sizeof(OvkState_T));
+
+  if (_createInfo.window == NULL)
+  {
+    state->isHeadless = 1;
+  }
 
   OPAL_ATTEMPT(
     CreateInstance(state),

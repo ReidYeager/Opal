@@ -40,6 +40,10 @@ OpalResult OvkCreateMaterial(
   OpalMaterial _Material);
 void OvkDestroyMaterial(OpalState _oState, OpalMaterial _oMaterial);
 
+// Mesh =====
+OpalResult OvkCreateMesh(OpalState _state, OpalCreateMeshInfo _createInfo, OpalMesh _outMesh);
+void OvkDestroyMesh(OpalState _state, OpalMesh _mesh);
+
 // =====
 // Vulkan internal
 // =====

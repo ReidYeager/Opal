@@ -88,12 +88,25 @@ typedef struct OpalMaterial_T
 } OpalMaterial_T;
 
 // =====
+// Mesh
+// =====
+
+typedef struct OpalMesh_T
+{
+  uint32_t vertexCount;
+  OpalBuffer vertexBuffer;
+  uint32_t indexCount;
+  OpalBuffer indexBuffer;
+} OpalMesh_T;
+
+// =====
 // State
 // =====
 
 typedef struct OpalState_T
 {
   OpalApi api;
+  OpalVertexLayoutInfo vertexLayout;
 
   struct {
     void* state;
@@ -117,6 +130,9 @@ typedef struct OpalState_T
       OpalCreateMaterialInfo _createInfo,
       OpalMaterial _Material);
     void(*DestroyMaterial)(OpalState _state, OpalMaterial _material);
+    // Mesh =====
+    OpalResult(*CreateMesh)(OpalState _state, OpalCreateMeshInfo _createInfo, OpalMesh _outMesh);
+    void(*DestroyMesh)(OpalState _state, OpalMesh _mesh);
   } backend;
 } OpalState_T;
 

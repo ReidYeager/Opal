@@ -117,9 +117,39 @@ OpalResult CreatePipelineLayout(OvkState_T* _state, OvkMaterial_T* _material)
   return Opal_Success;
 }
 
+void BuildVertexAttributeDescriptions(
+  OpalVertexLayoutInfo _layout,
+  uint32_t* _count,
+  VkVertexInputAttributeDescription** _attributes)
+{
+  static VkVertexInputAttributeDescription* attribs = NULL;
+
+  if (attribs == NULL)
+  {
+    attribs = (VkVertexInputAttributeDescription*)LapisMemAllocZero(
+      sizeof(VkVertexInputAttributeDescription) * _layout.elementCount);
+
+    uint32_t currentOffset = 0;
+    for (uint32_t i = 0; i < _layout.elementCount; i++)
+    {
+      attribs[i].binding = 0;
+      attribs[i].location = i;
+      // TODO : Select format type based on vertex attribute's Opal format
+      attribs[i].format =
+        (_layout.pElementSizes[i] == 12) ? VK_FORMAT_R32G32B32_SFLOAT : VK_FORMAT_R32G32_SFLOAT;
+      attribs[i].offset = currentOffset;
+      currentOffset += _layout.pElementSizes[i];
+    }
+  }
+
+  *_attributes = attribs;
+  *_count = _layout.elementCount;
+}
+
 OpalResult CreatePipeline(
   OvkState_T* _state,
   OpalCreateMaterialInfo _createInfo,
+  OpalVertexLayoutInfo _vertLayout,
   OvkMaterial_T* _oMaterial)
 {
   // Shader stages =====
@@ -148,18 +178,12 @@ OpalResult CreatePipeline(
 
   // Vertex input stage =====
   // TODO : Load vertex attributes from somewhere
-  uint32_t vertAttributeCount = 1;
-  VkVertexInputAttributeDescription vertAttributes [1];
-  // Position
-  vertAttributes[0].binding = 0;
-  vertAttributes[0].location = 0;
-  vertAttributes[0].format = VK_FORMAT_R32G32B32_SFLOAT;
-  vertAttributes[0].offset = 0;
-  // Normal
-  // UV
+  uint32_t vertAttributeCount = 0;
+  VkVertexInputAttributeDescription* vertAttributes = NULL;
+  BuildVertexAttributeDescriptions(_vertLayout, &vertAttributeCount, &vertAttributes);
 
   VkVertexInputBindingDescription vertBinding;
-  vertBinding.stride = sizeof(uint32_t) * 3;
+  vertBinding.stride = _vertLayout.structSize;
   vertBinding.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
   vertBinding.binding = 0;
 
@@ -167,12 +191,10 @@ OpalResult CreatePipeline(
   vertexInputStateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
   vertexInputStateInfo.pNext = NULL;
   vertexInputStateInfo.flags = 0;
-  vertexInputStateInfo.vertexAttributeDescriptionCount = 0;
-  //vertexInputStateInfo.vertexAttributeDescriptionCount = 1;
-  //vertexInputStateInfo.pVertexAttributeDescriptions = &vertAttributes;
-  vertexInputStateInfo.vertexBindingDescriptionCount = 0;
-  //vertexInputStateInfo.vertexBindingDescriptionCount = 1;
-  //vertexInputStateInfo.pVertexBindingDescriptions = &vertBinding;
+  vertexInputStateInfo.vertexAttributeDescriptionCount = vertAttributeCount;
+  vertexInputStateInfo.pVertexAttributeDescriptions = vertAttributes;
+  vertexInputStateInfo.vertexBindingDescriptionCount = 1;
+  vertexInputStateInfo.pVertexBindingDescriptions = &vertBinding;
 
   // Input assembly state =====
   VkPipelineInputAssemblyStateCreateInfo inputAssembyStateInfo = { 0 };
@@ -394,7 +416,7 @@ OpalResult OvkCreateMaterial(
     });
 
   OPAL_ATTEMPT(
-    CreatePipeline(state, _createInfo, newMaterial),
+    CreatePipeline(state, _createInfo, _oState->vertexLayout, newMaterial),
     {
       OPAL_LOG_VK_ERROR("Failed to create material : pipeline\n");
       return Opal_Failure_Vk_Create;

@@ -101,6 +101,28 @@ typedef struct OpalCreateMaterialInfo
 } OpalCreateMaterialInfo;
 
 // =====
+// Mesh
+// =====
+
+typedef struct OpalMesh_T* OpalMesh;
+
+typedef struct OpalVertexLayoutInfo
+{
+  uint32_t structSize;
+  uint32_t elementCount;
+  uint32_t* pElementSizes; // TODO : Replace with a format enum (like Vulkan's)
+} OpalVertexLayoutInfo;
+
+typedef struct OpalCreateMeshInfo
+{
+  uint32_t vertexCount;
+  void* pVertices;
+
+  uint32_t indexCount;
+  uint32_t* pIndices;
+} OpalCreateMeshInfo;
+
+// =====
 // Core
 // =====
 
@@ -110,6 +132,7 @@ typedef struct OpalCreateStateInfo
 {
   OpalApi api;
   LapisWindow window; // TODO : Allow headless when nullptr
+  OpalVertexLayoutInfo* pCustomVertexLayout;
 } OpalCreateStateInfo;
 
 typedef struct OpalFrameData
@@ -118,7 +141,7 @@ typedef struct OpalFrameData
   OpalMaterial* materials;
 
   uint32_t meshCount;
-  // OpalMesh* meshes;
+  OpalMesh* meshes;
 
   uint32_t* meshToMaterialIndexMap;
 } OpalFrameData;

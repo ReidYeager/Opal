@@ -34,6 +34,8 @@ typedef struct OvkFrame_T
 
 typedef struct OvkState_T
 {
+  uint32_t isHeadless;
+
   VkInstance instance;
   VkSurfaceKHR surface;
   OvkGpu_T gpu;

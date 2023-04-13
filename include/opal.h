@@ -38,6 +38,12 @@ OpalResult OpalCreateMaterial(
   OpalMaterial* _outMaterial);
 void OpalDestroyMaterial(OpalState _state, OpalMaterial* _material);
 
+// =====
+// Mesh
+// =====
+OpalResult OpalCreateMesh(OpalState _state, OpalCreateMeshInfo _createInfo, OpalMesh* _outMesh);
+void OpalDestroyMesh(OpalState _state, OpalMesh* _mesh);
+
 
 #ifdef __cplusplus
 }

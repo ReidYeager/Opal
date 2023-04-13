@@ -6,6 +6,42 @@
 #include <string.h>
 #include <stdlib.h>
 
+void PopulateVertexLayout(OpalState _state, OpalCreateStateInfo _createInfo)
+{
+  OpalVertexLayoutInfo* stateLayout = &_state->vertexLayout;
+  OpalVertexLayoutInfo* inLayout = _createInfo.pCustomVertexLayout;
+
+  if (inLayout == NULL)
+  {
+    stateLayout->elementCount = 3;
+    stateLayout->pElementSizes = (uint32_t*)LapisMemAlloc(
+      sizeof(uint32_t) * stateLayout->elementCount);
+
+    stateLayout->pElementSizes[0] = sizeof(uint32_t) * 3; // Vec3 Position
+    stateLayout->pElementSizes[1] = sizeof(uint32_t) * 3; // Vec3 Normal
+    stateLayout->pElementSizes[2] = sizeof(uint32_t) * 2; // Vec2 Uv
+
+    return;
+  }
+
+  stateLayout->structSize = inLayout->structSize;
+  if (stateLayout->structSize == 0)
+  {
+    for (uint32_t i = 0; i < inLayout->elementCount; i++)
+    {
+      stateLayout->structSize += inLayout->pElementSizes[i];
+    }
+  }
+
+  stateLayout->elementCount = inLayout->elementCount;
+  stateLayout->pElementSizes = (uint32_t*)LapisMemAlloc(
+    sizeof(uint32_t) * stateLayout->elementCount);
+  LapisMemCopy(
+    inLayout->pElementSizes,
+    stateLayout->pElementSizes,
+    sizeof(uint32_t) * stateLayout->elementCount);
+}
+
 OpalResult OpalCreateState(OpalCreateStateInfo _info,  OpalState* _outState)
 {
   if (_outState == NULL)
@@ -21,6 +57,8 @@ OpalResult OpalCreateState(OpalCreateStateInfo _info,  OpalState* _outState)
     printf("Opal state memory not allocated\n");
     return Opal_Unknown;
   }
+
+  PopulateVertexLayout(newState, _info);
 
   switch (_info.api)
   {

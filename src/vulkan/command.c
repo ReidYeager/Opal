@@ -57,6 +57,8 @@ OpalResult OvkRecordCommandBuffer(
 
   vkResetCommandBuffer(cmd, 0);
 
+  const VkDeviceSize zeroDeviceSize = 0;
+
   VkClearValue clearValues[1] = { 0 };
   clearValues[0].color = (VkClearColorValue){ 0.4f, 0.2f, 0.6f, 0.0f };
 
@@ -103,7 +105,18 @@ OpalResult OvkRecordCommandBuffer(
       0,
       NULL);
 
-    vkCmdDraw(cmd, 3, 1, 0, 0);
+    vkCmdBindVertexBuffers(
+      cmd,
+      0,
+      1,
+      &_data->meshes[0]->vertexBuffer->backend.vulkan.buffer,
+      &zeroDeviceSize);
+    vkCmdBindIndexBuffer(
+      cmd,
+      _data->meshes[0]->indexBuffer->backend.vulkan.buffer,
+      zeroDeviceSize,
+      VK_INDEX_TYPE_UINT32);
+    vkCmdDrawIndexed(cmd, _data->meshes[0]->indexCount, 1, 0, 0, 0);
   }
 
   vkCmdEndRenderPass(cmd);
