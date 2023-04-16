@@ -33,7 +33,10 @@ typedef enum OpalFormat
   Opal_Format_8_Bit_Uint_2,
   Opal_Format_8_Bit_Uint_3,
   Opal_Format_8_Bit_Uint_4,
-
+  Opal_Format_8_Bit_Unorm_1,
+  Opal_Format_8_Bit_Unorm_2,
+  Opal_Format_8_Bit_Unorm_3,
+  Opal_Format_8_Bit_Unorm_4,
   Opal_Format_32_Bit_Int_1,
   Opal_Format_32_Bit_Int_2,
   Opal_Format_32_Bit_Int_3,
@@ -73,6 +76,30 @@ typedef struct OpalCreateBufferInfo
 } OpalCreateBufferInfo;
 
 // =====
+// Image
+// =====
+
+typedef struct OpalImage_T* OpalImage;
+
+typedef enum OpalImageUsageBits
+{
+#define OPAL_IU(name, val) Opal_Image_Usage_##name = (val)
+  OPAL_IU(Shader_Sampled, 0x01)
+#undef OPAL_IU
+} OpalImageUsageBits;
+typedef uint32_t OpalImageUsageFlags;
+
+typedef struct OpalCreateImageInfo
+{
+  OpalImageUsageFlags usage;
+
+  OpalFormat pixelFormat;
+  uint32_t width;
+  uint32_t height;
+  void* pixelData;
+} OpalCreateImageInfo;
+
+// =====
 // Material
 // =====
 
@@ -82,7 +109,8 @@ typedef struct OpalMaterial_T* OpalMaterial;
 // Argument =====
 typedef enum OpalShaderArgTypes
 {
-  Opal_Shader_Arg_Uniform_Buffer
+  Opal_Shader_Arg_Uniform_Buffer,
+  Opal_Shader_Arg_Samped_Image,
 } OpalShaderArgTypes;
 
 typedef struct OpalShaderArg
@@ -96,8 +124,8 @@ typedef struct OpalShaderArg
     } bufferData;
 
     struct {
-      int x;
-    } tmp;
+      OpalImage image;
+    } imageData;
   };
 } OpalShaderArg;
 

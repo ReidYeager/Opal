@@ -52,7 +52,15 @@ OpalResult CreateDescriptorSetLayout(
     {
       newBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
     } break;
-    default: return Opal_Failure_Vk_Create;
+    case Opal_Shader_Arg_Samped_Image:
+    {
+      newBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    } break;
+    default:
+    {
+      LapisMemFree(bindings);
+      return Opal_Failure_Vk_Create;
+    }
     }
 
     bindings[i] = newBinding;
@@ -362,6 +370,19 @@ OpalResult UpdateShaderArguments(
       newWrite.pImageInfo = NULL;
 
       bufferInfoCount++;
+    } break;
+    case Opal_Shader_Arg_Samped_Image:
+    {
+      newImage.sampler = argI.imageData.image->backend.vulkan.sampler;
+      newImage.imageView = argI.imageData.image->backend.vulkan.view;
+      newImage.imageLayout = argI.imageData.image->backend.vulkan.layout;
+      imageInfos[imageInfoCount] = newImage;
+
+      newWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+      newWrite.pBufferInfo = NULL;
+      newWrite.pImageInfo = &imageInfos[imageInfoCount];
+
+      imageInfoCount++;
     } break;
     default:
     {

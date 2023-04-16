@@ -4,12 +4,12 @@
 
 #include <vulkan/vulkan.h>
 
-OpalResult OvkBeginSingleUseCommand(OvkState_T* _state, VkCommandBuffer* _cmd)
+OpalResult OvkBeginSingleUseCommand(OvkState_T* _state, VkCommandPool _pool, VkCommandBuffer* _cmd)
 {
   VkCommandBufferAllocateInfo allocInfo = { 0 };
   allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
   allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-  allocInfo.commandPool = _state->transientCommantPool;
+  allocInfo.commandPool = _pool;
   allocInfo.commandBufferCount = 1;
 
   OVK_ATTEMPT(
@@ -28,7 +28,11 @@ OpalResult OvkBeginSingleUseCommand(OvkState_T* _state, VkCommandBuffer* _cmd)
   return Opal_Success;
 }
 
-OpalResult OvkEndSingleUseCommand(OvkState_T* _state, VkCommandBuffer _cmd)
+OpalResult OvkEndSingleUseCommand(
+  OvkState_T* _state,
+  VkCommandPool _pool,
+  VkQueue _queue,
+  VkCommandBuffer _cmd)
 {
   OVK_ATTEMPT(vkEndCommandBuffer(_cmd), return Opal_Failure_Vk_Misc);
 
@@ -38,11 +42,11 @@ OpalResult OvkEndSingleUseCommand(OvkState_T* _state, VkCommandBuffer _cmd)
   submitInfo.pCommandBuffers = &_cmd;
 
   OVK_ATTEMPT(
-    vkQueueSubmit(_state->queueTransfer, 1, &submitInfo, VK_NULL_HANDLE),
+    vkQueueSubmit(_queue, 1, &submitInfo, VK_NULL_HANDLE),
     return Opal_Failure_Vk_Misc);
 
-  vkQueueWaitIdle(_state->queueTransfer);
-  vkFreeCommandBuffers(_state->device, _state->transientCommantPool, 1, &_cmd);
+  vkQueueWaitIdle(_queue);
+  vkFreeCommandBuffers(_state->device, _pool, 1, &_cmd);
 
   return Opal_Success;
 }

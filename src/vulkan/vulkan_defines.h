@@ -6,6 +6,53 @@
 
 #include <stdint.h>
 
+// =====
+// Buffer
+// =====
+
+typedef struct OvkBuffer_T
+{
+  VkBuffer buffer;
+  VkDeviceMemory memory;
+  // Usage?
+} OvkBuffer_T;
+
+// =====
+// Image
+// =====
+
+typedef struct OvkImage_T
+{
+  VkFormat format;
+  VkImageLayout layout;
+
+  VkImage image;
+  VkDeviceMemory memory;
+  VkImageView view;
+  VkSampler sampler;
+} OvkImage_T;
+
+// =====
+// Material
+// =====
+
+typedef struct OvkShader_T
+{
+  VkShaderModule module;
+} OvkShader_T;
+
+typedef struct OvkMaterial_T
+{
+  VkPipelineLayout pipelineLayout;
+  VkPipeline pipeline;
+  VkDescriptorSetLayout descriptorSetLayout;
+  VkDescriptorSet descriptorSet;
+} OvkMaterial_T;
+
+// =====
+// Core
+// =====
+
 typedef struct OvkGpu_T
 {
   VkPhysicalDevice device;
@@ -66,26 +113,6 @@ typedef struct OvkState_T
   VkRenderPass renderpass;
   VkFramebuffer* framebuffers;
 } OvkState_T;
-
-typedef struct OvkShader_T
-{
-  VkShaderModule module;
-} OvkShader_T;
-
-typedef struct OvkMaterial_T
-{
-  VkPipelineLayout pipelineLayout;
-  VkPipeline pipeline;
-  VkDescriptorSetLayout descriptorSetLayout;
-  VkDescriptorSet descriptorSet;
-} OvkMaterial_T;
-
-typedef struct OvkBuffer_T
-{
-  VkBuffer buffer;
-  VkDeviceMemory memory;
-  // Usage?
-} OvkBuffer_T;
 
 #define maxFlightSlotCount 3
 

@@ -6,7 +6,8 @@
 #include <string.h>
 #include <stdlib.h>
 
-uint32_t OpalFormatToSize(OpalFormat _format)
+// Not my favorite, but needed because vulkan handles these types differently
+uint32_t OpalFormatToSize(OpalFormat _format) // TODO : Find a better place to put this
 {
   switch (_format)
   {
@@ -18,6 +19,10 @@ uint32_t OpalFormatToSize(OpalFormat _format)
   case Opal_Format_8_Bit_Uint_2: return 2;
   case Opal_Format_8_Bit_Uint_3: return 3;
   case Opal_Format_8_Bit_Uint_4: return 4;
+  case Opal_Format_8_Bit_Unorm_1: return 1;
+  case Opal_Format_8_Bit_Unorm_2: return 2;
+  case Opal_Format_8_Bit_Unorm_3: return 3;
+  case Opal_Format_8_Bit_Unorm_4: return 4;
   case Opal_Format_32_Bit_Int_1: return 4;
   case Opal_Format_32_Bit_Int_2: return 8;
   case Opal_Format_32_Bit_Int_3: return 12;
@@ -99,6 +104,9 @@ OpalResult OpalCreateState(OpalCreateStateInfo _info,  OpalState* _outState)
     newState->backend.CreateBuffer = OvkCreateBuffer;
     newState->backend.DestroyBuffer = OvkDestroyBuffer;
     newState->backend.BufferPushData = OvkBufferPushData;
+    // Image =====
+    newState->backend.CreateImage = OvkCreateImage;
+    newState->backend.DestroyImage = OvkDestroyImage;
     // Material =====
     newState->backend.CreateShader = OvkCreateShader;
     newState->backend.DestroyShader = OvkDestroyShader;

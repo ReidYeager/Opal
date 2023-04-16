@@ -30,6 +30,10 @@ OpalResult OvkCreateBuffer(
 void OvkDestroyBuffer(OpalState _oState, OpalBuffer _oBuffer);
 OpalResult OvkBufferPushData(OpalState _oState, OpalBuffer _oBuffer, void* _data);
 
+// Image =====
+OpalResult OvkCreateImage(OpalState _state, OpalCreateImageInfo _createInfo, OpalImage _outImage);
+void OvkDestroyImage(OpalState _state, OpalImage _image);
+
 // Material =====
 OpalResult OvkCreateShader(
   OpalState _oState,
@@ -51,8 +55,8 @@ void OvkDestroyMesh(OpalState _state, OpalMesh _mesh);
 // =====
 
 // Commands =====
-OpalResult OvkBeginSingleUseCommand(OvkState_T* _state, VkCommandBuffer* _cmd);
-OpalResult OvkEndSingleUseCommand(OvkState_T* _state, VkCommandBuffer _cmd);
+OpalResult OvkBeginSingleUseCommand(OvkState_T* _state, VkCommandPool _pool, VkCommandBuffer* _cmd);
+OpalResult OvkEndSingleUseCommand(OvkState_T* _state, VkCommandPool _pool, VkQueue _queue, VkCommandBuffer _cmd);
 OpalResult OvkRecordCommandBuffer(OvkState_T* _state, OvkFrame_T* _frame, const OpalFrameData* _data);
 
 

@@ -138,7 +138,7 @@ void OvkDestroyBuffer(OpalState _oState, OpalBuffer _oBuffer)
 OpalResult TransferBufferData(OvkState_T* _state, OpalBuffer _src, OpalBuffer _dst, uint64_t _size)
 {
   VkCommandBuffer cmd;
-  OvkBeginSingleUseCommand(_state, &cmd);
+  OvkBeginSingleUseCommand(_state, _state->transientCommantPool, &cmd);
 
   VkBufferCopy region = { 0 };
   region.srcOffset = 0;
@@ -152,7 +152,7 @@ OpalResult TransferBufferData(OvkState_T* _state, OpalBuffer _src, OpalBuffer _d
     1,
     &region);
 
-  OvkEndSingleUseCommand(_state, cmd);
+  OvkEndSingleUseCommand(_state, _state->transientCommantPool, _state->queueTransfer, cmd);
 
   return Opal_Success;
 }

@@ -20,6 +20,10 @@ VkFormat OpalFormatToVkFormat(OpalFormat _inFormat)
   case Opal_Format_8_Bit_Uint_2: return VK_FORMAT_R8G8_UINT;
   case Opal_Format_8_Bit_Uint_3: return VK_FORMAT_R8G8B8_UINT;
   case Opal_Format_8_Bit_Uint_4: return VK_FORMAT_R8G8B8A8_UINT;
+  case Opal_Format_8_Bit_Unorm_1: return VK_FORMAT_R8_UNORM;
+  case Opal_Format_8_Bit_Unorm_2: return VK_FORMAT_R8G8_UNORM;
+  case Opal_Format_8_Bit_Unorm_3: return VK_FORMAT_R8G8B8_UNORM;
+  case Opal_Format_8_Bit_Unorm_4: return VK_FORMAT_R8G8B8A8_UNORM;
   case Opal_Format_32_Bit_Int_1: return VK_FORMAT_R32_SINT;
   case Opal_Format_32_Bit_Int_2: return VK_FORMAT_R32G32_SINT;
   case Opal_Format_32_Bit_Int_3: return VK_FORMAT_R32G32B32_SINT;

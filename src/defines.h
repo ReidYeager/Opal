@@ -62,10 +62,26 @@ typedef struct OpalBuffer_T
   uint64_t size;
   uint64_t paddedSize;
 
-  struct {
+  union {
+    void* null;
     OvkBuffer_T vulkan;
   } backend;
 } OpalBuffer_T;
+
+// =====
+// Image
+// =====
+
+typedef struct OpalImage_T
+{
+  uint32_t width;
+  uint32_t height;
+
+  union {
+    void* null;
+    OvkImage_T vulkan;
+  } backend;
+} OpalImage_T;
 
 // =====
 // Material
@@ -75,14 +91,16 @@ typedef struct OpalShader_T
 {
   OpalShaderTypes type;
 
-  struct {
+  union {
+    void* null;
     OvkShader_T vulkan;
   } backend;
 } OpalShader_T;
 
 typedef struct OpalMaterial_T
 {
-  struct {
+  union {
+    void* null;
     OvkMaterial_T vulkan;
   } backend;
 } OpalMaterial_T;
@@ -110,29 +128,35 @@ typedef struct OpalState_T
 
   struct {
     void* state;
-    void(*ShutdownState)(OpalState _state);
-    OpalResult(*RenderFrame)(OpalState _state, const OpalFrameData* _frameData);
+    void(*ShutdownState)(OpalState _oState);
+    OpalResult(*RenderFrame)(OpalState _oState, const OpalFrameData* _frameData);
     // Buffer =====
     OpalResult(*CreateBuffer)(
-      OpalState _state,
+      OpalState _oState,
       OpalCreateBufferInfo _createInfo,
-      OpalBuffer _buffer );
-    void(*DestroyBuffer)( OpalState _state, OpalBuffer _buffer);
-    OpalResult(*BufferPushData)(OpalState _state, OpalBuffer _buffer, void* _data);
+      OpalBuffer _oBuffer );
+    void(*DestroyBuffer)(OpalState _oState, OpalBuffer _oBuffer );
+    OpalResult(*BufferPushData)(OpalState _oState, OpalBuffer _oBuffer, void* _data);
+    // Image =====
+    OpalResult(*CreateImage)(
+      OpalState _oState,
+      OpalCreateImageInfo _createInfo,
+      OpalImage _oImage);
+    void(*DestroyImage)(OpalState _oState, OpalImage _oImage);
     // Material =====
     OpalResult(*CreateShader)(
-      OpalState _state,
+      OpalState _oState,
       OpalCreateShaderInfo _createInfo,
-      OpalShader _shader);
-    void(*DestroyShader)(OpalState _state, OpalShader _shader);
+      OpalShader _oShader);
+    void(*DestroyShader)(OpalState _oState, OpalShader _oShader);
     OpalResult(*CreateMaterial)(
-      OpalState _state,
+      OpalState _oState,
       OpalCreateMaterialInfo _createInfo,
-      OpalMaterial _Material);
-    void(*DestroyMaterial)(OpalState _state, OpalMaterial _material);
+      OpalMaterial _oMaterial);
+    void(*DestroyMaterial)(OpalState _oState, OpalMaterial _oMaterial );
     // Mesh =====
-    OpalResult(*CreateMesh)(OpalState _state, OpalCreateMeshInfo _createInfo, OpalMesh _outMesh);
-    void(*DestroyMesh)(OpalState _state, OpalMesh _mesh);
+    OpalResult(*CreateMesh)(OpalState _oState, OpalCreateMeshInfo _createInfo, OpalMesh _oMesh);
+    void(*DestroyMesh)(OpalState _oState, OpalMesh _oMesh );
   } backend;
 } OpalState_T;
 

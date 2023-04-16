@@ -6,7 +6,6 @@
 extern "C" {
 #endif // __cplusplus
 
-
 #include "include/opal_defines.h"
 
 uint32_t OpalFormatToSize(OpalFormat _format);
@@ -24,6 +23,12 @@ OpalResult OpalCreateBuffer(
   OpalBuffer* _outBuffer);
 void OpalDestroyBuffer(OpalState _state, OpalBuffer* _buffer);
 OpalResult OpalBufferPushData(OpalState _state, OpalBuffer _buffer, void* _data);
+
+// =====
+// Image
+// =====
+OpalResult OpalCreateImage(OpalState _state, OpalCreateImageInfo _createInfo, OpalImage* _outImage);
+void OpalDestroyImage(OpalState _state, OpalImage* _image);
 
 // =====
 // Material
