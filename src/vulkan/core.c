@@ -651,6 +651,95 @@ OpalResult CreateFramebuffers(OvkState_T* _state)
   return Opal_Success;
 }
 
+OpalResult OvkCreateDescriptorSetLayout(
+  OvkState_T* _state,
+  uint32_t _shaderArgCount,
+  OpalShaderArgTypes* _pShaderArgs,
+  VkDescriptorSetLayout* _outLayout)
+{
+  VkDescriptorSetLayoutBinding* bindings = (VkDescriptorSetLayoutBinding*)LapisMemAllocZero(
+    sizeof(VkDescriptorSetLayoutBinding) * _shaderArgCount);
+  VkDescriptorSetLayoutBinding newBinding = { 0 };
+  newBinding.descriptorCount = 1;
+  newBinding.pImmutableSamplers = NULL;
+  newBinding.stageFlags = VK_SHADER_STAGE_ALL_GRAPHICS;
+
+  for (uint32_t i = 0; i < _shaderArgCount; i++)
+  {
+    newBinding.binding = i;
+    switch (_pShaderArgs[i])
+    {
+    case Opal_Shader_Arg_Uniform_Buffer:
+    {
+      newBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    } break;
+    case Opal_Shader_Arg_Samped_Image:
+    {
+      newBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    } break;
+    default:
+    {
+      LapisMemFree(bindings);
+      return Opal_Failure_Vk_Create;
+    }
+    }
+
+    bindings[i] = newBinding;
+  }
+
+  VkDescriptorSetLayoutCreateInfo createInfo = { 0 };
+  createInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+  createInfo.pNext = NULL;
+  createInfo.flags = 0;
+  createInfo.bindingCount = _shaderArgCount;
+  createInfo.pBindings = bindings;
+
+  OVK_ATTEMPT(
+    vkCreateDescriptorSetLayout(_state->device, &createInfo, NULL, _outLayout),
+    return Opal_Failure_Vk_Create);
+
+  return Opal_Success;
+}
+
+OpalResult OvkCreateDescriptorSet(
+  OvkState_T* _state,
+  VkDescriptorSetLayout _layout,
+  VkDescriptorSet* _outSet)
+{
+  VkDescriptorSetAllocateInfo allocInfo = { 0 };
+  allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+  allocInfo.pNext = NULL;
+  allocInfo.descriptorPool = _state->descriptorPool;
+  allocInfo.descriptorSetCount = 1;
+  allocInfo.pSetLayouts = &_layout;
+
+  OVK_ATTEMPT(
+    vkAllocateDescriptorSets(_state->device, &allocInfo, _outSet),
+    return Opal_Failure_Vk_Create);
+
+  return Opal_Success;
+}
+
+OpalResult OvkCreateRenderable(
+  OpalState _oState,
+  OpalShaderArg* _objectArguments,
+  OpalRenderable _renderable)
+{
+  OvkState_T* state = (OvkState_T*)_oState->backend.state;
+  OvkCreateDescriptorSet(
+    state,
+    state->objectSetLayout,
+    &_renderable->backend.vulkan.descSet);
+
+  UpdateShaderArguments(
+    state,
+    _oState->objectShaderArgsInfo.argumentCount,
+    _objectArguments,
+    _renderable->backend.vulkan.descSet);
+
+  return Opal_Success;
+}
+
 OpalResult OvkInitState(OpalCreateStateInfo _createInfo, OpalState _oState)
 {
   OvkState_T* state = (OvkState_T*)LapisMemAllocZero(sizeof(OvkState_T));
@@ -705,6 +794,20 @@ OpalResult OvkInitState(OpalCreateStateInfo _createInfo, OpalState _oState)
     CreateDescriptorPool(state),
     {
       OPAL_LOG_VK_ERROR("Failed to create descriptor pool\n");
+      return Opal_Failure_Vk_Init;
+    });
+
+  uint32_t count = 0;
+  OpalShaderArgTypes* args = NULL;
+  if (_createInfo.pCustomObjectShaderArgumentLayout != NULL)
+  {
+    count = _createInfo.pCustomObjectShaderArgumentLayout->argumentCount;
+    args = _createInfo.pCustomObjectShaderArgumentLayout->args;
+  }
+  OPAL_ATTEMPT(
+    OvkCreateDescriptorSetLayout(state, count, args, &state->objectSetLayout),
+    {
+      OPAL_LOG_VK_ERROR("Failed to create object descriptor set layout\n");
       return Opal_Failure_Vk_Init;
     });
 

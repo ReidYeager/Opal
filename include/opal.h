@@ -51,6 +51,15 @@ void OpalDestroyMaterial(OpalState _state, OpalMaterial* _material);
 OpalResult OpalCreateMesh(OpalState _state, OpalCreateMeshInfo _createInfo, OpalMesh* _outMesh);
 void OpalDestroyMesh(OpalState _state, OpalMesh* _mesh);
 
+// Rendering
+
+OpalResult OpalCreateRenderable(
+  OpalState _state,
+  OpalMesh _mesh,
+  OpalMaterial _material,
+  OpalShaderArg* objectArguments,
+  OpalRenderable* _renderable);
+
 
 #ifdef __cplusplus
 }

@@ -1,5 +1,5 @@
 
-#include "src/defines.h"
+#include "src/internal.h"
 #include "src/vulkan/vulkan.h"
 
 #include <vulkan/vulkan.h>
@@ -29,7 +29,7 @@ void OvkDestroyShader(OpalState _oState, OpalShader _oShader)
   vkDestroyShaderModule(state->device, _oShader->backend.vulkan.module, NULL);
 }
 
-OpalResult CreateDescriptorSetLayout(
+OpalResult CreateMaterialDescriptorSetLayout(
   OvkState_T* _state,
   OpalCreateMaterialInfo _createInfo,
   OvkMaterial_T* _material)
@@ -80,7 +80,7 @@ OpalResult CreateDescriptorSetLayout(
   return Opal_Success;
 }
 
-OpalResult CreateDescriptorSet(
+OpalResult CreateMaterialDescriptorSet(
   OvkState_T* _state,
   OpalCreateMaterialInfo _createInfo,
   OvkMaterial_T* _material)
@@ -101,12 +101,12 @@ OpalResult CreateDescriptorSet(
 
 OpalResult CreatePipelineLayout(OvkState_T* _state, OvkMaterial_T* _material)
 {
-  const uint32_t layoutCount = 1;
-  VkDescriptorSetLayout layouts[1] = {
+  const uint32_t layoutCount = 2;
+  VkDescriptorSetLayout layouts[2] = {
     // Global descriptor set layout
     // Camera? descriptor set layout
-    _material->descriptorSetLayout
-    // Object descriptor set layout
+    _material->descriptorSetLayout,
+    _state->objectSetLayout
   };
 
   VkPipelineLayoutCreateInfo createInfo = { 0 };
@@ -115,7 +115,7 @@ OpalResult CreatePipelineLayout(OvkState_T* _state, OvkMaterial_T* _material)
   createInfo.flags = 0;
   createInfo.pushConstantRangeCount = 0;
   createInfo.pPushConstantRanges = NULL;
-  createInfo.setLayoutCount = 1;
+  createInfo.setLayoutCount = layoutCount;
   createInfo.pSetLayouts = layouts;
 
   OVK_ATTEMPT(
@@ -240,7 +240,8 @@ OpalResult CreatePipeline(
   rasterStateInfo.pNext = NULL;
   rasterStateInfo.flags = 0;
 
-  rasterStateInfo.cullMode = VK_CULL_MODE_BACK_BIT;
+  //rasterStateInfo.cullMode = VK_CULL_MODE_BACK_BIT;
+  rasterStateInfo.cullMode = VK_CULL_MODE_NONE;
   rasterStateInfo.polygonMode = VK_POLYGON_MODE_FILL;
 
   rasterStateInfo.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
@@ -327,40 +328,41 @@ OpalResult CreatePipeline(
 
 OpalResult UpdateShaderArguments(
   OvkState_T* _state,
-  OpalCreateMaterialInfo _createInfo,
-  OvkMaterial_T* _material)
+  uint32_t _argCount,
+  OpalShaderArg* args,
+  VkDescriptorSet _descriptorSet)
 {
   uint32_t bufferInfoCount = 0;
   VkDescriptorBufferInfo* bufferInfos =
     (VkDescriptorBufferInfo*)LapisMemAllocZero(
-      sizeof(VkDescriptorBufferInfo) * _createInfo.shaderArgCount);
+      sizeof(VkDescriptorBufferInfo) * _argCount);
   uint32_t imageInfoCount = 0;
   VkDescriptorImageInfo* imageInfos =
     (VkDescriptorImageInfo*)LapisMemAllocZero(
-      sizeof(VkDescriptorImageInfo) * _createInfo.shaderArgCount);
+      sizeof(VkDescriptorImageInfo) * _argCount);
   VkWriteDescriptorSet* writes =
     (VkWriteDescriptorSet*)LapisMemAllocZero(
-      sizeof(VkWriteDescriptorSet) * _createInfo.shaderArgCount);
+      sizeof(VkWriteDescriptorSet) * _argCount);
 
   VkDescriptorBufferInfo newBuffer = { 0 };
   VkDescriptorImageInfo newImage = { 0 };
   VkWriteDescriptorSet newWrite = { 0 };
   newWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-  newWrite.dstSet = _material->descriptorSet;
+  newWrite.dstSet = _descriptorSet;
   newWrite.dstArrayElement = 0;
   newWrite.descriptorCount = 1;
   newWrite.pTexelBufferView = NULL;
 
-  for (uint32_t i = 0; i < _createInfo.shaderArgCount; i++)
+  for (uint32_t i = 0; i < _argCount; i++)
   {
-    OpalShaderArg argI = _createInfo.pShaderArgs[i];
+    OpalShaderArg argI = args[i];
     newWrite.dstBinding = argI.index;
 
     switch (argI.type)
     {
     case Opal_Shader_Arg_Uniform_Buffer:
     {
-      newBuffer.buffer = argI.bufferData.buffer->backend.vulkan.buffer;
+      newBuffer.buffer = argI.buffer->backend.vulkan.buffer;
       newBuffer.offset = 0;
       newBuffer.range = VK_WHOLE_SIZE;
       bufferInfos[bufferInfoCount] = newBuffer;
@@ -373,9 +375,9 @@ OpalResult UpdateShaderArguments(
     } break;
     case Opal_Shader_Arg_Samped_Image:
     {
-      newImage.sampler = argI.imageData.image->backend.vulkan.sampler;
-      newImage.imageView = argI.imageData.image->backend.vulkan.view;
-      newImage.imageLayout = argI.imageData.image->backend.vulkan.layout;
+      newImage.sampler = argI.image->backend.vulkan.sampler;
+      newImage.imageView = argI.image->backend.vulkan.view;
+      newImage.imageLayout = argI.image->backend.vulkan.layout;
       imageInfos[imageInfoCount] = newImage;
 
       newWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
@@ -396,7 +398,7 @@ OpalResult UpdateShaderArguments(
     writes[i] = newWrite;
   }
 
-  vkUpdateDescriptorSets(_state->device, _createInfo.shaderArgCount, writes, 0, NULL),
+  vkUpdateDescriptorSets(_state->device, _argCount, writes, 0, NULL),
 
   LapisMemFree(writes);
   LapisMemFree(imageInfos);
@@ -413,7 +415,7 @@ OpalResult OvkCreateMaterial(
   OvkMaterial_T* newMaterial = &_oMaterial->backend.vulkan;
 
   OPAL_ATTEMPT(
-    CreateDescriptorSetLayout(state, _createInfo, newMaterial),
+    CreateMaterialDescriptorSetLayout(state, _createInfo, newMaterial),
     {
       OPAL_LOG_VK_ERROR("Failed to create material : descriptor set layout\n");
       return Opal_Failure_Vk_Create;
@@ -421,7 +423,7 @@ OpalResult OvkCreateMaterial(
 
   // Descriptor set
   OPAL_ATTEMPT(
-    CreateDescriptorSet(state, _createInfo, newMaterial),
+    CreateMaterialDescriptorSet(state, _createInfo, newMaterial),
     {
       OPAL_LOG_VK_ERROR("Failed to create material : descriptor set\n");
       return Opal_Failure_Vk_Create;
@@ -442,7 +444,11 @@ OpalResult OvkCreateMaterial(
     });
 
   OPAL_ATTEMPT(
-    UpdateShaderArguments(state, _createInfo, newMaterial),
+    UpdateShaderArguments(
+      state,
+      _createInfo.shaderArgCount,
+      _createInfo.pShaderArgs,
+      newMaterial->descriptorSet),
     {
       OPAL_LOG_VK_ERROR("Failed to bind one or more shader arguments\n");
       return Opal_Failure_Vk_Create;

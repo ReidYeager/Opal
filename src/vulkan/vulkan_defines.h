@@ -50,6 +50,15 @@ typedef struct OvkMaterial_T
 } OvkMaterial_T;
 
 // =====
+// Renderable
+// =====
+
+typedef struct OvkRenderable_T
+{
+  VkDescriptorSet descSet;
+} OvkRenderable_T;
+
+// =====
 // Core
 // =====
 
@@ -112,6 +121,8 @@ typedef struct OvkState_T
 
   VkRenderPass renderpass;
   VkFramebuffer* framebuffers;
+
+  VkDescriptorSetLayout objectSetLayout;
 } OvkState_T;
 
 #define maxFlightSlotCount 3

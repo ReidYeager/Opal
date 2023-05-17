@@ -59,13 +59,10 @@ typedef struct OpalBuffer_T* OpalBuffer;
 
 typedef enum OpalBufferUsageBits
 {
-#define OPAL_BU(name, val) Opal_Buffer_Usage_##name = (val)
-  OPAL_BU(Cpu_Read      , 0x01),
-  OPAL_BU(Vertex        , 0x02),
-  OPAL_BU(Index         , 0x04),
-  OPAL_BU(Shader_Uniform, 0x08),
-  //OPAL_BU(Image         , 0x10)
-#undef OPAL_BU
+  Opal_Buffer_Usage_Cpu_Read       = 0x01,
+  Opal_Buffer_Usage_Vertex         = 0x02,
+  Opal_Buffer_Usage_Index          = 0x04,
+  Opal_Buffer_Usage_Shader_Uniform = 0x08,
 } OpalBufferUsageBits;
 typedef uint32_t OpalBufferUsageFlags;
 
@@ -83,9 +80,7 @@ typedef struct OpalImage_T* OpalImage;
 
 typedef enum OpalImageUsageBits
 {
-#define OPAL_IU(name, val) Opal_Image_Usage_##name = (val)
-  OPAL_IU(Shader_Sampled, 0x01)
-#undef OPAL_IU
+  Opal_Image_Usage_Shader_Sampled = 0x01
 } OpalImageUsageBits;
 typedef uint32_t OpalImageUsageFlags;
 
@@ -119,13 +114,8 @@ typedef struct OpalShaderArg
 
   OpalShaderArgTypes type;
   union {
-    struct {
-      OpalBuffer buffer;
-    } bufferData;
-
-    struct {
-      OpalImage image;
-    } imageData;
+    OpalBuffer buffer;
+    OpalImage image;
   };
 } OpalShaderArg;
 
@@ -163,7 +153,7 @@ typedef struct OpalVertexLayoutInfo
 {
   uint32_t structSize;
   uint32_t elementCount;
-  OpalFormat* pElementFormats; // TODO : Replace with a format enum (like Vulkan's)
+  OpalFormat* pElementFormats;
 } OpalVertexLayoutInfo;
 
 typedef struct OpalCreateMeshInfo
@@ -181,22 +171,26 @@ typedef struct OpalCreateMeshInfo
 
 typedef struct OpalState_T* OpalState;
 
+typedef struct OpalObjectShaderArgumentsInfo
+{
+  uint32_t argumentCount;
+  OpalShaderArgTypes* args;
+} OpalObjectShaderArgumentsInfo;
+
 typedef struct OpalCreateStateInfo
 {
   OpalApi api;
   LapisWindow window; // TODO : Allow headless when nullptr
   OpalVertexLayoutInfo* pCustomVertexLayout;
+  OpalObjectShaderArgumentsInfo* pCustomObjectShaderArgumentLayout;
 } OpalCreateStateInfo;
+
+typedef struct OpalRenderable_T* OpalRenderable;
 
 typedef struct OpalFrameData
 {
-  uint32_t materialCount;
-  OpalMaterial* materials;
-
-  uint32_t meshCount;
-  OpalMesh* meshes;
-
-  uint32_t* meshToMaterialIndexMap;
+  uint32_t renderableCount;
+  OpalRenderable* renderables;
 } OpalFrameData;
 
 #endif // !GEM_OPAL_DEFINES_H

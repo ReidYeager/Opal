@@ -54,6 +54,8 @@ void PopulateVertexLayout(OpalState _state, OpalCreateStateInfo _createInfo)
     stateLayout->pElementFormats[1] = Opal_Format_32_Bit_Float_3; // Vec3 Normal
     stateLayout->pElementFormats[2] = Opal_Format_32_Bit_Float_2; // Vec2 Uv
 
+    stateLayout->structSize = (4 * 3) * 2 + (4 * 2);
+
     return;
   }
 
@@ -92,6 +94,7 @@ OpalResult OpalCreateState(OpalCreateStateInfo _info,  OpalState* _outState)
   }
 
   PopulateVertexLayout(newState, _info);
+  newState->objectShaderArgsInfo = *_info.pCustomObjectShaderArgumentLayout;
 
   switch (_info.api)
   {
@@ -112,6 +115,8 @@ OpalResult OpalCreateState(OpalCreateStateInfo _info,  OpalState* _outState)
     newState->backend.DestroyShader = OvkDestroyShader;
     newState->backend.CreateMaterial = OvkCreateMaterial;
     newState->backend.DestroyMaterial = OvkDestroyMaterial;
+    // Renderable =====
+    newState->backend.CreateRenderable = OvkCreateRenderable;
 
 
     OPAL_ATTEMPT(
@@ -149,5 +154,23 @@ OpalResult OpalRenderFrame(OpalState _state, const OpalFrameData* _frameData)
       return Opal_Failure_Backend;
     });
 
+  return Opal_Success;
+}
+
+OpalResult OpalCreateRenderable(
+  OpalState _state,
+  OpalMesh _mesh,
+  OpalMaterial _material,
+  OpalShaderArg* _objectArguments,
+  OpalRenderable* _renderable)
+{
+  if (*_renderable == NULL)
+  {
+    *_renderable = (OpalRenderable)LapisMemAllocZero(sizeof(OpalRenderable_T));
+    _state->backend.CreateRenderable(_state, _objectArguments, *_renderable);
+  }
+
+  (*_renderable)->mesh = _mesh;
+  (*_renderable)->material = _material;
   return Opal_Success;
 }

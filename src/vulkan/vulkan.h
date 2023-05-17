@@ -22,6 +22,16 @@ OpalResult OvkInitState(OpalCreateStateInfo _createInfo, OpalState _oState);
 void OvkShutdownState(OpalState _oState);
 OpalResult OvkRenderFrame(OpalState _oState, const OpalFrameData* _oFrameData);
 
+OpalResult OvkCreateDescriptorSetLayout(
+  OvkState_T* _state,
+  uint32_t _shaderArgCount,
+  OpalShaderArgTypes* _pShaderArgs,
+  VkDescriptorSetLayout* _outLayout);
+OpalResult OvkCreateDescriptorSet(
+  OvkState_T* _state,
+  VkDescriptorSetLayout _layout,
+  VkDescriptorSet* _outSet);
+
 // Buffer =====
 OpalResult OvkCreateBuffer(
   OpalState _oState,
@@ -49,6 +59,18 @@ void OvkDestroyMaterial(OpalState _oState, OpalMaterial _oMaterial);
 // Mesh =====
 OpalResult OvkCreateMesh(OpalState _state, OpalCreateMeshInfo _createInfo, OpalMesh _outMesh);
 void OvkDestroyMesh(OpalState _state, OpalMesh _mesh);
+
+// Renderable =====
+OpalResult OvkCreateRenderable(
+  OpalState _oState,
+  OpalShaderArg* _objectArguments,
+  OpalRenderable _renderable);
+
+OpalResult UpdateShaderArguments(
+  OvkState_T* _state,
+  uint32_t _argCount,
+  OpalShaderArg* args,
+  VkDescriptorSet _descriptorSet);
 
 // =====
 // Vulkan internal

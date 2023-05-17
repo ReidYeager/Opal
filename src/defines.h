@@ -118,6 +118,20 @@ typedef struct OpalMesh_T
 } OpalMesh_T;
 
 // =====
+// Rendering
+// =====
+
+typedef struct OpalRenderable_T
+{
+  OpalMaterial material;
+  OpalMesh mesh;
+  union
+  {
+    OvkRenderable_T vulkan;
+  } backend;
+} OpalRenderable_T;
+
+// =====
 // State
 // =====
 
@@ -125,6 +139,7 @@ typedef struct OpalState_T
 {
   OpalApi api;
   OpalVertexLayoutInfo vertexLayout;
+  OpalObjectShaderArgumentsInfo objectShaderArgsInfo;
 
   struct {
     void* state;
@@ -157,6 +172,11 @@ typedef struct OpalState_T
     // Mesh =====
     OpalResult(*CreateMesh)(OpalState _oState, OpalCreateMeshInfo _createInfo, OpalMesh _oMesh);
     void(*DestroyMesh)(OpalState _oState, OpalMesh _oMesh );
+    // Renderable =====
+    OpalResult(*CreateRenderable)(
+      OpalState _oState,
+      OpalShaderArg* _objectArguments,
+      OpalRenderable _renderable);
   } backend;
 } OpalState_T;
 

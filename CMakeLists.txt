@@ -24,7 +24,7 @@ add_library (Opal STATIC
   "src/vulkan/core.c"
   "src/vulkan/image.c"
   "src/vulkan/material.c"
-)
+ )
 
 set_target_properties(Opal PROPERTIES LINKER_LANGUAGE C)
 
