@@ -726,16 +726,18 @@ OpalResult OvkCreateRenderable(
   OpalRenderable _renderable)
 {
   OvkState_T* state = (OvkState_T*)_oState->backend.state;
-  OvkCreateDescriptorSet(
-    state,
-    state->objectSetLayout,
-    &_renderable->backend.vulkan.descSet);
 
-  UpdateShaderArguments(
-    state,
-    _oState->objectShaderArgsInfo.argumentCount,
-    _objectArguments,
-    _renderable->backend.vulkan.descSet);
+  OPAL_ATTEMPT(
+    OvkCreateDescriptorSet(state, state->objectSetLayout, &_renderable->backend.vulkan.descSet),
+    return Opal_Failure_Vk_Create);
+
+  OPAL_ATTEMPT(
+    UpdateShaderArguments(
+      state,
+      _oState->objectShaderArgsInfo.argumentCount,
+      _objectArguments,
+      _renderable->backend.vulkan.descSet),
+    return Opal_Failure_Vk_Create);
 
   return Opal_Success;
 }
@@ -751,8 +753,10 @@ OpalResult OvkInitState(OpalCreateStateInfo _createInfo, OpalState _oState)
 
   OPAL_ATTEMPT(
     CreateInstance(state),
+    {
       OPAL_LOG_VK_ERROR("Failed to create vulkan instance\n");
-      return Opal_Failure_Vk_Init;);
+      return Opal_Failure_Vk_Init;
+    });
 
   // TODO : Move surface creation to window setup
   OPAL_ATTEMPT(

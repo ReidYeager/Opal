@@ -190,7 +190,7 @@ typedef struct OpalRenderable_T* OpalRenderable;
 typedef struct OpalFrameData
 {
   uint32_t renderableCount;
-  OpalRenderable* renderables;
+  OpalRenderable renderables[256];
 } OpalFrameData;
 
 #endif // !GEM_OPAL_DEFINES_H

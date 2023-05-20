@@ -164,13 +164,13 @@ OpalResult OpalCreateRenderable(
   OpalShaderArg* _objectArguments,
   OpalRenderable* _renderable)
 {
-  if (*_renderable == NULL)
-  {
-    *_renderable = (OpalRenderable)LapisMemAllocZero(sizeof(OpalRenderable_T));
-    _state->backend.CreateRenderable(_state, _objectArguments, *_renderable);
-  }
+  *_renderable = (OpalRenderable)LapisMemAllocZero(sizeof(OpalRenderable_T));
 
   (*_renderable)->mesh = _mesh;
   (*_renderable)->material = _material;
+
+  OPAL_ATTEMPT(
+    _state->backend.CreateRenderable(_state, _objectArguments, *_renderable),
+    return Opal_Failure_Backend);
   return Opal_Success;
 }
