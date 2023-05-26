@@ -5,7 +5,7 @@
 #include <vulkan/vulkan.h>
 #include <lapis.h>
 
-OpalResult OvkCreateShader(OpalState _oState, OpalCreateShaderInfo _createInfo, OpalShader _oShader)
+OpalResult OpalVkCreateShader(OpalState _oState, OpalCreateShaderInfo _createInfo, OpalShader _oShader)
 {
   OvkState_T* state = (OvkState_T*)_oState->backend.state;
 
@@ -23,7 +23,7 @@ OpalResult OvkCreateShader(OpalState _oState, OpalCreateShaderInfo _createInfo, 
   return Opal_Success;
 }
 
-void OvkDestroyShader(OpalState _oState, OpalShader _oShader)
+void OpalVkDestroyShader(OpalState _oState, OpalShader _oShader)
 {
   OvkState_T* state = (OvkState_T*)_oState->backend.state;
   vkDestroyShaderModule(state->device, _oShader->backend.vulkan.module, NULL);
@@ -326,7 +326,7 @@ OpalResult CreatePipeline(
   return Opal_Success;
 }
 
-OpalResult UpdateShaderArguments(
+OpalResult OvkUpdateShaderArguments(
   OvkState_T* _state,
   uint32_t _argCount,
   OpalShaderArg* args,
@@ -406,7 +406,7 @@ OpalResult UpdateShaderArguments(
   return Opal_Success;
 }
 
-OpalResult OvkCreateMaterial(
+OpalResult OpalVkCreateMaterial(
   OpalState _oState,
   OpalCreateMaterialInfo _createInfo,
   OpalMaterial _oMaterial)
@@ -444,7 +444,7 @@ OpalResult OvkCreateMaterial(
     });
 
   OPAL_ATTEMPT(
-    UpdateShaderArguments(
+    OvkUpdateShaderArguments(
       state,
       _createInfo.shaderArgCount,
       _createInfo.pShaderArgs,
@@ -457,7 +457,7 @@ OpalResult OvkCreateMaterial(
   return Opal_Success;
 }
 
-void OvkDestroyMaterial(OpalState _oState, OpalMaterial _oMaterial)
+void OpalVkDestroyMaterial(OpalState _oState, OpalMaterial _oMaterial)
 {
   OvkState_T* state = (OvkState_T*)_oState->backend.state;
   OvkMaterial_T* material = &_oMaterial->backend.vulkan;

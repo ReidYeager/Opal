@@ -13,33 +13,6 @@ VkImageUsageFlags OpalImageUsageToVkImageUsage(OpalImageUsageFlags _usage)
   return finalUsage;
 }
 
-OpalResult CreateVkImage(OvkState_T* _state, OpalCreateImageInfo _createInfo, OvkImage_T* _outImage)
-{
-  VkImageCreateInfo createInfo = { 0 };
-  createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-  createInfo.pNext = NULL;
-  createInfo.flags = 0;
-  createInfo.extent.width = _createInfo.width;
-  createInfo.extent.height = _createInfo.height;
-  createInfo.extent.depth = 1;
-  createInfo.format = OpalFormatToVkFormat(_createInfo.pixelFormat);
-  createInfo.usage = OpalImageUsageToVkImageUsage(_createInfo.usage);
-  createInfo.mipLevels = 1;
-  createInfo.arrayLayers = 1;
-  createInfo.imageType = VK_IMAGE_TYPE_2D;
-  createInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
-  createInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-  createInfo.samples = VK_SAMPLE_COUNT_1_BIT;
-
-  OVK_ATTEMPT(
-    vkCreateImage(_state->device, &createInfo, NULL, &_outImage->image),
-    return Opal_Failure_Vk_Create);
-
-  _outImage->format = createInfo.format;
-
-  return Opal_Success;
-}
-
 uint32_t GetMemoryTypeIndex(OvkState_T* _state, uint32_t _mask, VkMemoryPropertyFlags _flags)
 {
   const VkPhysicalDeviceMemoryProperties* memProps = &_state->gpu.memoryProperties;
@@ -55,37 +28,93 @@ uint32_t GetMemoryTypeIndex(OvkState_T* _state, uint32_t _mask, VkMemoryProperty
   return ~0u;
 }
 
-OpalResult CreateVkImageMemory(
+OpalResult OvkCreateImage(
   OvkState_T* _state,
-  OpalCreateImageInfo _createInfo,
-  OvkImage_T* _outImage)
+  VkExtent2D _extents,
+  VkFormat _format,
+  VkImageUsageFlags _usage,
+  VkImage* _outImage)
 {
-  VkMemoryRequirements memRequirements;
-  vkGetImageMemoryRequirements(_state->device, _outImage->image, &memRequirements);
-
-  VkMemoryAllocateInfo allocInfo = { 0 };
-  allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-  allocInfo.pNext = NULL;
-  allocInfo.allocationSize = memRequirements.size;
-  allocInfo.memoryTypeIndex = 
-    GetMemoryTypeIndex(_state, memRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+  VkImageCreateInfo createInfo = { 0 };
+  createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+  createInfo.pNext = NULL;
+  createInfo.flags = 0;
+  createInfo.extent.width = _extents.width;
+  createInfo.extent.height = _extents.height;
+  createInfo.extent.depth = 1;
+  createInfo.format = _format;
+  createInfo.usage = _usage;
+  createInfo.mipLevels = 1;
+  createInfo.arrayLayers = 1;
+  createInfo.imageType = VK_IMAGE_TYPE_2D;
+  createInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
+  createInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+  createInfo.samples = VK_SAMPLE_COUNT_1_BIT;
 
   OVK_ATTEMPT(
-    vkAllocateMemory(_state->device, &allocInfo, NULL, &_outImage->memory),
+    vkCreateImage(_state->device, &createInfo, NULL, _outImage),
     return Opal_Failure_Vk_Create);
 
   return Opal_Success;
 }
 
-OpalResult CreateVkImageView(OvkState_T* _state, OvkImage_T* _image, VkImageAspectFlags _aspectMask)
+OpalResult OvkCreateImageMemory(OvkState_T* _state, VkImage _image, VkDeviceMemory* _outMemory)
+{
+  VkMemoryRequirements memRequirements;
+  vkGetImageMemoryRequirements(_state->device, _image, &memRequirements);
+
+  VkMemoryAllocateInfo allocInfo = { 0 };
+  allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+  allocInfo.pNext = NULL;
+  allocInfo.allocationSize = memRequirements.size;
+  allocInfo.memoryTypeIndex =
+    GetMemoryTypeIndex(_state, memRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+
+  OVK_ATTEMPT(
+    vkAllocateMemory(_state->device, &allocInfo, NULL, _outMemory),
+    return Opal_Failure_Vk_Create);
+
+  return Opal_Success;
+}
+
+OpalResult OvkCreateImageAndMemory(
+  OvkState_T* _state,
+  VkExtent2D _extents,
+  VkFormat _format,
+  VkImageUsageFlags _usage,
+  VkImage* _outImage,
+  VkDeviceMemory* _outMemory)
+{
+  OPAL_ATTEMPT(
+    OvkCreateImage(_state, _extents, _format, _usage, _outImage),
+    return Opal_Failure_Vk_Create);
+  OPAL_ATTEMPT(
+    OvkCreateImageMemory(_state, *_outImage, _outMemory),
+    return Opal_Failure_Vk_Create);
+  OVK_ATTEMPT(
+    vkBindImageMemory(_state->device, *_outImage, *_outMemory, 0),
+    {
+      OPAL_LOG_VK_ERROR("Failed to bind image and memory\n");
+      return Opal_Failure_Vk_Create;
+    });
+
+  return Opal_Success;
+}
+
+OpalResult OvkCreateImageView(
+  OvkState_T* _state,
+  VkImageAspectFlags _aspectMask,
+  VkImage _image,
+  VkFormat _format,
+  VkImageView* _outView)
 {
   VkImageViewCreateInfo createInfo = { 0 };
   createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
   createInfo.pNext = NULL;
   createInfo.flags = 0;
   createInfo.viewType = VK_IMAGE_TYPE_2D;
-  createInfo.image = _image->image;
-  createInfo.format = _image->format;
+  createInfo.image = _image;
+  createInfo.format = _format;
   createInfo.subresourceRange.aspectMask = _aspectMask;
   createInfo.subresourceRange.levelCount = 1;
   createInfo.subresourceRange.baseMipLevel = 0;
@@ -93,13 +122,13 @@ OpalResult CreateVkImageView(OvkState_T* _state, OvkImage_T* _image, VkImageAspe
   createInfo.subresourceRange.baseArrayLayer = 0;
 
   OVK_ATTEMPT(
-    vkCreateImageView(_state->device, &createInfo, NULL, &_image->view),
+    vkCreateImageView(_state->device, &createInfo, NULL, _outView),
     return Opal_Failure_Vk_Create);
 
   return Opal_Success;
 }
 
-OpalResult CreateVkSampler(OvkState_T* _state, OvkImage_T* _image)
+OpalResult OvkCreateImageSampler(OvkState_T* _state, VkSampler* _outSampler)
 {
   VkSamplerCreateInfo createInfo = { 0 };
   createInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
@@ -121,7 +150,7 @@ OpalResult CreateVkSampler(OvkState_T* _state, OvkImage_T* _image)
   createInfo.maxAnisotropy = 1.0f;
 
   OVK_ATTEMPT(
-    vkCreateSampler(_state->device, &createInfo, NULL, &_image->sampler),
+    vkCreateSampler(_state->device, &createInfo, NULL, _outSampler),
     return Opal_Failure_Vk_Create);
 
   return Opal_Success;
@@ -175,7 +204,12 @@ OpalResult TransitionImageLayout(OvkState_T* _state, OvkImage_T* _image, uint32_
   return Opal_Success;
 }
 
-OpalResult CopyBufferToImage(OvkState_T* _state, OvkBuffer_T* _buffer, OpalCreateImageInfo _createInfo, OvkImage_T* _image)
+OpalResult CopyBufferToImage(
+  OvkState_T* _state,
+  OvkBuffer_T* _buffer,
+  uint32_t _width,
+  uint32_t _height,
+  OvkImage_T* _image)
 {
   VkCommandBuffer cmd;
   OPAL_ATTEMPT(
@@ -184,14 +218,14 @@ OpalResult CopyBufferToImage(OvkState_T* _state, OvkBuffer_T* _buffer, OpalCreat
 
   VkBufferImageCopy copyRegion = { 0 };
   copyRegion.bufferOffset = 0;
-  copyRegion.bufferRowLength = _createInfo.width;
-  copyRegion.bufferImageHeight = _createInfo.height;
+  copyRegion.bufferRowLength = _width;
+  copyRegion.bufferImageHeight = _height;
   copyRegion.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
   copyRegion.imageSubresource.mipLevel = 0;
   copyRegion.imageSubresource.layerCount = 1;
   copyRegion.imageSubresource.baseArrayLayer = 0;
   copyRegion.imageOffset = (VkOffset3D){ 0, 0, 0 };
-  copyRegion.imageExtent = (VkExtent3D){ _createInfo.width, _createInfo.height, 1 };
+  copyRegion.imageExtent = (VkExtent3D){ _width, _height, 1 };
 
   vkCmdCopyBufferToImage(
     cmd,
@@ -208,41 +242,31 @@ OpalResult CopyBufferToImage(OvkState_T* _state, OvkBuffer_T* _buffer, OpalCreat
   return Opal_Success;
 }
 
-OpalResult OvkCreateImage(OpalState _oState, OpalCreateImageInfo _createInfo, OpalImage _oImage)
+OpalResult OpalVkImageFillData(
+  OpalState _oState,
+  OvkImage_T* _image,
+  uint32_t _width,
+  uint32_t _height,
+  OpalFormat _format,
+  void* _data)
 {
   OvkState_T* state = (OvkState_T*)_oState->backend.state;
-  OvkImage_T* image = &_oImage->backend.vulkan;
-
-  OPAL_ATTEMPT(CreateVkImage(state, _createInfo, image), return Opal_Failure_Vk_Create);
-  OPAL_ATTEMPT(CreateVkImageMemory(state, _createInfo, image), return Opal_Failure_Vk_Create);
-
-  OVK_ATTEMPT(
-    vkBindImageMemory(state->device, image->image, image->memory, 0),
-    return Opal_Failure_Vk_Create);
-
-  OPAL_ATTEMPT(
-    CreateVkImageView(state, image, VK_IMAGE_ASPECT_COLOR_BIT),
-    return Opal_Failure_Vk_Create);
-
-  OPAL_ATTEMPT(CreateVkSampler(state, image), return Opal_Failure_Vk_Create);
-  image->layout = VK_IMAGE_LAYOUT_UNDEFINED;
 
   OpalCreateBufferInfo createBufferInfo = { 0 };
   createBufferInfo.usage = Opal_Buffer_Usage_Cpu_Read;
-  createBufferInfo.size =
-    _createInfo.width * _createInfo.height * OpalFormatToSize(_createInfo.pixelFormat);
+  createBufferInfo.size = _width * _height * OpalFormatToSize(_format);
   OpalBuffer imageDataCopyBuffer;
   OpalCreateBuffer(_oState, createBufferInfo, &imageDataCopyBuffer);
-  OpalBufferPushData(_oState, imageDataCopyBuffer, _createInfo.pixelData);
+  OpalBufferPushData(_oState, imageDataCopyBuffer, _data);
 
   OPAL_ATTEMPT(
-    TransitionImageLayout(state, image, 0, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT),
+    TransitionImageLayout(state, _image, 0, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT),
     return Opal_Failure_Vk_Create);
   OPAL_ATTEMPT(
-    CopyBufferToImage(state, &imageDataCopyBuffer->backend.vulkan, _createInfo, image),
+    CopyBufferToImage(state, &imageDataCopyBuffer->backend.vulkan, _width, _height, _image),
     return Opal_Failure_Vk_Create);
   OPAL_ATTEMPT(
-    TransitionImageLayout(state, image, 1, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT),
+    TransitionImageLayout(state, _image, 1, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT),
     return Opal_Failure_Vk_Create);
 
   OpalDestroyBuffer(_oState, &imageDataCopyBuffer);
@@ -250,7 +274,51 @@ OpalResult OvkCreateImage(OpalState _oState, OpalCreateImageInfo _createInfo, Op
   return Opal_Success;
 }
 
-void OvkDestroyImage(OpalState _oState, OpalImage _oImage)
+OpalResult OpalVkCreateImage(OpalState _oState, OpalCreateImageInfo _createInfo, OpalImage _oImage)
+{
+  OvkState_T* state = (OvkState_T*)_oState->backend.state;
+  OvkImage_T* image = &_oImage->backend.vulkan;
+
+  image->format = OpalFormatToVkFormat(_createInfo.pixelFormat);
+
+  OPAL_ATTEMPT(
+    OvkCreateImage(
+      state,
+      (VkExtent2D){_createInfo.width, _createInfo.height},
+      OpalFormatToVkFormat(_createInfo.pixelFormat),
+      OpalImageUsageToVkImageUsage(_createInfo.usage),
+      &image->image),
+    return Opal_Failure_Vk_Create);
+  OPAL_ATTEMPT(
+    OvkCreateImageMemory(state, image->image, &image->memory),
+    return Opal_Failure_Vk_Create);
+
+  OVK_ATTEMPT(
+    vkBindImageMemory(state->device, image->image, image->memory, 0),
+    return Opal_Failure_Vk_Create);
+
+  OPAL_ATTEMPT(
+    OvkCreateImageView(state, VK_IMAGE_ASPECT_COLOR_BIT, image->image, image->format, &image->view),
+    return Opal_Failure_Vk_Create);
+
+  OPAL_ATTEMPT(OvkCreateImageSampler(state, &image->sampler), return Opal_Failure_Vk_Create);
+  image->layout = VK_IMAGE_LAYOUT_UNDEFINED;
+
+  if (_createInfo.pixelData != NULL)
+  {
+    OpalVkImageFillData(
+      _oState,
+      image,
+      _createInfo.width,
+      _createInfo.height,
+      _createInfo.pixelFormat,
+      _createInfo.pixelData);
+  }
+
+  return Opal_Success;
+}
+
+void OpalVkDestroyImage(OpalState _oState, OpalImage _oImage)
 {
   OvkState_T* state = (OvkState_T*)_oState->backend.state;
   OvkImage_T* image = &_oImage->backend.vulkan;

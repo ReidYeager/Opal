@@ -106,7 +106,7 @@ OpalResult AllocateMemory(OvkState_T* _state, OpalCreateBufferInfo _createInfo, 
   return Opal_Success;
 }
 
-OpalResult OvkCreateBuffer(OpalState _oState, OpalCreateBufferInfo _createInfo, OpalBuffer _oBuffer)
+OpalResult OpalVkCreateBuffer(OpalState _oState, OpalCreateBufferInfo _createInfo, OpalBuffer _oBuffer)
 {
   OvkState_T* state = (OvkState_T*)_oState->backend.state;
   OvkBuffer_T* buffer = &_oBuffer->backend.vulkan;
@@ -126,7 +126,7 @@ OpalResult OvkCreateBuffer(OpalState _oState, OpalCreateBufferInfo _createInfo, 
   return Opal_Success;
 }
 
-void OvkDestroyBuffer(OpalState _oState, OpalBuffer _oBuffer)
+void OpalVkDestroyBuffer(OpalState _oState, OpalBuffer _oBuffer)
 {
   OvkState_T* state = (OvkState_T*)_oState->backend.state;
   OvkBuffer_T* buffer = &_oBuffer->backend.vulkan;
@@ -157,7 +157,7 @@ OpalResult TransferBufferData(OvkState_T* _state, OpalBuffer _src, OpalBuffer _d
   return Opal_Success;
 }
 
-OpalResult OvkBufferPushData(OpalState _oState, OpalBuffer _oBuffer, void* _data)
+OpalResult OpalVkBufferPushData(OpalState _oState, OpalBuffer _oBuffer, void* _data)
 {
   OvkState_T* state = (OvkState_T*)_oState->backend.state;
   OvkBuffer_T* buffer = &_oBuffer->backend.vulkan;

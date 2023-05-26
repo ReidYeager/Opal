@@ -113,6 +113,11 @@ typedef struct OvkState_T
     VkSurfaceFormatKHR format;
     VkExtent2D extents;
     VkPresentModeKHR presentMode;
+
+    VkImage* depthImages;
+    VkDeviceMemory* depthImageMemories;
+    VkImageView* depthImageViews;
+    VkFormat depthFormat;
   } swapchain;
 
   uint32_t currentFrameSlotIndex;

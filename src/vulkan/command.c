@@ -63,13 +63,15 @@ OpalResult OvkRecordCommandBuffer(
 
   const VkDeviceSize zeroDeviceSize = 0;
 
-  VkClearValue clearValues[1] = { 0 };
+  const uint32_t clearCount = 2;
+  VkClearValue clearValues[2] = { 0 };
   clearValues[0].color = (VkClearColorValue){ 0.4f, 0.2f, 0.6f, 0.0f };
+  clearValues[1].depthStencil = (VkClearDepthStencilValue){ 1, 0 };
 
   VkRenderPassBeginInfo rpBeginInfo = { 0 };
   rpBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
   rpBeginInfo.pNext = NULL;
-  rpBeginInfo.clearValueCount = 1;
+  rpBeginInfo.clearValueCount = clearCount;
   rpBeginInfo.pClearValues = clearValues;
   rpBeginInfo.renderArea.extent = _state->swapchain.extents;
   rpBeginInfo.renderArea.offset = (VkOffset2D){ 0, 0 };

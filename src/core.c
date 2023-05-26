@@ -101,26 +101,26 @@ OpalResult OpalCreateState(OpalCreateStateInfo _info,  OpalState* _outState)
   case Opal_Api_Vulkan:
   {
     // Define vulkan backend functions
-    newState->backend.ShutdownState = OvkShutdownState;
-    newState->backend.RenderFrame = OvkRenderFrame;
+    newState->backend.ShutdownState = OpalVkShutdownState;
+    newState->backend.RenderFrame = OpalVkRenderFrame;
     // Buffer =====
-    newState->backend.CreateBuffer = OvkCreateBuffer;
-    newState->backend.DestroyBuffer = OvkDestroyBuffer;
-    newState->backend.BufferPushData = OvkBufferPushData;
+    newState->backend.CreateBuffer = OpalVkCreateBuffer;
+    newState->backend.DestroyBuffer = OpalVkDestroyBuffer;
+    newState->backend.BufferPushData = OpalVkBufferPushData;
     // Image =====
-    newState->backend.CreateImage = OvkCreateImage;
-    newState->backend.DestroyImage = OvkDestroyImage;
+    newState->backend.CreateImage = OpalVkCreateImage;
+    newState->backend.DestroyImage = OpalVkDestroyImage;
     // Material =====
-    newState->backend.CreateShader = OvkCreateShader;
-    newState->backend.DestroyShader = OvkDestroyShader;
-    newState->backend.CreateMaterial = OvkCreateMaterial;
-    newState->backend.DestroyMaterial = OvkDestroyMaterial;
+    newState->backend.CreateShader = OpalVkCreateShader;
+    newState->backend.DestroyShader = OpalVkDestroyShader;
+    newState->backend.CreateMaterial = OpalVkCreateMaterial;
+    newState->backend.DestroyMaterial = OpalVkDestroyMaterial;
     // Renderable =====
-    newState->backend.CreateRenderable = OvkCreateRenderable;
+    newState->backend.CreateRenderable = OpalVkCreateRenderable;
 
 
     OPAL_ATTEMPT(
-      OvkInitState(_info, newState),
+      OpalVkInitState(_info, newState),
       {
         //OPAL_LOG_ERROR("Failed to initialize the Vulkan backend\n");
         return Opal_Failure_Backend;

@@ -18,63 +18,89 @@
 
 VkFormat OpalFormatToVkFormat(OpalFormat _inFormat);
 
-OpalResult OvkInitState(OpalCreateStateInfo _createInfo, OpalState _oState);
-void OvkShutdownState(OpalState _oState);
-OpalResult OvkRenderFrame(OpalState _oState, const OpalFrameData* _oFrameData);
+OpalResult OpalVkInitState(OpalCreateStateInfo _createInfo, OpalState _oState);
+void OpalVkShutdownState(OpalState _oState);
+OpalResult OpalVkRenderFrame(OpalState _oState, const OpalFrameData* _oFrameData);
 
-OpalResult OvkCreateDescriptorSetLayout(
+OpalResult OpalVkCreateDescriptorSetLayout(
   OvkState_T* _state,
   uint32_t _shaderArgCount,
   OpalShaderArgTypes* _pShaderArgs,
   VkDescriptorSetLayout* _outLayout);
-OpalResult OvkCreateDescriptorSet(
+OpalResult OpalVkCreateDescriptorSet(
   OvkState_T* _state,
   VkDescriptorSetLayout _layout,
   VkDescriptorSet* _outSet);
 
 // Buffer =====
-OpalResult OvkCreateBuffer(
+OpalResult OpalVkCreateBuffer(
   OpalState _oState,
   OpalCreateBufferInfo _createInfo,
   OpalBuffer _oBuffer);
-void OvkDestroyBuffer(OpalState _oState, OpalBuffer _oBuffer);
-OpalResult OvkBufferPushData(OpalState _oState, OpalBuffer _oBuffer, void* _data);
+void OpalVkDestroyBuffer(OpalState _oState, OpalBuffer _oBuffer);
+OpalResult OpalVkBufferPushData(OpalState _oState, OpalBuffer _oBuffer, void* _data);
 
 // Image =====
-OpalResult OvkCreateImage(OpalState _state, OpalCreateImageInfo _createInfo, OpalImage _outImage);
-void OvkDestroyImage(OpalState _state, OpalImage _image);
+OpalResult OpalVkCreateImage(OpalState _state, OpalCreateImageInfo _createInfo, OpalImage _outImage);
+void OpalVkDestroyImage(OpalState _state, OpalImage _image);
+
+OpalResult OpalVkImageFillData(
+  OpalState _oState,
+  OvkImage_T* _image,
+  uint32_t _width,
+  uint32_t _height,
+  OpalFormat _format,
+  void* _data);
+
+OpalResult OvkCreateImage(
+  OvkState_T* _state,
+  VkExtent2D _extents,
+  VkFormat _format,
+  VkImageUsageFlags _usage,
+  VkImage* _outImage);
+OpalResult OvkCreateImageMemory(OvkState_T* _state, VkImage _image, VkDeviceMemory* _outMemory);
+OpalResult OvkCreateImageAndMemory(
+  OvkState_T* _state,
+  VkExtent2D _extents,
+  VkFormat _format,
+  VkImageUsageFlags _usage,
+  VkImage* _outImage,
+  VkDeviceMemory* _outMemory);
+OpalResult OvkCreateImageView(
+  OvkState_T* _state,
+  VkImageAspectFlags _aspectMask,
+  VkImage _image,
+  VkFormat _format,
+  VkImageView* _outView);
+OpalResult OvkCreateImageSampler(OvkState_T* _state, VkSampler* _outSampler);
 
 // Material =====
-OpalResult OvkCreateShader(
+OpalResult OpalVkCreateShader(
   OpalState _oState,
   OpalCreateShaderInfo _createInfo,
   OpalShader _oShader);
-void OvkDestroyShader(OpalState _oState, OpalShader _oShader);
-OpalResult OvkCreateMaterial(
+void OpalVkDestroyShader(OpalState _oState, OpalShader _oShader);
+OpalResult OpalVkCreateMaterial(
   OpalState _state,
   OpalCreateMaterialInfo _createInfo,
   OpalMaterial _Material);
-void OvkDestroyMaterial(OpalState _oState, OpalMaterial _oMaterial);
+void OpalVkDestroyMaterial(OpalState _oState, OpalMaterial _oMaterial);
 
 // Mesh =====
-OpalResult OvkCreateMesh(OpalState _state, OpalCreateMeshInfo _createInfo, OpalMesh _outMesh);
-void OvkDestroyMesh(OpalState _state, OpalMesh _mesh);
+OpalResult OpalVkCreateMesh(OpalState _state, OpalCreateMeshInfo _createInfo, OpalMesh _outMesh);
+void OpalVkDestroyMesh(OpalState _state, OpalMesh _mesh);
 
 // Renderable =====
-OpalResult OvkCreateRenderable(
+OpalResult OpalVkCreateRenderable(
   OpalState _oState,
   OpalShaderArg* _objectArguments,
   OpalRenderable _renderable);
 
-OpalResult UpdateShaderArguments(
+OpalResult OvkUpdateShaderArguments(
   OvkState_T* _state,
   uint32_t _argCount,
   OpalShaderArg* args,
   VkDescriptorSet _descriptorSet);
-
-// =====
-// Vulkan internal
-// =====
 
 // Commands =====
 OpalResult OvkBeginSingleUseCommand(OvkState_T* _state, VkCommandPool _pool, VkCommandBuffer* _cmd);
