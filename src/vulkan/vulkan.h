@@ -86,10 +86,6 @@ OpalResult OpalVkCreateMaterial(
   OpalMaterial _Material);
 void OpalVkDestroyMaterial(OpalState _oState, OpalMaterial _oMaterial);
 
-// Mesh =====
-OpalResult OpalVkCreateMesh(OpalState _state, OpalCreateMeshInfo _createInfo, OpalMesh _outMesh);
-void OpalVkDestroyMesh(OpalState _state, OpalMesh _mesh);
-
 // Renderable =====
 OpalResult OpalVkCreateRenderable(
   OpalState _oState,
@@ -101,6 +97,30 @@ OpalResult OvkUpdateShaderArguments(
   uint32_t _argCount,
   OpalShaderArg* args,
   VkDescriptorSet _descriptorSet);
+
+// Rendering =====
+
+//typedef struct OvkRenderpassInfo
+
+typedef struct OvkRenderpassAttachment {
+  VkFormat dataFormat;
+  OvkRenderpassAttachmentUsage usage;
+
+  OvkRenderpassAttachmentLoadOp loadOperation;
+  uint8_t shouldStoreReneredData;
+} OvkRenderpassAttachment;
+
+typedef struct OvkCreateRenderpassInfo {
+  uint32_t attachmentCount;
+  OvkRenderpassAttachment* attachments;
+
+  OpalResult (*Render)(); // Function called for user's custom command buffer recording
+} OvkCreateRenderpassInfo;
+
+OpalResult OvkCreateRenderpass(
+  OvkState_T* _state,
+  OvkCreateRenderpassInfo _createInfo,
+  VkRenderPass* _outRenderpass);
 
 // Commands =====
 OpalResult OvkBeginSingleUseCommand(OvkState_T* _state, VkCommandPool _pool, VkCommandBuffer* _cmd);

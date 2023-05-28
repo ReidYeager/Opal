@@ -58,6 +58,18 @@ typedef struct OvkRenderable_T
   VkDescriptorSet descSet;
 } OvkRenderable_T;
 
+typedef enum OvkRenderpassAttachmentLoadOp {
+  Ovk_Attachment_LoadOp_Clear,
+  Ovk_Attachment_LoadOp_Load,
+  Ovk_Attachment_LoadOp_Dont_Care
+} OvkRenderpassAttachmentLoadOp;
+
+typedef enum OvkRenderpassAttachmentUsage {
+  Ovk_Attachment_Usage_Color,
+  Ovk_Attachment_Usage_Depth,
+  Ovk_Attachment_Usage_Presented
+} OvkRenderpassAttachmentUsage;
+
 // =====
 // Core
 // =====

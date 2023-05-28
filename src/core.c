@@ -35,6 +35,7 @@ uint32_t OpalFormatToSize(OpalFormat _format) // TODO : Find a better place to p
   case Opal_Format_32_Bit_Float_2: return 8;
   case Opal_Format_32_Bit_Float_3: return 12;
   case Opal_Format_32_Bit_Float_4: return 16;
+  case Opal_Format_24_Bit_Depth_8_Bit_Stencil: return 4;
   default: return 0;
   }
 }

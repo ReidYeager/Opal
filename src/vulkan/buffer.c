@@ -106,10 +106,16 @@ OpalResult AllocateMemory(OvkState_T* _state, OpalCreateBufferInfo _createInfo, 
   return Opal_Success;
 }
 
-OpalResult OpalVkCreateBuffer(OpalState _oState, OpalCreateBufferInfo _createInfo, OpalBuffer _oBuffer)
+OpalResult OpalVkCreateBuffer(
+  OpalState _oState,
+  OpalCreateBufferInfo _createInfo,
+  OpalBuffer _oBuffer)
 {
   OvkState_T* state = (OvkState_T*)_oState->backend.state;
   OvkBuffer_T* buffer = &_oBuffer->backend.vulkan;
+
+  // TODO : Remove this eventually. Currently faster to just keep buffers cpu visible.
+  _createInfo.usage |= Opal_Buffer_Usage_Cpu_Read;
 
   vkDeviceWaitIdle(state->device);
 
@@ -128,8 +134,14 @@ OpalResult OpalVkCreateBuffer(OpalState _oState, OpalCreateBufferInfo _createInf
 
 void OpalVkDestroyBuffer(OpalState _oState, OpalBuffer _oBuffer)
 {
+  if (_oBuffer == NULL)
+    return;
+
   OvkState_T* state = (OvkState_T*)_oState->backend.state;
   OvkBuffer_T* buffer = &_oBuffer->backend.vulkan;
+
+  if (buffer->memory == VK_NULL_HANDLE)
+    return;
 
   vkFreeMemory(state->device, buffer->memory, NULL);
   vkDestroyBuffer(state->device, buffer->buffer, NULL);
@@ -157,38 +169,69 @@ OpalResult TransferBufferData(OvkState_T* _state, OpalBuffer _src, OpalBuffer _d
   return Opal_Success;
 }
 
+// NOTE : Will eventually want to separate quick cpu-visible buffer updates
+//OpalVkBufferPushDataCpuVisible(OpalState _oState, OpalBuffer _oBuffer, void* _data)
+//{
+//  OvkState_T* state = (OvkState_T*)_oState->backend.state;
+//  OvkBuffer_T* buffer = &_oBuffer->backend.vulkan;
+//
+//  // Copy data =====
+//  void* mappedMemory;
+//  OVK_ATTEMPT(
+//    vkMapMemory(
+//      state->device,
+//      _oBuffer->backend.vulkan.memory,
+//      0,
+//      _oBuffer->size,
+//      0,
+//      &mappedMemory),
+//    return Opal_Failure_Vk_Misc);
+//  LapisMemCopy(_data, mappedMemory, _oBuffer->size);
+//  vkUnmapMemory(state->device, _oBuffer->backend.vulkan.memory);
+//
+//  return Opal_Success;
+//}
+
 OpalResult OpalVkBufferPushData(OpalState _oState, OpalBuffer _oBuffer, void* _data)
 {
   OvkState_T* state = (OvkState_T*)_oState->backend.state;
   OvkBuffer_T* buffer = &_oBuffer->backend.vulkan;
 
-  // Transient buffer =====
-  OpalBuffer transientBuffer;
-  OpalCreateBufferInfo transientBufferInfo = { 0 };
-  transientBufferInfo.size = _oBuffer->paddedSize;
-  transientBufferInfo.usage = Opal_Buffer_Usage_Cpu_Read;
-  OPAL_ATTEMPT(
-    OpalCreateBuffer(_oState, transientBufferInfo, &transientBuffer),
-    return Opal_Failure_Vk_Misc);
+  static uint64_t maxSize = 0;
+  static OpalBuffer transientBuffer;
+
+  //if (_oBuffer->paddedSize > maxSize)
+  //{
+  //  OpalDestroyBuffer(_oState, &transientBuffer);
+
+  //  // Transient buffer =====
+  //  OpalCreateBufferInfo transientBufferInfo = { 0 };
+  //  transientBufferInfo.size = _oBuffer->paddedSize;
+  //  transientBufferInfo.usage = Opal_Buffer_Usage_Cpu_Read;
+  //  OPAL_ATTEMPT(
+  //    OpalCreateBuffer(_oState, transientBufferInfo, &transientBuffer),
+  //    return Opal_Failure_Vk_Misc);
+
+  //  maxSize = _oBuffer->paddedSize;
+  //}
 
   // Copy data =====
   void* mappedMemory;
   OVK_ATTEMPT(
     vkMapMemory(
       state->device,
-      transientBuffer->backend.vulkan.memory,
+      _oBuffer->backend.vulkan.memory,
       0,
       _oBuffer->size,
       0,
       &mappedMemory),
     return Opal_Failure_Vk_Misc);
   LapisMemCopy(_data, mappedMemory, _oBuffer->size);
-  vkUnmapMemory(state->device, transientBuffer->backend.vulkan.memory);
+  vkUnmapMemory(state->device, _oBuffer->backend.vulkan.memory);
 
   // Transfer data =====
-  TransferBufferData(state, transientBuffer, _oBuffer, _oBuffer->size);
+  //TransferBufferData(state, transientBuffer, _oBuffer, _oBuffer->size);
 
-  OpalDestroyBuffer(_oState, &transientBuffer);
   return Opal_Success;
 }
 

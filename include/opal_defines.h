@@ -48,7 +48,8 @@ typedef enum OpalFormat
   Opal_Format_32_Bit_Float_1,
   Opal_Format_32_Bit_Float_2,
   Opal_Format_32_Bit_Float_3,
-  Opal_Format_32_Bit_Float_4
+  Opal_Format_32_Bit_Float_4,
+  Opal_Format_24_Bit_Depth_8_Bit_Stencil
 } OpalFormat;
 
 // =====
@@ -166,6 +167,30 @@ typedef struct OpalCreateMeshInfo
 } OpalCreateMeshInfo;
 
 // =====
+// Rendering
+// =====
+
+typedef enum OpalRenderpassAttachmentLoadOp {
+  Opal_Attachment_LoadOp_Clear,
+  Opal_Attachment_LoadOp_Load,
+  Opal_Attachment_LoadOp_Dont_Care
+} OpalRenderpassAttachmentLoadOp;
+
+typedef enum OpalRenderpassAttachmentUsage {
+  Opal_Attachment_Usage_Color,
+  Opal_Attachment_Usage_Depth,
+  Opal_Attachment_Usage_Presented
+} OpalRenderpassAttachmentUsage;
+
+typedef struct OpalRenderpassAttachment {
+  OpalFormat dataFormat;
+  OpalRenderpassAttachmentUsage usage;
+
+  OpalRenderpassAttachmentLoadOp loadOperation;
+  uint8_t shouldStoreReneredData;
+} OpalRenderpassAttachment;
+
+// =====
 // Core
 // =====
 
@@ -183,6 +208,9 @@ typedef struct OpalCreateStateInfo
   LapisWindow window; // TODO : Allow headless when nullptr
   OpalVertexLayoutInfo* pCustomVertexLayout;
   OpalObjectShaderArgumentsInfo* pCustomObjectShaderArgumentLayout;
+
+  uint32_t renderpassCount;
+  OpalRenderpassAttachment pCustomRenderpasses;
 } OpalCreateStateInfo;
 
 typedef struct OpalRenderable_T* OpalRenderable;
@@ -190,7 +218,7 @@ typedef struct OpalRenderable_T* OpalRenderable;
 typedef struct OpalFrameData
 {
   uint32_t renderableCount;
-  OpalRenderable renderables[256];
+  OpalRenderable renderables[512];
 } OpalFrameData;
 
 #endif // !GEM_OPAL_DEFINES_H

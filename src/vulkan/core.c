@@ -36,6 +36,7 @@ VkFormat OpalFormatToVkFormat(OpalFormat _inFormat)
   case Opal_Format_32_Bit_Float_2: return VK_FORMAT_R32G32_SFLOAT;
   case Opal_Format_32_Bit_Float_3: return VK_FORMAT_R32G32B32_SFLOAT;
   case Opal_Format_32_Bit_Float_4: return VK_FORMAT_R32G32B32A32_SFLOAT;
+  case Opal_Format_24_Bit_Depth_8_Bit_Stencil : return VK_FORMAT_D24_UNORM_S8_UINT;
   default: return VK_FORMAT_UNDEFINED;
   }
 }
@@ -602,40 +603,72 @@ OpalResult CreateCommandBuffers(OvkState_T* _state)
 }
 
 // TODO : Allow renderpass to be headless
-OpalResult CreateRenderpass(OvkState_T* _state)
+OpalResult OvkCreateRenderpass(
+  OvkState_T* _state,
+  OvkCreateRenderpassInfo _createInfo,
+  VkRenderPass* _outRenderpass)
 {
-  // Attachments =====
-#define tmpAttachmentCount 2
-  VkAttachmentDescription attachments[tmpAttachmentCount] = { 0 };
-  // Swapchain
-  attachments[0].flags = 0;
-  attachments[0].format = _state->swapchain.format.format;
-  attachments[0].samples = VK_SAMPLE_COUNT_1_BIT;
-  attachments[0].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-  attachments[0].finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-  attachments[0].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-  attachments[0].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-  attachments[0].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-  attachments[0].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-  // Depth
-  attachments[1].flags = 0;
-  attachments[1].format = _state->swapchain.depthFormat;
-  attachments[1].samples = VK_SAMPLE_COUNT_1_BIT;
-  attachments[1].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-  attachments[1].finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-  attachments[1].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-  attachments[1].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-  attachments[1].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-  attachments[1].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+  VkAttachmentDescription* attachments =
+    (VkAttachmentDescription*)LapisMemAllocZero(
+      sizeof(VkAttachmentDescription) * _createInfo.attachmentCount);
+  VkAttachmentReference* attachmentRefs =
+    (VkAttachmentReference*)LapisMemAllocZero(
+      sizeof(VkAttachmentReference) * _createInfo.attachmentCount);
 
-  // Attachment references =====
-  VkAttachmentReference attachmentRefs[tmpAttachmentCount] = { 0 };
-  // Swapchain
-  attachmentRefs[0].attachment = 0;
-  attachmentRefs[0].layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-  // Depth
-  attachmentRefs[1].attachment = 1;
-  attachmentRefs[1].layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+  for (int i = 0; i < _createInfo.attachmentCount; i++)
+  {
+    OvkRenderpassAttachment inAttachment = _createInfo.attachments[i];
+
+    attachmentRefs[i].attachment = i;
+
+    attachments[i].flags = 0;
+    attachments[i].format = inAttachment.dataFormat;
+    attachments[i].samples = VK_SAMPLE_COUNT_1_BIT;
+    attachments[i].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    attachments[i].finalLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    attachments[i].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+    attachments[i].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+
+    switch (inAttachment.usage)
+    {
+    case Ovk_Attachment_Usage_Color:
+    {
+      attachmentRefs[i].layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+      attachments[i].finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+    } break;
+    case Ovk_Attachment_Usage_Depth:
+    {
+      attachmentRefs[i].layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+      attachments[i].finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+    } break;
+    case Ovk_Attachment_Usage_Presented:
+    {
+      attachmentRefs[i].layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+      attachments[i].finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+    } break;
+    default: return Opal_Failure;
+    }
+
+    switch (inAttachment.loadOperation)
+    {
+    case Ovk_Attachment_LoadOp_Load:
+    {
+      attachments[i].loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
+      if (inAttachment.usage == Ovk_Attachment_Usage_Presented)
+        attachments[i].finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+      else
+        attachments[i].initialLayout = attachmentRefs[i].layout;
+    } break;
+    case Ovk_Attachment_LoadOp_Clear:attachments[i].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;  break;
+    case Ovk_Attachment_LoadOp_Dont_Care: attachments[i].loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE; break;
+    default: return Opal_Failure;
+    }
+
+    attachments[i].storeOp =
+      inAttachment.shouldStoreReneredData
+        ? VK_ATTACHMENT_STORE_OP_STORE
+        : VK_ATTACHMENT_STORE_OP_DONT_CARE;
+  }
 
   // Subpasses =====
   VkSubpassDescription subpass = { 0 };
@@ -652,13 +685,16 @@ OpalResult CreateRenderpass(OvkState_T* _state)
 
   // Dependencies =====
   // None needed
+  VkSubpassDependency dep = { 0 };
+  //dep.
+
 
   // Creation =====
   VkRenderPassCreateInfo createInfo = { 0 };
   createInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
   createInfo.pNext = NULL;
   createInfo.flags = 0;
-  createInfo.attachmentCount = tmpAttachmentCount;
+  createInfo.attachmentCount = _createInfo.attachmentCount;
   createInfo.pAttachments = attachments;
   createInfo.subpassCount = 1;
   createInfo.pSubpasses = &subpass;
@@ -666,10 +702,9 @@ OpalResult CreateRenderpass(OvkState_T* _state)
   createInfo.pDependencies = NULL;
 
   OVK_ATTEMPT(
-    vkCreateRenderPass(_state->device, &createInfo, NULL, &_state->renderpass),
+    vkCreateRenderPass(_state->device, &createInfo, NULL, _outRenderpass),
     return Opal_Failure_Vk_Create);
 
-#undef tmpAttachmentCount
   return Opal_Success;
 }
 
@@ -908,8 +943,26 @@ OpalResult OpalVkInitState(OpalCreateStateInfo _createInfo, OpalState _oState)
       return Opal_Failure_Vk_Init;
     });
 
+  OvkCreateRenderpassInfo rpCreateInfo = { 0 };
+  rpCreateInfo.Render = NULL;
+  rpCreateInfo.attachmentCount = 2;
+  rpCreateInfo.attachments =
+    (OvkRenderpassAttachment*)LapisMemAllocZero(
+      sizeof(OvkRenderpassAttachment) * rpCreateInfo.attachmentCount);
+
+  // Swapchain
+  rpCreateInfo.attachments[0].dataFormat = state->swapchain.format.format;
+  rpCreateInfo.attachments[0].loadOperation = Ovk_Attachment_LoadOp_Clear;
+  rpCreateInfo.attachments[0].shouldStoreReneredData = 1;
+  rpCreateInfo.attachments[0].usage = Ovk_Attachment_Usage_Presented;
+  // Depth
+  rpCreateInfo.attachments[1].dataFormat = state->swapchain.depthFormat;
+  rpCreateInfo.attachments[1].loadOperation = Ovk_Attachment_LoadOp_Clear;
+  rpCreateInfo.attachments[1].shouldStoreReneredData = 0;
+  rpCreateInfo.attachments[1].usage = Ovk_Attachment_Usage_Depth;
+
   OPAL_ATTEMPT(
-    CreateRenderpass(state),
+    OvkCreateRenderpass(state, rpCreateInfo, &state->renderpass),
     {
       OPAL_LOG_VK_ERROR("Failed to create renderpass\n");
       return Opal_Failure_Vk_Init;
