@@ -100,23 +100,6 @@ OpalResult OvkUpdateShaderArguments(
 
 // Rendering =====
 
-//typedef struct OvkRenderpassInfo
-
-typedef struct OvkRenderpassAttachment {
-  VkFormat dataFormat;
-  OvkRenderpassAttachmentUsage usage;
-
-  OvkRenderpassAttachmentLoadOp loadOperation;
-  uint8_t shouldStoreReneredData;
-} OvkRenderpassAttachment;
-
-typedef struct OvkCreateRenderpassInfo {
-  uint32_t attachmentCount;
-  OvkRenderpassAttachment* attachments;
-
-  OpalResult (*Render)(); // Function called for user's custom command buffer recording
-} OvkCreateRenderpassInfo;
-
 OpalResult OvkCreateRenderpass(
   OvkState_T* _state,
   OvkCreateRenderpassInfo _createInfo,
@@ -129,6 +112,11 @@ OpalResult OvkCreateFramebuffer(
   uint32_t _viewCount,
   VkImageView* _views,
   VkFramebuffer* _outFramebuffer);
+
+OpalResult OpalVkCreateRenderpassAndFramebuffers(
+  OpalState _oState,
+  OpalCreateRenderpassInfo _createInfo,
+  OpalRenderpass _outRenderpass);
 
 // Commands =====
 OpalResult OvkBeginSingleUseCommand(OvkState_T* _state, VkCommandPool _pool, VkCommandBuffer* _cmd);

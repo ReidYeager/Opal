@@ -81,7 +81,8 @@ typedef struct OpalImage_T* OpalImage;
 
 typedef enum OpalImageUsageBits
 {
-  Opal_Image_Usage_Shader_Sampled = 0x01
+  Opal_Image_Usage_Shader_Sampled = 0x01,
+  Opal_Image_Usage_Depth_Stencil = 0x02,
 } OpalImageUsageBits;
 typedef uint32_t OpalImageUsageFlags;
 
@@ -183,13 +184,22 @@ typedef enum OpalRenderpassAttachmentUsage {
 } OpalRenderpassAttachmentUsage;
 
 typedef struct OpalRenderpassAttachment {
-  uint32_t imageCount;
-  OpalImage* images;
   OpalRenderpassAttachmentUsage usage;
 
   OpalRenderpassAttachmentLoadOp loadOperation;
   uint8_t shouldStoreReneredData;
 } OpalRenderpassAttachment;
+
+typedef struct OpalCreateRenderpassInfo {
+  uint32_t imageCount;
+  OpalImage* images;
+  OpalRenderpassAttachment* imageAttachments;
+
+  OpalResult(*RenderFunction)();
+  uint8_t rendersToFramebuffer;
+} OpalCreateRenderpassInfo;
+
+typedef struct OpalRenderpass_T* OpalRenderpass;
 
 // =====
 // Core
@@ -211,7 +221,7 @@ typedef struct OpalCreateStateInfo
   OpalObjectShaderArgumentsInfo* pCustomObjectShaderArgumentLayout;
 
   uint32_t renderpassCount;
-  OpalRenderpassAttachment pCustomRenderpasses;
+  OpalRenderpassAttachment* pCustomRenderpasses;
 } OpalCreateStateInfo;
 
 typedef struct OpalRenderable_T* OpalRenderable;

@@ -60,6 +60,11 @@ OpalResult OpalCreateRenderable(
   OpalShaderArg* objectArguments,
   OpalRenderable* _renderable);
 
+OpalResult OpalCreateRenderpass(
+  OpalState _state,
+  OpalCreateRenderpassInfo _createInfo,
+  OpalRenderpass* _outRenderpass);
+
 
 #ifdef __cplusplus
 }

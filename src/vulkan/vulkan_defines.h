@@ -70,6 +70,31 @@ typedef enum OvkRenderpassAttachmentUsage {
   Ovk_Attachment_Usage_Presented
 } OvkRenderpassAttachmentUsage;
 
+typedef struct OvkRenderpassAttachment {
+  VkFormat dataFormat;
+  OvkRenderpassAttachmentUsage usage;
+
+  OvkRenderpassAttachmentLoadOp loadOperation;
+  uint8_t shouldStoreReneredData;
+} OvkRenderpassAttachment;
+
+typedef struct OvkCreateRenderpassInfo {
+  uint32_t attachmentCount;
+  OvkRenderpassAttachment* attachments;
+
+  OpalResult(*Render)(); // Function called for user's custom command buffer recording
+} OvkCreateRenderpassInfo;
+
+typedef struct OvkRenderpass_T {
+  VkRenderPass renderpass;
+
+  // Will be one for each swapchain image if shoulRenderToFramebuffer, otherwise only one
+  VkFramebuffer* framebuffers;
+  uint32_t framebufferCount;
+
+  OpalResult(*Render)();
+} OvkRenderpass_T;
+
 // =====
 // Core
 // =====

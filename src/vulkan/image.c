@@ -4,13 +4,24 @@
 
 VkImageUsageFlags OpalImageUsageToVkImageUsage(OpalImageUsageFlags _usage)
 {
-  VkImageUsageFlags finalUsage = 0;
-
-  finalUsage |=
-    ((_usage & Opal_Image_Usage_Shader_Sampled) != 0)
-    * (VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT);
+#define OiuToVk(opal, vk) ((vk) * ((_usage & (opal)) != 0))
+  VkImageUsageFlags finalUsage =
+    OiuToVk(Opal_Image_Usage_Shader_Sampled, VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT)
+    | OiuToVk(Opal_Image_Usage_Depth_Stencil, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT);
+#undef OiuToVk
 
   return finalUsage;
+}
+
+VkImageAspectFlags OpalImageUsageToVkImageAspect(OpalImageUsageFlags _usage)
+{
+#define OiuToVk(opal, vk) ((vk) * ((_usage & (opal)) != 0))
+  VkImageAspectFlags finalAspect =
+    OiuToVk(Opal_Image_Usage_Shader_Sampled, VK_IMAGE_ASPECT_COLOR_BIT)
+    | OiuToVk(Opal_Image_Usage_Depth_Stencil, VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT);
+#undef OiuToVk
+
+  return finalAspect;
 }
 
 uint32_t GetMemoryTypeIndex(OvkState_T* _state, uint32_t _mask, VkMemoryPropertyFlags _flags)
@@ -298,7 +309,12 @@ OpalResult OpalVkCreateImage(OpalState _oState, OpalCreateImageInfo _createInfo,
     return Opal_Failure_Vk_Create);
 
   OPAL_ATTEMPT(
-    OvkCreateImageView(state, VK_IMAGE_ASPECT_COLOR_BIT, image->image, image->format, &image->view),
+    OvkCreateImageView(
+      state,
+      OpalImageUsageToVkImageAspect(_createInfo.usage),
+      image->image,
+      image->format,
+      &image->view),
     return Opal_Failure_Vk_Create);
 
   OPAL_ATTEMPT(OvkCreateImageSampler(state, &image->sampler), return Opal_Failure_Vk_Create);

@@ -118,6 +118,7 @@ OpalResult OpalCreateState(OpalCreateStateInfo _info,  OpalState* _outState)
     newState->backend.DestroyMaterial = OpalVkDestroyMaterial;
     // Renderable =====
     newState->backend.CreateRenderable = OpalVkCreateRenderable;
+    newState->backend.CreateRenderpass = OpalVkCreateRenderpassAndFramebuffers;
 
 
     OPAL_ATTEMPT(
@@ -173,5 +174,24 @@ OpalResult OpalCreateRenderable(
   OPAL_ATTEMPT(
     _state->backend.CreateRenderable(_state, _objectArguments, *_renderable),
     return Opal_Failure_Backend);
+  return Opal_Success;
+}
+
+OpalResult OpalCreateRenderpass(
+  OpalState _state,
+  OpalCreateRenderpassInfo _createInfo,
+  OpalRenderpass* _outRenderpass)
+{
+  OpalRenderpass newRenderpass = (OpalRenderpass)LapisMemAllocZero(sizeof(OpalRenderpass_T));
+
+  OPAL_ATTEMPT(
+    _state->backend.CreateRenderpass(_state, _createInfo, newRenderpass),
+    {
+      LapisMemFree(newRenderpass);
+      return Opal_Failure_Backend;
+    });
+
+  *_outRenderpass = newRenderpass;
+
   return Opal_Success;
 }

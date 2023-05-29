@@ -65,8 +65,8 @@ OpalResult OvkRecordCommandBuffer(
 
   const uint32_t clearCount = 2;
   VkClearValue clearValues[2] = { 0 };
-  clearValues[0].color = (VkClearColorValue){ 0.4f, 0.2f, 0.6f, 0.0f };
-  clearValues[1].depthStencil = (VkClearDepthStencilValue){ 1, 0 };
+  clearValues[0].depthStencil = (VkClearDepthStencilValue){ 1, 0 };
+  clearValues[1].color = (VkClearColorValue){ 0.4f, 0.2f, 0.6f, 0.0f };
 
   VkRenderPassBeginInfo rpBeginInfo = { 0 };
   rpBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
