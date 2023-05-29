@@ -315,7 +315,7 @@ OpalResult CreatePipeline(
   createInfo.pStages = shaderStages;
 
   createInfo.layout = _oMaterial->pipelineLayout;
-  createInfo.renderPass = _state->renderpass;
+  createInfo.renderPass = _createInfo.renderpass->backend.vulkan.renderpass;
   createInfo.subpass = 0;
 
   OVK_ATTEMPT(

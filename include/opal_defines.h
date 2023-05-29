@@ -52,6 +52,14 @@ typedef enum OpalFormat
   Opal_Format_24_Bit_Depth_8_Bit_Stencil
 } OpalFormat;
 
+typedef struct OpalExtents2D
+{
+  uint32_t width;
+  uint32_t height;
+} OpalExtents2D;
+
+typedef struct OpalRenderpass_T* OpalRenderpass;
+
 // =====
 // Buffer
 // =====
@@ -91,8 +99,7 @@ typedef struct OpalCreateImageInfo
   OpalImageUsageFlags usage;
 
   OpalFormat pixelFormat;
-  uint32_t width;
-  uint32_t height;
+  OpalExtents2D extents;
   void* pixelData;
 } OpalCreateImageInfo;
 
@@ -143,6 +150,7 @@ typedef struct OpalCreateMaterialInfo
 
   uint32_t shaderArgCount;
   OpalShaderArg* pShaderArgs;
+  OpalRenderpass renderpass;
 } OpalCreateMaterialInfo;
 
 // =====
@@ -183,11 +191,29 @@ typedef enum OpalRenderpassAttachmentUsage {
   Opal_Attachment_Usage_Presented
 } OpalRenderpassAttachmentUsage;
 
+typedef union OpalClearColor {
+  float float32[4];
+  uint32_t uint32[4];
+  int32_t int32[4];
+} OpalClearColor;
+
+typedef struct OpalClearDepth {
+  float depth;
+  uint32_t stencil;
+} OpalClearDepth;
+
+typedef union OpalRenderpassAttachmentClearValues{
+  OpalClearColor color;
+  OpalClearDepth depthStencil;
+} OpalRenderpassAttachmentClearValues;
+
 typedef struct OpalRenderpassAttachment {
   OpalRenderpassAttachmentUsage usage;
 
   OpalRenderpassAttachmentLoadOp loadOperation;
   uint8_t shouldStoreReneredData;
+
+  OpalRenderpassAttachmentClearValues clearValues;
 } OpalRenderpassAttachment;
 
 typedef struct OpalCreateRenderpassInfo {
@@ -196,10 +222,8 @@ typedef struct OpalCreateRenderpassInfo {
   OpalRenderpassAttachment* imageAttachments;
 
   OpalResult(*RenderFunction)();
-  uint8_t rendersToFramebuffer;
+  uint8_t rendersToSwapchain;
 } OpalCreateRenderpassInfo;
-
-typedef struct OpalRenderpass_T* OpalRenderpass;
 
 // =====
 // Core
@@ -228,6 +252,9 @@ typedef struct OpalRenderable_T* OpalRenderable;
 
 typedef struct OpalFrameData
 {
+  uint32_t renderpassCount;
+  OpalRenderpass* renderpasses;
+
   uint32_t renderableCount;
   OpalRenderable renderables[512];
 } OpalFrameData;

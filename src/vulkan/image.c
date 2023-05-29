@@ -218,8 +218,7 @@ OpalResult TransitionImageLayout(OvkState_T* _state, OvkImage_T* _image, uint32_
 OpalResult CopyBufferToImage(
   OvkState_T* _state,
   OvkBuffer_T* _buffer,
-  uint32_t _width,
-  uint32_t _height,
+  OpalExtents2D _extents,
   OvkImage_T* _image)
 {
   VkCommandBuffer cmd;
@@ -229,14 +228,14 @@ OpalResult CopyBufferToImage(
 
   VkBufferImageCopy copyRegion = { 0 };
   copyRegion.bufferOffset = 0;
-  copyRegion.bufferRowLength = _width;
-  copyRegion.bufferImageHeight = _height;
+  copyRegion.bufferRowLength = _extents.width;
+  copyRegion.bufferImageHeight = _extents.height;
   copyRegion.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
   copyRegion.imageSubresource.mipLevel = 0;
   copyRegion.imageSubresource.layerCount = 1;
   copyRegion.imageSubresource.baseArrayLayer = 0;
   copyRegion.imageOffset = (VkOffset3D){ 0, 0, 0 };
-  copyRegion.imageExtent = (VkExtent3D){ _width, _height, 1 };
+  copyRegion.imageExtent = (VkExtent3D){ _extents.width, _extents.height, 1 };
 
   vkCmdCopyBufferToImage(
     cmd,
@@ -256,8 +255,7 @@ OpalResult CopyBufferToImage(
 OpalResult OpalVkImageFillData(
   OpalState _oState,
   OvkImage_T* _image,
-  uint32_t _width,
-  uint32_t _height,
+  OpalExtents2D _extents,
   OpalFormat _format,
   void* _data)
 {
@@ -265,7 +263,7 @@ OpalResult OpalVkImageFillData(
 
   OpalCreateBufferInfo createBufferInfo = { 0 };
   createBufferInfo.usage = Opal_Buffer_Usage_Cpu_Read;
-  createBufferInfo.size = _width * _height * OpalFormatToSize(_format);
+  createBufferInfo.size = _extents.width * _extents.height * OpalFormatToSize(_format);
   OpalBuffer imageDataCopyBuffer;
   OpalCreateBuffer(_oState, createBufferInfo, &imageDataCopyBuffer);
   OpalBufferPushData(_oState, imageDataCopyBuffer, _data);
@@ -274,7 +272,7 @@ OpalResult OpalVkImageFillData(
     TransitionImageLayout(state, _image, 0, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT),
     return Opal_Failure_Vk_Create);
   OPAL_ATTEMPT(
-    CopyBufferToImage(state, &imageDataCopyBuffer->backend.vulkan, _width, _height, _image),
+    CopyBufferToImage(state, &imageDataCopyBuffer->backend.vulkan, _extents, _image),
     return Opal_Failure_Vk_Create);
   OPAL_ATTEMPT(
     TransitionImageLayout(state, _image, 1, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT),
@@ -295,7 +293,7 @@ OpalResult OpalVkCreateImage(OpalState _oState, OpalCreateImageInfo _createInfo,
   OPAL_ATTEMPT(
     OvkCreateImage(
       state,
-      (VkExtent2D){_createInfo.width, _createInfo.height},
+      (VkExtent2D){ _createInfo.extents.width, _createInfo.extents.height },
       OpalFormatToVkFormat(_createInfo.pixelFormat),
       OpalImageUsageToVkImageUsage(_createInfo.usage),
       &image->image),
@@ -325,8 +323,7 @@ OpalResult OpalVkCreateImage(OpalState _oState, OpalCreateImageInfo _createInfo,
     OpalVkImageFillData(
       _oState,
       image,
-      _createInfo.width,
-      _createInfo.height,
+      _createInfo.extents,
       _createInfo.pixelFormat,
       _createInfo.pixelData);
   }

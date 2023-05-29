@@ -18,6 +18,8 @@
 
 VkFormat OpalFormatToVkFormat(OpalFormat _inFormat);
 
+OpalExtents2D OpalVkGetSwapchainExtents();
+
 OpalResult OpalVkInitState(OpalCreateStateInfo _createInfo, OpalState _oState);
 void OpalVkShutdownState(OpalState _oState);
 OpalResult OpalVkRenderFrame(OpalState _oState, const OpalFrameData* _oFrameData);
@@ -47,8 +49,7 @@ void OpalVkDestroyImage(OpalState _state, OpalImage _image);
 OpalResult OpalVkImageFillData(
   OpalState _oState,
   OvkImage_T* _image,
-  uint32_t _width,
-  uint32_t _height,
+  OpalExtents2D _extents,
   OpalFormat _format,
   void* _data);
 

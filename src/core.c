@@ -104,6 +104,7 @@ OpalResult OpalCreateState(OpalCreateStateInfo _info,  OpalState* _outState)
     // Define vulkan backend functions
     newState->backend.ShutdownState = OpalVkShutdownState;
     newState->backend.RenderFrame = OpalVkRenderFrame;
+    newState->backend.GetSwapchainExtents = OpalVkGetSwapchainExtents;
     // Buffer =====
     newState->backend.CreateBuffer = OpalVkCreateBuffer;
     newState->backend.DestroyBuffer = OpalVkDestroyBuffer;
@@ -182,7 +183,69 @@ OpalResult OpalCreateRenderpass(
   OpalCreateRenderpassInfo _createInfo,
   OpalRenderpass* _outRenderpass)
 {
+  if (_createInfo.imageCount == 0)
+  {
+    OPAL_LOG_ERROR("Can not create a renderpass with 0 input images\n");
+    return Opal_Failure;
+  }
+
   OpalRenderpass newRenderpass = (OpalRenderpass)LapisMemAllocZero(sizeof(OpalRenderpass_T));
+  OpalExtents2D matchExtents = _createInfo.images[0]->extents;
+  int32_t depthPosition = -1;
+
+  newRenderpass->clearValues =
+    (OpalRenderpassAttachmentClearValues*)LapisMemAllocZero(
+      sizeof(OpalRenderpassAttachmentClearValues)
+      * (_createInfo.imageCount + (_createInfo.rendersToSwapchain != 0)));
+
+  for (uint32_t i = 0; i < _createInfo.imageCount; i++)
+  {
+    if (_createInfo.images[i]->extents.width != matchExtents.width
+      || _createInfo.images[i]->extents.height != matchExtents.height)
+    {
+      LapisMemFree(newRenderpass->clearValues);
+      LapisMemFree(newRenderpass);
+      OPAL_LOG_ERROR("Failed to create renderpass. All images must have the same extents\n");
+      return Opal_Failure;
+    }
+
+    if (_createInfo.imageAttachments[i].usage == Opal_Attachment_Usage_Depth)
+    {
+      if (depthPosition != -1)
+      {
+        LapisMemFree(newRenderpass->clearValues);
+        LapisMemFree(newRenderpass);
+        OPAL_LOG_ERROR("Failed to create renderpass. Only one attachment may be used as a depth buffer\n");
+        return Opal_Failure;
+      }
+
+      depthPosition = i;
+    }
+
+    newRenderpass->clearValues[i] = _createInfo.imageAttachments->clearValues;
+  }
+  if (_createInfo.rendersToSwapchain)
+  {
+    if (depthPosition > 0)
+    {
+      LapisMemFree(newRenderpass->clearValues);
+      LapisMemFree(newRenderpass);
+      OPAL_LOG_ERROR("Failed to create renderpass. Depth buffer must be attachment 0 when rendering to the swapchain\n");
+      return Opal_Failure;
+    }
+    // TODO : Check if the swapchain extents match input
+
+    newRenderpass->clearValues[_createInfo.imageCount].color =
+      (OpalClearColor){ 0.4f, 0.2f, 0.6f, 0.0f };
+  }
+
+  if (depthPosition > 0 && depthPosition < (_createInfo.imageCount - 1))
+  {
+    LapisMemFree(newRenderpass->clearValues);
+    LapisMemFree(newRenderpass);
+    OPAL_LOG_ERROR("Failed to create renderpass. Depth buffer must either be the first or last attachment\n");
+    return Opal_Failure;
+  }
 
   OPAL_ATTEMPT(
     _state->backend.CreateRenderpass(_state, _createInfo, newRenderpass),
@@ -191,7 +254,16 @@ OpalResult OpalCreateRenderpass(
       return Opal_Failure_Backend;
     });
 
+  newRenderpass->attachmentCount = _createInfo.imageCount + (_createInfo.rendersToSwapchain != 0);
+  newRenderpass->extents = _createInfo.images[0]->extents;
+  newRenderpass->Render = _createInfo.RenderFunction;
+
   *_outRenderpass = newRenderpass;
 
   return Opal_Success;
+}
+
+OpalExtents2D OpalGetSwapchainExtents(OpalState _state)
+{
+  return _state->backend.GetSwapchainExtents(_state);
 }

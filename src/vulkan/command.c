@@ -51,48 +51,13 @@ OpalResult OvkEndSingleUseCommand(
   return Opal_Success;
 }
 
-OpalResult OvkRecordCommandBuffer(
+void tmprenderpassrender(
   OvkState_T* _state,
   OvkFrame_T* _frame,
-  const OpalFrameData* _data)
+  const OpalFrameData* _data,
+  VkCommandBuffer cmd)
 {
-  uint32_t index = _frame->swapchainImageIndex;
-  VkCommandBuffer cmd = _frame->cmd;
-
-  vkResetCommandBuffer(cmd, 0);
-
   const VkDeviceSize zeroDeviceSize = 0;
-
-  const uint32_t clearCount = 2;
-  VkClearValue clearValues[2] = { 0 };
-  clearValues[0].depthStencil = (VkClearDepthStencilValue){ 1, 0 };
-  clearValues[1].color = (VkClearColorValue){ 0.4f, 0.2f, 0.6f, 0.0f };
-
-  VkRenderPassBeginInfo rpBeginInfo = { 0 };
-  rpBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-  rpBeginInfo.pNext = NULL;
-  rpBeginInfo.clearValueCount = clearCount;
-  rpBeginInfo.pClearValues = clearValues;
-  rpBeginInfo.renderArea.extent = _state->swapchain.extents;
-  rpBeginInfo.renderArea.offset = (VkOffset2D){ 0, 0 };
-  rpBeginInfo.renderPass = _state->renderpass;
-  rpBeginInfo.framebuffer = _state->framebuffers[index];
-
-  VkCommandBufferBeginInfo cmdBeginInfo = { 0 };
-  cmdBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-  cmdBeginInfo.pNext = NULL;
-  cmdBeginInfo.flags = 0;
-
-  OVK_ATTEMPT(
-    vkBeginCommandBuffer(cmd, &cmdBeginInfo),
-    {
-      OPAL_LOG_VK_ERROR("Failed to begin command buffer : %u\n", index);
-      return Opal_Failure_Vk_Render;
-    });
-
-  // Commands start =====
-
-  vkCmdBeginRenderPass(cmd, &rpBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
 
   for (uint32_t renderIndex = 0; renderIndex < _data->renderableCount; renderIndex++)
   {
@@ -134,10 +99,54 @@ OpalResult OvkRecordCommandBuffer(
       VK_INDEX_TYPE_UINT32);
     vkCmdDrawIndexed(cmd, _data->renderables[renderIndex]->mesh->indexCount, 1, 0, 0, 0);
   }
+}
 
-  vkCmdEndRenderPass(cmd);
+OpalResult OvkRecordCommandBuffer(
+  OvkState_T* _state,
+  OvkFrame_T* _frame,
+  const OpalFrameData* _data)
+{
+  uint32_t index = _frame->swapchainImageIndex;
+  VkCommandBuffer cmd = _frame->cmd;
 
-  // Commands end =====
+  vkResetCommandBuffer(cmd, 0);
+
+  VkCommandBufferBeginInfo cmdBeginInfo = { 0 };
+  cmdBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+  cmdBeginInfo.pNext = NULL;
+  cmdBeginInfo.flags = 0;
+
+  OVK_ATTEMPT(
+    vkBeginCommandBuffer(cmd, &cmdBeginInfo),
+    {
+      OPAL_LOG_VK_ERROR("Failed to begin command buffer : %u\n", index);
+      return Opal_Failure_Vk_Render;
+    });
+
+  for (uint32_t i = 0; i < _data->renderpassCount; i++)
+  {
+    OpalRenderpass_T orp = *_data->renderpasses[i];
+    OvkRenderpass_T vrp = _data->renderpasses[i]->backend.vulkan;
+
+    VkClearValue* clearValues = (VkClearValue*)orp.clearValues;
+
+    VkRenderPassBeginInfo rpBeginInfo = { 0 };
+    rpBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+    rpBeginInfo.pNext = NULL;
+    rpBeginInfo.clearValueCount = orp.attachmentCount;
+    rpBeginInfo.pClearValues = clearValues;
+    rpBeginInfo.renderArea.extent = (VkExtent2D){orp.extents.width, orp.extents.height};
+    rpBeginInfo.renderArea.offset = (VkOffset2D){ 0, 0 };
+    rpBeginInfo.renderPass = vrp.renderpass;
+    rpBeginInfo.framebuffer = vrp.framebuffers[index % vrp.framebufferCount];
+
+    vkCmdBeginRenderPass(cmd, &rpBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+
+    //OPAL_ATTEMPT(orp.Render(), return Opal_Failure);
+    tmprenderpassrender(_state, _frame, _data, cmd);
+
+    vkCmdEndRenderPass(cmd);
+  }
 
   OVK_ATTEMPT(
     vkEndCommandBuffer(cmd),

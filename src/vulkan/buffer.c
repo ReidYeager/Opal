@@ -170,28 +170,6 @@ OpalResult TransferBufferData(OvkState_T* _state, OpalBuffer _src, OpalBuffer _d
 }
 
 // NOTE : Will eventually want to separate quick cpu-visible buffer updates
-//OpalVkBufferPushDataCpuVisible(OpalState _oState, OpalBuffer _oBuffer, void* _data)
-//{
-//  OvkState_T* state = (OvkState_T*)_oState->backend.state;
-//  OvkBuffer_T* buffer = &_oBuffer->backend.vulkan;
-//
-//  // Copy data =====
-//  void* mappedMemory;
-//  OVK_ATTEMPT(
-//    vkMapMemory(
-//      state->device,
-//      _oBuffer->backend.vulkan.memory,
-//      0,
-//      _oBuffer->size,
-//      0,
-//      &mappedMemory),
-//    return Opal_Failure_Vk_Misc);
-//  LapisMemCopy(_data, mappedMemory, _oBuffer->size);
-//  vkUnmapMemory(state->device, _oBuffer->backend.vulkan.memory);
-//
-//  return Opal_Success;
-//}
-
 OpalResult OpalVkBufferPushData(OpalState _oState, OpalBuffer _oBuffer, void* _data)
 {
   OvkState_T* state = (OvkState_T*)_oState->backend.state;

@@ -8,8 +8,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-OpalImage depthImage;
-
 VkFormat OpalFormatToVkFormat(OpalFormat _inFormat)
 {
   switch (_inFormat)
@@ -612,6 +610,7 @@ OpalResult OvkCreateRenderpass(
   VkAttachmentReference* attachmentRefs =
     (VkAttachmentReference*)LapisMemAllocZero(
       sizeof(VkAttachmentReference) * _createInfo.attachmentCount);
+  uint32_t depthAttachmentIndex = ~0u;
 
   for (int i = 0; i < _createInfo.attachmentCount; i++)
   {
@@ -636,6 +635,7 @@ OpalResult OvkCreateRenderpass(
     } break;
     case Ovk_Attachment_Usage_Depth:
     {
+      depthAttachmentIndex = i;
       attachmentRefs[i].layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
       attachments[i].finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
     } break;
@@ -674,7 +674,7 @@ OpalResult OvkCreateRenderpass(
   subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
   subpass.colorAttachmentCount = 1;
   subpass.pColorAttachments = &attachmentRefs[1];
-  subpass.pDepthStencilAttachment = &attachmentRefs[0];
+  subpass.pDepthStencilAttachment = &attachmentRefs[depthAttachmentIndex];
   subpass.inputAttachmentCount = 0;
   subpass.pInputAttachments = NULL;
   subpass.preserveAttachmentCount = 0;
@@ -741,9 +741,10 @@ OpalResult OpalVkCreateRenderpassAndFramebuffers(
   OpalRenderpass _outRenderpass)
 {
   OvkState_T* state = (OvkState_T*)_oState->backend.state;
+  OvkRenderpass_T* outOvkRp = &_outRenderpass->backend.vulkan;
 
-  uint32_t fbCount = _createInfo.rendersToFramebuffer ? state->swapchain.imageCount : 1;
-  uint32_t attachmentCount = _createInfo.imageCount + (_createInfo.rendersToFramebuffer ? 1 : 0);
+  uint32_t fbCount = _createInfo.rendersToSwapchain ? state->swapchain.imageCount : 1;
+  uint32_t attachmentCount = _createInfo.imageCount + (_createInfo.rendersToSwapchain ? 1 : 0);
   VkImageView* views = (VkImageView*)LapisMemAllocZero(sizeof(VkImageView) * attachmentCount);
 
   // Renderpass =====
@@ -761,7 +762,7 @@ OpalResult OpalVkCreateRenderpassAndFramebuffers(
 
     views[i] = _createInfo.images[i]->backend.vulkan.view;
   }
-  if (_createInfo.rendersToFramebuffer)
+  if (_createInfo.rendersToSwapchain)
   {
     rpInfo.attachments[attachmentCount - 1].dataFormat = state->swapchain.format.format;
     rpInfo.attachments[attachmentCount - 1].shouldStoreReneredData = 1;
@@ -771,24 +772,23 @@ OpalResult OpalVkCreateRenderpassAndFramebuffers(
 
   rpInfo.Render = _createInfo.RenderFunction;
 
-  OvkCreateRenderpass(state, rpInfo, &_outRenderpass->backend.vulkan.renderpass);
+  OvkCreateRenderpass(state, rpInfo, &outOvkRp->renderpass);
 
   // Framebuffers =====
 
-  _outRenderpass->backend.vulkan.framebufferCount = fbCount;
-  _outRenderpass->backend.vulkan.framebuffers =
-    (VkFramebuffer*)LapisMemAlloc(sizeof(VkFramebuffer) * fbCount);
+  outOvkRp->framebufferCount = fbCount;
+  outOvkRp->framebuffers = (VkFramebuffer*)LapisMemAlloc(sizeof(VkFramebuffer) * fbCount);
 
   for (uint32_t i = 0; i < fbCount; i++)
   {
     views[_createInfo.imageCount] = state->swapchain.imageViews[i];
     OvkCreateFramebuffer(
       state,
-      (VkExtent2D){_createInfo.images[0]->width, _createInfo.images[0]->height},
-      _outRenderpass->backend.vulkan.renderpass,
+      (VkExtent2D){_createInfo.images[0]->extents.width, _createInfo.images[0]->extents.height},
+      outOvkRp->renderpass,
       attachmentCount,
       views,
-      & _outRenderpass->backend.vulkan.framebuffers[i]);
+      &outOvkRp->framebuffers[i]);
   }
 
   return Opal_Success;
@@ -967,21 +967,6 @@ OpalResult OpalVkInitState(OpalCreateStateInfo _createInfo, OpalState _oState)
       return Opal_Failure_Vk_Init;
     });
 
-  OpalCreateImageInfo depthImageInfo = { 0 };
-  depthImageInfo.height = state->swapchain.extents.height;
-  depthImageInfo.width = state->swapchain.extents.width;
-  depthImageInfo.pixelFormat = Opal_Format_24_Bit_Depth_8_Bit_Stencil;
-  depthImageInfo.usage = Opal_Image_Usage_Depth_Stencil;
-  depthImageInfo.pixelData = NULL;
-  OpalCreateImage(_oState, depthImageInfo, &depthImage);
-
-  //OPAL_ATTEMPT(
-  //  CreateDepthBuffers(state),
-  //  {
-  //    OPAL_LOG_VK_ERROR("Failed to create depth buffers\n");
-  //    return Opal_Failure_Vk_Init;
-  //  });
-
   // TODO : Modify frames objects to accommodate headless rendering
   OPAL_ATTEMPT(
     CreateSyncObjects(state),
@@ -997,82 +982,6 @@ OpalResult OpalVkInitState(OpalCreateStateInfo _createInfo, OpalState _oState)
       return Opal_Failure_Vk_Init;
     });
 
-  /*
-  OvkCreateRenderpassInfo rpCreateInfo = { 0 };
-  rpCreateInfo.Render = NULL;
-  rpCreateInfo.attachmentCount = 2;
-  rpCreateInfo.attachments =
-    (OvkRenderpassAttachment*)LapisMemAllocZero(
-      sizeof(OvkRenderpassAttachment) * rpCreateInfo.attachmentCount);
-
-  // Swapchain
-  rpCreateInfo.attachments[0].dataFormat = state->swapchain.format.format;
-  rpCreateInfo.attachments[0].loadOperation = Ovk_Attachment_LoadOp_Clear;
-  rpCreateInfo.attachments[0].shouldStoreReneredData = 1;
-  rpCreateInfo.attachments[0].usage = Ovk_Attachment_Usage_Presented;
-  // Depth
-  rpCreateInfo.attachments[1].dataFormat = state->swapchain.depthFormat;
-  rpCreateInfo.attachments[1].loadOperation = Ovk_Attachment_LoadOp_Clear;
-  rpCreateInfo.attachments[1].shouldStoreReneredData = 0;
-  rpCreateInfo.attachments[1].usage = Ovk_Attachment_Usage_Depth;
-
-  OPAL_ATTEMPT(
-    OvkCreateRenderpass(state, rpCreateInfo, &state->renderpass),
-    {
-      OPAL_LOG_VK_ERROR("Failed to create renderpass\n");
-      return Opal_Failure_Vk_Init;
-    });
-
-  // Framebuffers =====
-  const uint32_t framebufferCount = state->swapchain.imageCount;
-  const uint32_t viewsPerFramebuffer = 2; // Swapchain, depth
-
-  state->framebuffers = (VkFramebuffer*)LapisMemAlloc(sizeof(VkFramebuffer) * framebufferCount);
-
-  VkImageView* viewAttachments =
-    (VkImageView*)LapisMemAlloc(sizeof(VkImageView) * framebufferCount * viewsPerFramebuffer);
-
-  for (uint32_t i = 0; i < framebufferCount; i++)
-  {
-    viewAttachments[i * viewsPerFramebuffer + 0] = state->swapchain.imageViews[i];
-    viewAttachments[i * viewsPerFramebuffer + 1] = state->swapchain.depthImageViews[i];
-    // Add depth, etc. here
-  }
-
-  for (uint32_t i = 0; i < framebufferCount; i++)
-  {
-    OVK_ATTEMPT(
-      OvkCreateFramebuffer(
-        state,
-        state->swapchain.extents,
-        state->renderpass,
-        viewsPerFramebuffer,
-        (viewAttachments + (i * viewsPerFramebuffer)),
-        (state->framebuffers + i)),
-      {
-        OPAL_LOG_VK_ERROR("Failed to create framebuffer %d\n", i);
-        return Opal_Failure_Vk_Init;
-      });
-  }
-  */
-
-  OpalRenderpassAttachment attachment = { 0 };
-  attachment.loadOperation = Opal_Attachment_LoadOp_Clear;
-  attachment.usage = Opal_Attachment_Usage_Depth;
-  attachment.shouldStoreReneredData = 0;
-
-  OpalCreateRenderpassInfo rpinfo = { 0 };
-  rpinfo.imageCount = 1;
-  rpinfo.images = &depthImage;
-  rpinfo.imageAttachments = &attachment;
-  rpinfo.RenderFunction = NULL;
-  rpinfo.rendersToFramebuffer = 1;
-
-  OpalRenderpass rp = { 0 };
-  OpalCreateRenderpass(_oState, rpinfo, &rp);
-  state->renderpass = rp->backend.vulkan.renderpass;
-  state->framebuffers = rp->backend.vulkan.framebuffers;
-
   OPAL_LOG_VK(Lapis_Console_Info, "Init complete\n");
 
   return Opal_Success;
@@ -1084,13 +993,13 @@ void OpalVkShutdownState(OpalState _oState)
 
   vkDeviceWaitIdle(state->device);
 
-  for (uint32_t i = 0; i < state->swapchain.imageCount; i++)
-  {
-    vkDestroyFramebuffer(state->device, state->framebuffers[i], NULL);
-  }
-  LapisMemFree(state->framebuffers);
+  //for (uint32_t i = 0; i < state->swapchain.imageCount; i++)
+  //{
+  //  vkDestroyFramebuffer(state->device, state->framebuffers[i], NULL);
+  //}
+  //LapisMemFree(state->framebuffers);
 
-  vkDestroyRenderPass(state->device, state->renderpass, NULL);
+  //vkDestroyRenderPass(state->device, state->renderpass, NULL);
 
   for (uint32_t i = 0; i < state->frameSlotCount; i++)
   {
@@ -1135,8 +1044,7 @@ OpalResult OpalVkRenderFrame(OpalState _oState, const OpalFrameData* _oFrameData
   // Setup =====
 
   OVK_ATTEMPT(
-    // 16 ms timeout
-    vkWaitForFences(state->device, 1, &frameSlot->fenceFrameAvailable, VK_TRUE, 16000000),
+    vkWaitForFences(state->device, 1, &frameSlot->fenceFrameAvailable, VK_TRUE, UINT64_MAX),
     return Opal_Failure_Vk_Render);
 
   OVK_ATTEMPT(
@@ -1193,4 +1101,11 @@ OpalResult OpalVkRenderFrame(OpalState _oState, const OpalFrameData* _oFrameData
   state->currentFrameSlotIndex = (state->currentFrameSlotIndex + 1) % maxFlightSlotCount;
 
   return Opal_Success;
+}
+
+OpalExtents2D OpalVkGetSwapchainExtents(OpalState _oState)
+{
+  OvkState_T* state = (OvkState_T*)_oState->backend.state;
+  OpalExtents2D out = {state->swapchain.extents.width, state->swapchain.extents.height};
+  return out;
 }

@@ -12,8 +12,7 @@ OpalResult OpalCreateImage(OpalState _state, OpalCreateImageInfo _createInfo, Op
       return Opal_Failure_Backend;
     });
 
-  newImage->width = _createInfo.width;
-  newImage->height = _createInfo.height;
+  newImage->extents = _createInfo.extents;
 
   *_outImage = newImage;
   return Opal_Success;

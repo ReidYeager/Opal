@@ -91,8 +91,6 @@ typedef struct OvkRenderpass_T {
   // Will be one for each swapchain image if shoulRenderToFramebuffer, otherwise only one
   VkFramebuffer* framebuffers;
   uint32_t framebufferCount;
-
-  OpalResult(*Render)();
 } OvkRenderpass_T;
 
 // =====
@@ -160,9 +158,6 @@ typedef struct OvkState_T
   uint32_t currentFrameSlotIndex;
   uint32_t frameSlotCount;
   OvkFrame_T* frameSlots;
-
-  VkRenderPass renderpass;
-  VkFramebuffer* framebuffers;
 
   VkDescriptorSetLayout objectSetLayout;
 } OvkState_T;

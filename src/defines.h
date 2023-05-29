@@ -74,8 +74,7 @@ typedef struct OpalBuffer_T
 
 typedef struct OpalImage_T
 {
-  uint32_t width;
-  uint32_t height;
+  OpalExtents2D extents;
 
   union {
     void* null;
@@ -137,6 +136,11 @@ typedef struct OpalRenderpass_T
   {
     OvkRenderpass_T vulkan;
   } backend;
+
+  OpalExtents2D extents;
+  uint32_t attachmentCount;
+  OpalRenderpassAttachmentClearValues* clearValues;
+  OpalResult(*Render)();
 } OpalRenderpass_T;
 
 // =====
@@ -153,6 +157,9 @@ typedef struct OpalState_T
     void* state;
     void(*ShutdownState)(OpalState _oState);
     OpalResult(*RenderFrame)(OpalState _oState, const OpalFrameData* _frameData);
+
+    OpalExtents2D(*GetSwapchainExtents)(OpalState _oState);
+
     // Buffer =====
     OpalResult(*CreateBuffer)(
       OpalState _oState,
