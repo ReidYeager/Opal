@@ -40,7 +40,6 @@ OpalResult CreateMaterialDescriptorSetLayout(
   VkDescriptorSetLayoutBinding newBinding = { 0 };
   newBinding.descriptorCount = 1;
   newBinding.pImmutableSamplers = NULL;
-  newBinding.stageFlags = VK_SHADER_STAGE_ALL_GRAPHICS;
 
   for (uint32_t i = 0; i < _createInfo.shaderArgCount; i++)
   {
@@ -51,10 +50,17 @@ OpalResult CreateMaterialDescriptorSetLayout(
     case Opal_Shader_Arg_Uniform_Buffer:
     {
       newBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+      newBinding.stageFlags = VK_SHADER_STAGE_ALL_GRAPHICS;
     } break;
     case Opal_Shader_Arg_Samped_Image:
     {
       newBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+      newBinding.stageFlags = VK_SHADER_STAGE_ALL_GRAPHICS;
+    } break;
+    case Opal_Shader_Arg_Subpass_Input:
+    {
+      newBinding.descriptorType = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT;
+      newBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
     } break;
     default:
     {
@@ -316,7 +322,7 @@ OpalResult CreatePipeline(
 
   createInfo.layout = _oMaterial->pipelineLayout;
   createInfo.renderPass = _createInfo.renderpass->backend.vulkan.renderpass;
-  createInfo.subpass = 0;
+  createInfo.subpass = _createInfo.subpassIndex;
 
   OVK_ATTEMPT(
     vkCreateGraphicsPipelines(_state->device, NULL, 1, &createInfo, NULL, &_oMaterial->pipeline),
@@ -362,7 +368,7 @@ OpalResult OvkUpdateShaderArguments(
     {
     case Opal_Shader_Arg_Uniform_Buffer:
     {
-      newBuffer.buffer = argI.buffer->backend.vulkan.buffer;
+      newBuffer.buffer = argI.inputValue.buffer->backend.vulkan.buffer;
       newBuffer.offset = 0;
       newBuffer.range = VK_WHOLE_SIZE;
       bufferInfos[bufferInfoCount] = newBuffer;
@@ -375,12 +381,25 @@ OpalResult OvkUpdateShaderArguments(
     } break;
     case Opal_Shader_Arg_Samped_Image:
     {
-      newImage.sampler = argI.image->backend.vulkan.sampler;
-      newImage.imageView = argI.image->backend.vulkan.view;
-      newImage.imageLayout = argI.image->backend.vulkan.layout;
+      newImage.sampler = argI.inputValue.image->backend.vulkan.sampler;
+      newImage.imageView = argI.inputValue.image->backend.vulkan.view;
+      newImage.imageLayout = argI.inputValue.image->backend.vulkan.layout;
       imageInfos[imageInfoCount] = newImage;
 
       newWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+      newWrite.pBufferInfo = NULL;
+      newWrite.pImageInfo = &imageInfos[imageInfoCount];
+
+      imageInfoCount++;
+    } break;
+    case Opal_Shader_Arg_Subpass_Input:
+    {
+      newImage.sampler = VK_NULL_HANDLE;
+      newImage.imageView = argI.inputValue.inputAttachment.image->backend.vulkan.view;
+      newImage.imageLayout = argI.inputValue.inputAttachment.image->backend.vulkan.layout;
+      imageInfos[imageInfoCount] = newImage;
+
+      newWrite.descriptorType = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT;
       newWrite.pBufferInfo = NULL;
       newWrite.pImageInfo = &imageInfos[imageInfoCount];
 

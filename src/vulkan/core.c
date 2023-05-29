@@ -669,22 +669,53 @@ OpalResult OvkCreateRenderpass(
   }
 
   // Subpasses =====
-  VkSubpassDescription subpass = { 0 };
-  subpass.flags = 0;
-  subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-  subpass.colorAttachmentCount = 1;
-  subpass.pColorAttachments = &attachmentRefs[1];
-  subpass.pDepthStencilAttachment = &attachmentRefs[depthAttachmentIndex];
-  subpass.inputAttachmentCount = 0;
-  subpass.pInputAttachments = NULL;
-  subpass.preserveAttachmentCount = 0;
-  subpass.pPreserveAttachments = NULL;
-  subpass.pResolveAttachments = NULL;
+
+  VkSubpassDescription* subpasses = (VkSubpassDescription*)LapisMemAlloc(sizeof(VkSubpassDescription) * _createInfo.subpassCount);
+
+  for (uint32_t subpassIndex = 0; subpassIndex < _createInfo.subpassCount; subpassIndex++)
+  {
+    OpalRenderpassSubpass inSub = _createInfo.subpasses[subpassIndex];
+
+    VkAttachmentReference* colorAttachments = (VkAttachmentReference*)LapisMemAlloc( sizeof(VkAttachmentReference) * inSub.colorAttachmentCount);
+    for (uint32_t i = 0; i < inSub.colorAttachmentCount; i++)
+    {
+      colorAttachments[i] = attachmentRefs[inSub.pColorAttachmentIndices[i]];
+    }
+
+    VkAttachmentReference* inputAttachments = (VkAttachmentReference*)LapisMemAlloc( sizeof(VkAttachmentReference) * inSub.inputAttachmentCount);
+    for (uint32_t i = 0; i < inSub.inputAttachmentCount; i++)
+    {
+      inputAttachments[i] = attachmentRefs[inSub.pInputAttachmentIndices[i]];
+    }
+
+    VkSubpassDescription sub = { 0 };
+    sub.flags = 0;
+    sub.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+    if (_createInfo.subpasses[subpassIndex].depthAttachmentIndex != ~0u)
+    {
+      sub.pDepthStencilAttachment = &attachmentRefs[_createInfo.subpasses[subpassIndex].depthAttachmentIndex];
+    }
+    sub.colorAttachmentCount = inSub.colorAttachmentCount;
+    sub.pColorAttachments = colorAttachments;
+    sub.inputAttachmentCount = inSub.inputAttachmentCount;
+    sub.pInputAttachments = inputAttachments;
+    sub.preserveAttachmentCount = inSub.preserveAttachmentCount;
+    sub.pPreserveAttachments = inSub.pPreserveAttachmentIndices;
+    sub.pResolveAttachments = NULL;
+
+    subpasses[subpassIndex] = sub;
+  }
 
   // Dependencies =====
   // None needed
   VkSubpassDependency dep = { 0 };
-  //dep.
+  dep.srcSubpass = 0;
+  dep.dstSubpass = 1;
+  dep.srcStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+  dep.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+  dep.srcAccessMask = VK_ACCESS_MEMORY_READ_BIT;
+  dep.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+  dep.dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
 
 
   // Creation =====
@@ -694,10 +725,10 @@ OpalResult OvkCreateRenderpass(
   createInfo.flags = 0;
   createInfo.attachmentCount = _createInfo.attachmentCount;
   createInfo.pAttachments = attachments;
-  createInfo.subpassCount = 1;
-  createInfo.pSubpasses = &subpass;
-  createInfo.dependencyCount = 0;
-  createInfo.pDependencies = NULL;
+  createInfo.subpassCount = _createInfo.subpassCount;
+  createInfo.pSubpasses = subpasses;
+  createInfo.dependencyCount = 1;
+  createInfo.pDependencies = &dep;
 
   OVK_ATTEMPT(
     vkCreateRenderPass(_state->device, &createInfo, NULL, _outRenderpass),
@@ -752,6 +783,8 @@ OpalResult OpalVkCreateRenderpassAndFramebuffers(
   OvkCreateRenderpassInfo rpInfo = { 0 };
   rpInfo.attachmentCount = attachmentCount;
   rpInfo.attachments = (OvkRenderpassAttachment*)LapisMemAllocZero(sizeof(OvkRenderpassAttachment) * attachmentCount);
+  rpInfo.subpassCount = _createInfo.subpassCount;
+  rpInfo.subpasses = _createInfo.subpasses;
 
   for (uint32_t i = 0; i < _createInfo.imageCount; i++)
   {
@@ -768,9 +801,14 @@ OpalResult OpalVkCreateRenderpassAndFramebuffers(
     rpInfo.attachments[attachmentCount - 1].shouldStoreReneredData = 1;
     rpInfo.attachments[attachmentCount - 1].loadOperation = Ovk_Attachment_LoadOp_Clear;
     rpInfo.attachments[attachmentCount - 1].usage = Ovk_Attachment_Usage_Presented;
-  }
 
-  rpInfo.Render = _createInfo.RenderFunction;
+    OpalRenderpassSubpass* finalSub = &_createInfo.subpasses[_createInfo.subpassCount - 1];
+    uint32_t colorCount = finalSub->colorAttachmentCount;
+    uint32_t** colorIndices = &finalSub->pColorAttachmentIndices;
+    *colorIndices = (uint32_t*)LapisMemRealloc(*colorIndices, 4 * colorCount + 1);
+    *colorIndices[colorCount] = _createInfo.imageCount;
+    finalSub->colorAttachmentCount++;
+  }
 
   OvkCreateRenderpass(state, rpInfo, &outOvkRp->renderpass);
 

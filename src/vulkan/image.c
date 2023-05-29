@@ -7,7 +7,9 @@ VkImageUsageFlags OpalImageUsageToVkImageUsage(OpalImageUsageFlags _usage)
 #define OiuToVk(opal, vk) ((vk) * ((_usage & (opal)) != 0))
   VkImageUsageFlags finalUsage =
     OiuToVk(Opal_Image_Usage_Shader_Sampled, VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT)
-    | OiuToVk(Opal_Image_Usage_Depth_Stencil, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT);
+    | OiuToVk(Opal_Image_Usage_Color_Attachment, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT)
+    | OiuToVk(Opal_Image_Usage_Depth_Attachment, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT)
+    | OiuToVk(Opal_Image_Usage_Input_Attachment, VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT);
 #undef OiuToVk
 
   return finalUsage;
@@ -18,7 +20,9 @@ VkImageAspectFlags OpalImageUsageToVkImageAspect(OpalImageUsageFlags _usage)
 #define OiuToVk(opal, vk) ((vk) * ((_usage & (opal)) != 0))
   VkImageAspectFlags finalAspect =
     OiuToVk(Opal_Image_Usage_Shader_Sampled, VK_IMAGE_ASPECT_COLOR_BIT)
-    | OiuToVk(Opal_Image_Usage_Depth_Stencil, VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT);
+    | OiuToVk(Opal_Image_Usage_Color_Attachment, VK_IMAGE_ASPECT_COLOR_BIT)
+    | OiuToVk(Opal_Image_Usage_Depth_Attachment, VK_IMAGE_ASPECT_DEPTH_BIT)
+    | OiuToVk(Opal_Image_Usage_Stencil_Attachment, VK_IMAGE_ASPECT_STENCIL_BIT);
 #undef OiuToVk
 
   return finalAspect;
@@ -316,7 +320,21 @@ OpalResult OpalVkCreateImage(OpalState _oState, OpalCreateImageInfo _createInfo,
     return Opal_Failure_Vk_Create);
 
   OPAL_ATTEMPT(OvkCreateImageSampler(state, &image->sampler), return Opal_Failure_Vk_Create);
-  image->layout = VK_IMAGE_LAYOUT_UNDEFINED;
+
+  //TransitionImageLayout(state, image, true, VK_SHADER_STAGE_ALL_GRAPHICS);
+
+  if (_createInfo.usage & Opal_Image_Usage_Color_Attachment)
+    //image->layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+    image->layout = VK_IMAGE_LAYOUT_ATTACHMENT_OPTIMAL;
+  else if (_createInfo.usage & Opal_Image_Usage_Depth_Attachment)
+    image->layout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_STENCIL_READ_ONLY_OPTIMAL;
+  else if (_createInfo.usage & Opal_Image_Usage_Stencil_Attachment)
+    image->layout = VK_IMAGE_LAYOUT_DEPTH_READ_ONLY_STENCIL_ATTACHMENT_OPTIMAL;
+  //else if (_createInfo.usage & Opal_Image_Usage_Shader_Sampled)
+  //  image->layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+  else
+    image->layout = VK_IMAGE_LAYOUT_UNDEFINED;
+
 
   if (_createInfo.pixelData != NULL)
   {

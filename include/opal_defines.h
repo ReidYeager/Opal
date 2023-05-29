@@ -90,7 +90,10 @@ typedef struct OpalImage_T* OpalImage;
 typedef enum OpalImageUsageBits
 {
   Opal_Image_Usage_Shader_Sampled = 0x01,
-  Opal_Image_Usage_Depth_Stencil = 0x02,
+  Opal_Image_Usage_Color_Attachment = 0x02,
+  Opal_Image_Usage_Depth_Attachment = 0x04,
+  Opal_Image_Usage_Stencil_Attachment = 0x08,
+  Opal_Image_Usage_Input_Attachment = 0x10
 } OpalImageUsageBits;
 typedef uint32_t OpalImageUsageFlags;
 
@@ -115,17 +118,25 @@ typedef enum OpalShaderArgTypes
 {
   Opal_Shader_Arg_Uniform_Buffer,
   Opal_Shader_Arg_Samped_Image,
+  Opal_Shader_Arg_Subpass_Input
 } OpalShaderArgTypes;
+
+typedef union OpalShaderArgInputTypeValues
+{
+  OpalBuffer buffer;
+  OpalImage image;
+  struct {
+    uint32_t attachmentIndex;
+    OpalImage image;
+  } inputAttachment;
+} OpalShaderArgInputTypeValues;
 
 typedef struct OpalShaderArg
 {
   uint32_t index;
 
   OpalShaderArgTypes type;
-  union {
-    OpalBuffer buffer;
-    OpalImage image;
-  };
+  OpalShaderArgInputTypeValues inputValue;
 } OpalShaderArg;
 
 // Shader =====
@@ -151,6 +162,7 @@ typedef struct OpalCreateMaterialInfo
   uint32_t shaderArgCount;
   OpalShaderArg* pShaderArgs;
   OpalRenderpass renderpass;
+  uint32_t subpassIndex;
 } OpalCreateMaterialInfo;
 
 // =====
@@ -216,10 +228,22 @@ typedef struct OpalRenderpassAttachment {
   OpalRenderpassAttachmentClearValues clearValues;
 } OpalRenderpassAttachment;
 
+typedef struct OpalRenderpassSubpass {
+  uint32_t depthAttachmentIndex;
+  uint32_t colorAttachmentCount;
+  uint32_t* pColorAttachmentIndices;
+  uint32_t inputAttachmentCount;
+  uint32_t* pInputAttachmentIndices;
+  uint32_t preserveAttachmentCount;
+  uint32_t* pPreserveAttachmentIndices;
+} OpalRenderpassSubpass;
+
 typedef struct OpalCreateRenderpassInfo {
   uint32_t imageCount;
   OpalImage* images;
   OpalRenderpassAttachment* imageAttachments;
+  uint32_t subpassCount;
+  OpalRenderpassSubpass* subpasses;
 
   OpalResult(*RenderFunction)();
   uint8_t rendersToSwapchain;

@@ -82,7 +82,8 @@ typedef struct OvkCreateRenderpassInfo {
   uint32_t attachmentCount;
   OvkRenderpassAttachment* attachments;
 
-  OpalResult(*Render)(); // Function called for user's custom command buffer recording
+  uint32_t subpassCount;
+  OpalRenderpassSubpass* subpasses;
 } OvkCreateRenderpassInfo;
 
 typedef struct OvkRenderpass_T {

@@ -18,7 +18,7 @@
 
 VkFormat OpalFormatToVkFormat(OpalFormat _inFormat);
 
-OpalExtents2D OpalVkGetSwapchainExtents();
+OpalExtents2D OpalVkGetSwapchainExtents(OpalState _oState);
 
 OpalResult OpalVkInitState(OpalCreateStateInfo _createInfo, OpalState _oState);
 void OpalVkShutdownState(OpalState _oState);

@@ -183,15 +183,14 @@ OpalResult OpalCreateRenderpass(
   OpalCreateRenderpassInfo _createInfo,
   OpalRenderpass* _outRenderpass)
 {
-  if (_createInfo.imageCount == 0)
+  if (_createInfo.imageCount == 0 || _createInfo.subpassCount == 0)
   {
-    OPAL_LOG_ERROR("Can not create a renderpass with 0 input images\n");
+    OPAL_LOG_ERROR("Failed to create renderpass. At least one image and subpass are rquired\n");
     return Opal_Failure;
   }
 
   OpalRenderpass newRenderpass = (OpalRenderpass)LapisMemAllocZero(sizeof(OpalRenderpass_T));
   OpalExtents2D matchExtents = _createInfo.images[0]->extents;
-  int32_t depthPosition = -1;
 
   newRenderpass->clearValues =
     (OpalRenderpassAttachmentClearValues*)LapisMemAllocZero(
@@ -209,42 +208,13 @@ OpalResult OpalCreateRenderpass(
       return Opal_Failure;
     }
 
-    if (_createInfo.imageAttachments[i].usage == Opal_Attachment_Usage_Depth)
-    {
-      if (depthPosition != -1)
-      {
-        LapisMemFree(newRenderpass->clearValues);
-        LapisMemFree(newRenderpass);
-        OPAL_LOG_ERROR("Failed to create renderpass. Only one attachment may be used as a depth buffer\n");
-        return Opal_Failure;
-      }
-
-      depthPosition = i;
-    }
-
-    newRenderpass->clearValues[i] = _createInfo.imageAttachments->clearValues;
+    newRenderpass->clearValues[i] = _createInfo.imageAttachments[i].clearValues;
   }
   if (_createInfo.rendersToSwapchain)
   {
-    if (depthPosition > 0)
-    {
-      LapisMemFree(newRenderpass->clearValues);
-      LapisMemFree(newRenderpass);
-      OPAL_LOG_ERROR("Failed to create renderpass. Depth buffer must be attachment 0 when rendering to the swapchain\n");
-      return Opal_Failure;
-    }
     // TODO : Check if the swapchain extents match input
-
     newRenderpass->clearValues[_createInfo.imageCount].color =
       (OpalClearColor){ 0.4f, 0.2f, 0.6f, 0.0f };
-  }
-
-  if (depthPosition > 0 && depthPosition < (_createInfo.imageCount - 1))
-  {
-    LapisMemFree(newRenderpass->clearValues);
-    LapisMemFree(newRenderpass);
-    OPAL_LOG_ERROR("Failed to create renderpass. Depth buffer must either be the first or last attachment\n");
-    return Opal_Failure;
   }
 
   OPAL_ATTEMPT(

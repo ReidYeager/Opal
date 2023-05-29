@@ -59,7 +59,7 @@ void tmprenderpassrender(
 {
   const VkDeviceSize zeroDeviceSize = 0;
 
-  for (uint32_t renderIndex = 0; renderIndex < _data->renderableCount; renderIndex++)
+  for (uint32_t renderIndex = 0; renderIndex < _data->renderableCount - 1; renderIndex++)
   {
     vkCmdBindPipeline(
       cmd,
@@ -99,6 +99,49 @@ void tmprenderpassrender(
       VK_INDEX_TYPE_UINT32);
     vkCmdDrawIndexed(cmd, _data->renderables[renderIndex]->mesh->indexCount, 1, 0, 0, 0);
   }
+
+  vkCmdNextSubpass(cmd, VK_SUBPASS_CONTENTS_INLINE);
+
+  uint32_t renderIndex = _data->renderableCount - 1;
+
+  vkCmdBindPipeline(
+    cmd,
+    VK_PIPELINE_BIND_POINT_GRAPHICS,
+    _data->renderables[renderIndex]->material->backend.vulkan.pipeline);
+
+  vkCmdBindDescriptorSets(
+    cmd,
+    VK_PIPELINE_BIND_POINT_GRAPHICS,
+    _data->renderables[renderIndex]->material->backend.vulkan.pipelineLayout,
+    0,
+    1,
+    &_data->renderables[renderIndex]->material->backend.vulkan.descriptorSet,
+    0,
+    NULL);
+
+  vkCmdBindDescriptorSets(
+    cmd,
+    VK_PIPELINE_BIND_POINT_GRAPHICS,
+    _data->renderables[renderIndex]->material->backend.vulkan.pipelineLayout,
+    1,
+    1,
+    &_data->renderables[renderIndex]->backend.vulkan.descSet,
+    0,
+    NULL);
+
+  vkCmdBindVertexBuffers(
+    cmd,
+    0,
+    1,
+    &_data->renderables[renderIndex]->mesh->vertexBuffer->backend.vulkan.buffer,
+    &zeroDeviceSize);
+  vkCmdBindIndexBuffer(
+    cmd,
+    _data->renderables[renderIndex]->mesh->indexBuffer->backend.vulkan.buffer,
+    zeroDeviceSize,
+    VK_INDEX_TYPE_UINT32);
+  vkCmdDrawIndexed(cmd, _data->renderables[renderIndex]->mesh->indexCount, 1, 0, 0, 0);
+
 }
 
 OpalResult OvkRecordCommandBuffer(
