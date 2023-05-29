@@ -183,7 +183,8 @@ typedef enum OpalRenderpassAttachmentUsage {
 } OpalRenderpassAttachmentUsage;
 
 typedef struct OpalRenderpassAttachment {
-  OpalFormat dataFormat;
+  uint32_t imageCount;
+  OpalImage* images;
   OpalRenderpassAttachmentUsage usage;
 
   OpalRenderpassAttachmentLoadOp loadOperation;

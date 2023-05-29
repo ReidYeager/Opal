@@ -122,6 +122,14 @@ OpalResult OvkCreateRenderpass(
   OvkCreateRenderpassInfo _createInfo,
   VkRenderPass* _outRenderpass);
 
+OpalResult OvkCreateFramebuffer(
+  OvkState_T* _state,
+  VkExtent2D _extents,
+  VkRenderPass _renderpass,
+  uint32_t _viewCount,
+  VkImageView* _views,
+  VkFramebuffer* _outFramebuffer);
+
 // Commands =====
 OpalResult OvkBeginSingleUseCommand(OvkState_T* _state, VkCommandPool _pool, VkCommandBuffer* _cmd);
 OpalResult OvkEndSingleUseCommand(OvkState_T* _state, VkCommandPool _pool, VkQueue _queue, VkCommandBuffer _cmd);

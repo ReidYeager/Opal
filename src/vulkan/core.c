@@ -244,15 +244,16 @@ OpalResult CreateDevice(OvkState_T* _state)
   VkPhysicalDeviceFeatures enabledFeatures = { 0 };
 
   // Queues =====
-#define tmpDefineQueueCount 3
+  uint32_t queueCount = 3;
   const float queuePriority = 1.0f;
-  uint32_t queueIndices[tmpDefineQueueCount] = {
-    _state->gpu.queueIndexGraphics,
-    _state->gpu.queueIndexTransfer,
-    _state->gpu.queueIndexPresent
-  };
-  VkDeviceQueueCreateInfo queueCreateInfos[tmpDefineQueueCount] = { 0 };
-  for (uint32_t i = 0; i < tmpDefineQueueCount; i++)
+  uint32_t* queueIndices = (uint32_t*)LapisMemAllocZero(4 * queueCount);
+  queueIndices[0] = _state->gpu.queueIndexGraphics;
+  queueIndices[1] = _state->gpu.queueIndexTransfer;
+  queueIndices[2] = _state->gpu.queueIndexPresent;
+  VkDeviceQueueCreateInfo* queueCreateInfos =
+    (VkDeviceQueueCreateInfo*)LapisMemAllocZero(sizeof(VkDeviceQueueCreateInfo) * queueCount);
+
+  for (uint32_t i = 0; i < queueCount; i++)
   {
     queueCreateInfos[i].sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
     queueCreateInfos[i].pNext = NULL;
@@ -263,16 +264,14 @@ OpalResult CreateDevice(OvkState_T* _state)
   }
 
   // Extensions =====
-#define tmpDefineExtensionCount 1
-  const char* extensions[tmpDefineExtensionCount] = {
-    VK_KHR_SWAPCHAIN_EXTENSION_NAME
-  };
+  uint32_t extensionCount = 1;
+  const char** extensions = (const char**)LapisMemAllocZero(sizeof(char*) * extensionCount);
+  extensions[0] = VK_KHR_SWAPCHAIN_EXTENSION_NAME;
 
   // Layers =====
-#define tmpDefineLayerCount 1
-  const char* layers[tmpDefineLayerCount] = {
-    "VK_LAYER_KHRONOS_validation"
-  };
+  uint32_t layerCount = 1;
+  const char** layers = (const char**)LapisMemAllocZero(sizeof(char*) * layerCount);
+  layers[0] = "VK_LAYER_KHRONOS_validation";
 
   // Creation =====
   VkDeviceCreateInfo createInfo = { 0 };
@@ -280,11 +279,11 @@ OpalResult CreateDevice(OvkState_T* _state)
   createInfo.pNext = NULL;
   createInfo.flags = 0;
   createInfo.pEnabledFeatures = &enabledFeatures;
-  createInfo.queueCreateInfoCount = tmpDefineQueueCount;
+  createInfo.queueCreateInfoCount = queueCount;
   createInfo.pQueueCreateInfos = queueCreateInfos;
-  createInfo.enabledExtensionCount = tmpDefineExtensionCount;
+  createInfo.enabledExtensionCount = extensionCount;
   createInfo.ppEnabledExtensionNames = extensions;
-  createInfo.enabledLayerCount = tmpDefineLayerCount;
+  createInfo.enabledLayerCount = layerCount;
   createInfo.ppEnabledLayerNames = layers;
 
   OVK_ATTEMPT(
@@ -296,9 +295,6 @@ OpalResult CreateDevice(OvkState_T* _state)
   vkGetDeviceQueue(_state->device, _state->gpu.queueIndexPresent, 0, &_state->queuePresent);
 
   return Opal_Success;
-#undef tmpDefineQueueCount
-#undef tmpDefineExtensionCount
-#undef tmpDefineLayerCount
 }
 
 OpalResult CreateCommandPool(OvkState_T* _state, uint32_t _isTransient)
@@ -708,43 +704,31 @@ OpalResult OvkCreateRenderpass(
   return Opal_Success;
 }
 
-OpalResult CreateFramebuffers(OvkState_T* _state)
+OpalResult OvkCreateFramebuffer(
+  OvkState_T* _state,
+  VkExtent2D _extents,
+  VkRenderPass _renderpass,
+  uint32_t _viewCount,
+  VkImageView* _views,
+  VkFramebuffer* _outFramebuffer)
 {
-  const uint32_t framebufferCount = _state->swapchain.imageCount;
-  const uint32_t viewsPerFramebuffer = 2; // Swapchain, depth
-
-  _state->framebuffers = (VkFramebuffer*)LapisMemAlloc(sizeof(VkFramebuffer) * framebufferCount);
-
-  VkImageView* viewAttachments =
-    (VkImageView*)LapisMemAlloc(sizeof(VkImageView) * framebufferCount * viewsPerFramebuffer);
-
-  for (uint32_t i = 0; i < framebufferCount; i++)
-  {
-    viewAttachments[i * viewsPerFramebuffer + 0] = _state->swapchain.imageViews[i];
-    viewAttachments[i * viewsPerFramebuffer + 1] = _state->swapchain.depthImageViews[i];
-    // Add depth, etc. here
-  }
-
   VkFramebufferCreateInfo createInfo = { 0 };
   createInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
   createInfo.pNext = NULL;
   createInfo.flags = 0;
-  createInfo.width = _state->swapchain.extents.width;
-  createInfo.height = _state->swapchain.extents.height;
+  createInfo.width = _extents.width;
+  createInfo.height = _extents.height;
   createInfo.layers = 1;
-  createInfo.renderPass = _state->renderpass;
-  createInfo.attachmentCount = viewsPerFramebuffer;
+  createInfo.renderPass = _renderpass;
+  createInfo.attachmentCount = _viewCount;
+  createInfo.pAttachments = _views;
 
-  for (uint32_t i = 0; i < framebufferCount; i++)
-  {
-    createInfo.pAttachments = &viewAttachments[i * viewsPerFramebuffer];
-    OVK_ATTEMPT(
-      vkCreateFramebuffer(_state->device, &createInfo, NULL, &_state->framebuffers[i]),
-      {
-        OPAL_LOG_VK_ERROR("Failed to create framebuffer %d\n", i);
-        return Opal_Failure_Vk_Create;
-      });
-  }
+  OVK_ATTEMPT(
+    vkCreateFramebuffer(_state->device, &createInfo, NULL, _outFramebuffer),
+    {
+      OPAL_LOG_VK_ERROR("Failed to create framebuffer\n");
+      return Opal_Failure_Vk_Create;
+    });
 
   return Opal_Success;
 }
@@ -968,12 +952,37 @@ OpalResult OpalVkInitState(OpalCreateStateInfo _createInfo, OpalState _oState)
       return Opal_Failure_Vk_Init;
     });
 
-  OPAL_ATTEMPT(
-    CreateFramebuffers(state),
-    {
-      OPAL_LOG_VK_ERROR("Failed to create framebuffers\n");
-      return Opal_Failure_Vk_Init;
-    });
+  // Framebuffers =====
+  const uint32_t framebufferCount = state->swapchain.imageCount;
+  const uint32_t viewsPerFramebuffer = 2; // Swapchain, depth
+
+  state->framebuffers = (VkFramebuffer*)LapisMemAlloc(sizeof(VkFramebuffer) * framebufferCount);
+
+  VkImageView* viewAttachments =
+    (VkImageView*)LapisMemAlloc(sizeof(VkImageView) * framebufferCount * viewsPerFramebuffer);
+
+  for (uint32_t i = 0; i < framebufferCount; i++)
+  {
+    viewAttachments[i * viewsPerFramebuffer + 0] = state->swapchain.imageViews[i];
+    viewAttachments[i * viewsPerFramebuffer + 1] = state->swapchain.depthImageViews[i];
+    // Add depth, etc. here
+  }
+
+  for (uint32_t i = 0; i < framebufferCount; i++)
+  {
+    OVK_ATTEMPT(
+      OvkCreateFramebuffer(
+        state,
+        state->swapchain.extents,
+        state->renderpass,
+        viewsPerFramebuffer,
+        (viewAttachments + (i * viewsPerFramebuffer)),
+        (state->framebuffers + i)),
+      {
+        OPAL_LOG_VK_ERROR("Failed to create framebuffer %d\n", i);
+        return Opal_Failure_Vk_Init;
+      });
+  }
 
   OPAL_LOG_VK(Lapis_Console_Info, "Init complete\n");
 
