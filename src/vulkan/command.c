@@ -51,97 +51,62 @@ OpalResult OvkEndSingleUseCommand(
   return Opal_Success;
 }
 
-void tmprenderpassrender(
-  OvkState_T* _state,
-  OvkFrame_T* _frame,
-  const OpalFrameData* _data,
-  VkCommandBuffer cmd)
+VkCommandBuffer currentCommandBuffer;
+VkPipelineLayout currentlyBoundPipelineLayout;
+
+void OpalVkBindMaterial(OpalState _oState, OpalMaterial _material)
 {
-  const VkDeviceSize zeroDeviceSize = 0;
-
-  for (uint32_t renderIndex = 0; renderIndex < _data->renderableCount - 1; renderIndex++)
-  {
-    vkCmdBindPipeline(
-      cmd,
-      VK_PIPELINE_BIND_POINT_GRAPHICS,
-      _data->renderables[renderIndex]->material->backend.vulkan.pipeline);
-
-    vkCmdBindDescriptorSets(
-      cmd,
-      VK_PIPELINE_BIND_POINT_GRAPHICS,
-      _data->renderables[renderIndex]->material->backend.vulkan.pipelineLayout,
-      0,
-      1,
-      &_data->renderables[renderIndex]->material->backend.vulkan.descriptorSet,
-      0,
-      NULL);
-
-    vkCmdBindDescriptorSets(
-      cmd,
-      VK_PIPELINE_BIND_POINT_GRAPHICS,
-      _data->renderables[renderIndex]->material->backend.vulkan.pipelineLayout,
-      1,
-      1,
-      &_data->renderables[renderIndex]->backend.vulkan.descSet,
-      0,
-      NULL);
-
-    vkCmdBindVertexBuffers(
-      cmd,
-      0,
-      1,
-      &_data->renderables[renderIndex]->mesh->vertexBuffer->backend.vulkan.buffer,
-      &zeroDeviceSize);
-    vkCmdBindIndexBuffer(
-      cmd,
-      _data->renderables[renderIndex]->mesh->indexBuffer->backend.vulkan.buffer,
-      zeroDeviceSize,
-      VK_INDEX_TYPE_UINT32);
-    vkCmdDrawIndexed(cmd, _data->renderables[renderIndex]->mesh->indexCount, 1, 0, 0, 0);
-  }
-
-  vkCmdNextSubpass(cmd, VK_SUBPASS_CONTENTS_INLINE);
-
-  uint32_t renderIndex = _data->renderableCount - 1;
-
   vkCmdBindPipeline(
-    cmd,
+    currentCommandBuffer,
     VK_PIPELINE_BIND_POINT_GRAPHICS,
-    _data->renderables[renderIndex]->material->backend.vulkan.pipeline);
+    _material->backend.vulkan.pipeline);
+
+  currentlyBoundPipelineLayout = _material->backend.vulkan.pipelineLayout;
 
   vkCmdBindDescriptorSets(
-    cmd,
+    currentCommandBuffer,
     VK_PIPELINE_BIND_POINT_GRAPHICS,
-    _data->renderables[renderIndex]->material->backend.vulkan.pipelineLayout,
+    _material->backend.vulkan.pipelineLayout,
     0,
     1,
-    &_data->renderables[renderIndex]->material->backend.vulkan.descriptorSet,
+    &_material->backend.vulkan.descriptorSet,
     0,
     NULL);
+}
 
+void OpalVkBindRenderable(OpalState _oState, OpalRenderable _renderable)
+{
   vkCmdBindDescriptorSets(
-    cmd,
+    currentCommandBuffer,
     VK_PIPELINE_BIND_POINT_GRAPHICS,
-    _data->renderables[renderIndex]->material->backend.vulkan.pipelineLayout,
+    currentlyBoundPipelineLayout,
     1,
     1,
-    &_data->renderables[renderIndex]->backend.vulkan.descSet,
+    &_renderable->backend.vulkan.descSet,
     0,
     NULL);
+}
 
+void OpalVkRenderMesh(OpalMesh _mesh)
+{
+  static VkDeviceSize zeroDeviceSize = 0;
   vkCmdBindVertexBuffers(
-    cmd,
+    currentCommandBuffer,
     0,
     1,
-    &_data->renderables[renderIndex]->mesh->vertexBuffer->backend.vulkan.buffer,
+    &_mesh->vertexBuffer->backend.vulkan.buffer,
     &zeroDeviceSize);
   vkCmdBindIndexBuffer(
-    cmd,
-    _data->renderables[renderIndex]->mesh->indexBuffer->backend.vulkan.buffer,
+    currentCommandBuffer,
+    _mesh->indexBuffer->backend.vulkan.buffer,
     zeroDeviceSize,
     VK_INDEX_TYPE_UINT32);
-  vkCmdDrawIndexed(cmd, _data->renderables[renderIndex]->mesh->indexCount, 1, 0, 0, 0);
+  vkCmdDrawIndexed(currentCommandBuffer, _mesh->indexCount, 1, 0, 0, 0);
+}
 
+void OpalVkNextSubpass()
+{
+  vkCmdNextSubpass(currentCommandBuffer, VK_SUBPASS_CONTENTS_INLINE);
 }
 
 OpalResult OvkRecordCommandBuffer(
@@ -151,6 +116,7 @@ OpalResult OvkRecordCommandBuffer(
 {
   uint32_t index = _frame->swapchainImageIndex;
   VkCommandBuffer cmd = _frame->cmd;
+  currentCommandBuffer = cmd;
 
   vkResetCommandBuffer(cmd, 0);
 
@@ -185,8 +151,7 @@ OpalResult OvkRecordCommandBuffer(
 
     vkCmdBeginRenderPass(cmd, &rpBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-    //OPAL_ATTEMPT(orp.Render(), return Opal_Failure);
-    tmprenderpassrender(_state, _frame, _data, cmd);
+    OPAL_ATTEMPT(orp.Render(), return Opal_Failure);
 
     vkCmdEndRenderPass(cmd);
   }

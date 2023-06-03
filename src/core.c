@@ -117,10 +117,13 @@ OpalResult OpalCreateState(OpalCreateStateInfo _info,  OpalState* _outState)
     newState->backend.DestroyShader = OpalVkDestroyShader;
     newState->backend.CreateMaterial = OpalVkCreateMaterial;
     newState->backend.DestroyMaterial = OpalVkDestroyMaterial;
-    // Renderable =====
+    // Rendering =====
     newState->backend.CreateRenderable = OpalVkCreateRenderable;
     newState->backend.CreateRenderpass = OpalVkCreateRenderpassAndFramebuffers;
-
+    newState->backend.BindMaterial = OpalVkBindMaterial;
+    newState->backend.BindRenderable = OpalVkBindRenderable;
+    newState->backend.RenderMesh = OpalVkRenderMesh;
+    newState->backend.NextSubpass = OpalVkNextSubpass;
 
     OPAL_ATTEMPT(
       OpalVkInitState(_info, newState),
@@ -237,3 +240,24 @@ OpalExtents2D OpalGetSwapchainExtents(OpalState _state)
 {
   return _state->backend.GetSwapchainExtents(_state);
 }
+
+void OpalBindMaterial(OpalState _state, OpalMaterial _material)
+{
+  _state->backend.BindMaterial(_state, _material);
+}
+
+void OpalBindRenderable(OpalState _state, OpalRenderable _renderable)
+{
+  _state->backend.BindRenderable(_state, _renderable);
+}
+
+void OpalRenderMesh(OpalState _state, OpalMesh _mesh)
+{
+  _state->backend.RenderMesh(_mesh);
+}
+
+void OpalNextSubpass(OpalState _state)
+{
+  _state->backend.NextSubpass();
+}
+

@@ -228,6 +228,8 @@ typedef struct OpalRenderpassAttachment {
   OpalRenderpassAttachmentClearValues clearValues;
 } OpalRenderpassAttachment;
 
+#define OPAL_SUBPASS_NO_DEPTH ~0u
+
 typedef struct OpalRenderpassSubpass {
   uint32_t depthAttachmentIndex;
   uint32_t colorAttachmentCount;

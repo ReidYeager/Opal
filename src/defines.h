@@ -62,7 +62,8 @@ typedef struct OpalBuffer_T
   uint64_t size;
   uint64_t paddedSize;
 
-  union {
+  union
+  {
     void* null;
     OvkBuffer_T vulkan;
   } backend;
@@ -76,7 +77,8 @@ typedef struct OpalImage_T
 {
   OpalExtents2D extents;
 
-  union {
+  union
+  {
     void* null;
     OvkImage_T vulkan;
   } backend;
@@ -90,7 +92,8 @@ typedef struct OpalShader_T
 {
   OpalShaderTypes type;
 
-  union {
+  union
+  {
     void* null;
     OvkShader_T vulkan;
   } backend;
@@ -98,7 +101,8 @@ typedef struct OpalShader_T
 
 typedef struct OpalMaterial_T
 {
-  union {
+  union
+  {
     void* null;
     OvkMaterial_T vulkan;
   } backend;
@@ -114,6 +118,11 @@ typedef struct OpalMesh_T
   OpalBuffer vertexBuffer;
   uint32_t indexCount;
   OpalBuffer indexBuffer;
+
+  union
+  {
+    OvkMesh_T vulkan;
+  } backend;
 } OpalMesh_T;
 
 // =====
@@ -197,6 +206,11 @@ typedef struct OpalState_T
       OpalState _oState,
       OpalCreateRenderpassInfo _createInfo,
       OpalRenderpass _outRenderpass);
+
+    void(*BindMaterial)(OpalState _oState, OpalMaterial _material);
+    void(*BindRenderable)(OpalState _oState, OpalRenderable _renderable);
+    void(*RenderMesh)(OpalMesh _mesh);
+    void(*NextSubpass)();
   } backend;
 } OpalState_T;
 

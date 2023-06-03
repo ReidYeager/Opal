@@ -5,15 +5,20 @@
 #include "src/defines.h"
 #include "src/vulkan/vulkan_defines.h"
 
-#define OVK_ATTEMPT(fn, failureAction) \
-{                                      \
-  VkResult attemptResult = (fn);       \
-  if (attemptResult != VK_SUCCESS)     \
-  {                                    \
-    OPAL_LOG_ERROR("Vk attempt failed : Result %d : \"%s\"\n\t\"%s\" : %u\n", attemptResult, #fn, __FILE__, __LINE__); \
-    __debugbreak();                    \
-    failureAction;                     \
-  }                                    \
+#define OVK_ATTEMPT(fn, failureAction)                           \
+{                                                                \
+  VkResult attemptResult = (fn);                                 \
+  if (attemptResult != VK_SUCCESS)                               \
+  {                                                              \
+    OPAL_LOG_ERROR(                                              \
+      "Vk attempt failed : Result %d : \"%s\"\n\t\"%s\" : %u\n", \
+      attemptResult,                                             \
+      #fn,                                                       \
+      __FILE__,                                                  \
+      __LINE__);                                                 \
+    __debugbreak();                                              \
+    failureAction;                                               \
+  }                                                              \
 }
 
 VkFormat OpalFormatToVkFormat(OpalFormat _inFormat);
@@ -35,6 +40,7 @@ OpalResult OpalVkCreateDescriptorSet(
   VkDescriptorSet* _outSet);
 
 // Buffer =====
+
 OpalResult OpalVkCreateBuffer(
   OpalState _oState,
   OpalCreateBufferInfo _createInfo,
@@ -43,6 +49,7 @@ void OpalVkDestroyBuffer(OpalState _oState, OpalBuffer _oBuffer);
 OpalResult OpalVkBufferPushData(OpalState _oState, OpalBuffer _oBuffer, void* _data);
 
 // Image =====
+
 OpalResult OpalVkCreateImage(OpalState _state, OpalCreateImageInfo _createInfo, OpalImage _outImage);
 void OpalVkDestroyImage(OpalState _state, OpalImage _image);
 
@@ -76,6 +83,7 @@ OpalResult OvkCreateImageView(
 OpalResult OvkCreateImageSampler(OvkState_T* _state, VkSampler* _outSampler);
 
 // Material =====
+
 OpalResult OpalVkCreateShader(
   OpalState _oState,
   OpalCreateShaderInfo _createInfo,
@@ -88,6 +96,7 @@ OpalResult OpalVkCreateMaterial(
 void OpalVkDestroyMaterial(OpalState _oState, OpalMaterial _oMaterial);
 
 // Renderable =====
+
 OpalResult OpalVkCreateRenderable(
   OpalState _oState,
   OpalShaderArg* _objectArguments,
@@ -118,6 +127,11 @@ OpalResult OpalVkCreateRenderpassAndFramebuffers(
   OpalState _oState,
   OpalCreateRenderpassInfo _createInfo,
   OpalRenderpass _outRenderpass);
+
+void OpalVkBindMaterial(OpalState _oState, OpalMaterial _material);
+void OpalVkBindRenderable(OpalState _oState, OpalRenderable _renderable);
+void OpalVkRenderMesh(OpalMesh _mesh);
+void OpalVkNextSubpass();
 
 // Commands =====
 OpalResult OvkBeginSingleUseCommand(OvkState_T* _state, VkCommandPool _pool, VkCommandBuffer* _cmd);

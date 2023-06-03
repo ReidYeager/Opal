@@ -50,6 +50,15 @@ typedef struct OvkMaterial_T
 } OvkMaterial_T;
 
 // =====
+// Mesh
+// =====
+
+typedef struct OvkMesh_T
+{
+  VkDescriptorSet descriptorSet;
+} OvkMesh_T;
+
+// =====
 // Renderable
 // =====
 
