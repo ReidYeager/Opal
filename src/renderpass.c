@@ -1,15 +1,12 @@
 
-#include "defines.h"
+#include "src/common.h"
 
 uint8_t CompareExtents(OpalExtents2D _a, OpalExtents2D _b)
 {
   return (_a.width == _b.width) && (_a.height == _b.height);
 }
 
-OpalResult OpalCreateRenderpass(
-  OpalState _state,
-  OpalCreateRenderpassInfo _createInfo,
-  OpalRenderpass* _outRenderpass)
+OpalResult OpalCreateRenderpass(OpalState _state, OpalCreateRenderpassInfo _createInfo, OpalRenderpass* _outRenderpass)
 {
   if (_createInfo.imageCount == 0 || _createInfo.subpassCount == 0)
   {
@@ -20,7 +17,7 @@ OpalResult OpalCreateRenderpass(
   uint32_t totalImageCount = _createInfo.imageCount + usesSwapchain;
 
   OpalRenderpass newRenderpass = (OpalRenderpass)LapisMemAllocZero(sizeof(OpalRenderpass_T));
-  newRenderpass->clearValues = (OpalClearValue*)LapisMemAllocZero(sizeof(OpalClearValue) * totalImageCount);
+  newRenderpass->clearValues = LapisMemAllocZeroArray(OpalClearValue, totalImageCount);
 
   OpalExtents2D matchExtents = _createInfo.images[0]->extents;
   if (usesSwapchain)
@@ -44,12 +41,13 @@ OpalResult OpalCreateRenderpass(
 
   // Fill subpass info
   newRenderpass->subpassCount = _createInfo.subpassCount;
-  newRenderpass->subpasses = (OpalSubpass_T*)LapisMemAllocZero(sizeof(OpalSubpass_T) * _createInfo.subpassCount);
+  newRenderpass->subpasses = LapisMemAllocZeroArray(OpalSubpass_T, _createInfo.subpassCount);
   for (uint32_t i = 0; i < newRenderpass->subpassCount; i++)
   {
     newRenderpass->subpasses[i].colorAttachmentCount = _createInfo.subpasses[i].colorAttachmentCount;
-    if (i == newRenderpass->subpassCount - 1)
+    if (_createInfo.rendersToSwapchain && i == newRenderpass->subpassCount - 1)
     {
+      // Add color attachment for the swapchain
       newRenderpass->subpasses[i].colorAttachmentCount++;
     }
 
@@ -60,13 +58,12 @@ OpalResult OpalCreateRenderpass(
   newRenderpass->extents = matchExtents;
   newRenderpass->Render = _createInfo.RenderFunction;
 
-  OPAL_ATTEMPT(
-    _state->backend.CreateRenderpass(_state, _createInfo, newRenderpass),
-    {
-      LapisMemFree(newRenderpass->clearValues);
-      LapisMemFree(newRenderpass);
-      return Opal_Failure_Backend;
-    });
+  OPAL_ATTEMPT(_state->backend.CreateRenderpass(_state, _createInfo, newRenderpass),
+  {
+    LapisMemFree(newRenderpass->clearValues);
+    LapisMemFree(newRenderpass);
+    return Opal_Failure_Backend;
+  });
 
   *_outRenderpass = newRenderpass;
 
@@ -78,9 +75,9 @@ void OpalBindMaterial(OpalState _state, OpalMaterial _material)
   _state->backend.BindMaterial(_state, _material);
 }
 
-void OpalBindRenderable(OpalState _state, OpalRenderable _renderable)
+void OpalBindObject(OpalState _state, OpalObject _object)
 {
-  _state->backend.BindRenderable(_state, _renderable);
+  _state->backend.BindObject(_state, _object);
 }
 
 void OpalRenderMesh(OpalState _state, OpalMesh _mesh)

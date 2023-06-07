@@ -1,5 +1,5 @@
 
-#include "src/defines.h"
+#include "src/common.h"
 
 OpalResult OpalCreateBuffer(
   OpalState _state,

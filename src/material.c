@@ -1,10 +1,7 @@
 
-#include "src/defines.h"
+#include "src/common.h"
 
-OpalResult CreateSingleShader(
-  OpalState _state,
-  OpalCreateShaderInfo _createInfo,
-  OpalShader* _outShader)
+OpalResult CreateSingleShader(OpalState _state, OpalCreateShaderInfo _createInfo, OpalShader* _outShader)
 {
   if (_createInfo.sourceCode == NULL || _createInfo.sourceSize == 0)
   {
@@ -16,13 +13,11 @@ OpalResult CreateSingleShader(
 
   newShader->type = _createInfo.type;
 
-  OPAL_ATTEMPT(
-    _state->backend.CreateShader(_state, _createInfo, newShader),
-    {
-      OPAL_LOG_ERROR("Failed to create shader backend\n");
-      LapisMemFree(newShader);
-      return Opal_Failure_Backend;
-    });
+  OPAL_ATTEMPT(_state->backend.CreateShader(_state, _createInfo, newShader),
+  {
+    LapisMemFree(newShader);
+    return Opal_Failure_Backend;
+  });
 
   *_outShader = newShader;
   return Opal_Success;
@@ -36,8 +31,7 @@ OpalResult OpalCreateShaders(
 {
   for (uint32_t i = 0; i < _createCount; i++)
   {
-    OPAL_ATTEMPT(
-      CreateSingleShader(_state, _pCreateInfos[i], &_pOutShaders[i]),
+    OPAL_ATTEMPT(CreateSingleShader(_state, _pCreateInfos[i], &_pOutShaders[i]),
       return attemptResult);
   }
 
@@ -54,20 +48,15 @@ void OpalDestroyShader(OpalState _state, OpalShader* _shader)
   *_shader = NULL;
 }
 
-OpalResult OpalCreateMaterial(
-  OpalState _state,
-  OpalCreateMaterialInfo _createInfo,
-  OpalMaterial* _outMaterial)
+OpalResult OpalCreateMaterial(OpalState _state, OpalCreateMaterialInfo _createInfo, OpalMaterial* _outMaterial)
 {
   OpalMaterial_T* newMaterial = (OpalMaterial_T*)LapisMemAllocZero(sizeof(OpalMaterial_T));
 
-  OPAL_ATTEMPT(
-    _state->backend.CreateMaterial(_state, _createInfo, newMaterial),
-    {
-      OPAL_LOG_ERROR("Failed to create material backend\n");
-      LapisMemFree(newMaterial);
-      return Opal_Failure_Backend;
-    });
+  OPAL_ATTEMPT(_state->backend.CreateMaterial(_state, _createInfo, newMaterial),
+  {
+    LapisMemFree(newMaterial);
+    return Opal_Failure_Backend;
+  });
 
   *_outMaterial = newMaterial;
   return Opal_Success;

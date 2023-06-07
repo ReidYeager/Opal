@@ -283,7 +283,7 @@ typedef struct OpalCreateStateInfo
   OpalRenderpassAttachment* pCustomRenderpasses;
 } OpalCreateStateInfo;
 
-typedef struct OpalRenderable_T* OpalRenderable;
+typedef struct OpalObject_T* OpalObject;
 
 typedef struct OpalFrameData
 {
@@ -291,7 +291,7 @@ typedef struct OpalFrameData
   OpalRenderpass* renderpasses;
 
   uint32_t renderableCount;
-  OpalRenderable renderables[512];
+  OpalObject renderables[512];
 } OpalFrameData;
 
 #endif // !GEM_OPAL_DEFINES_H

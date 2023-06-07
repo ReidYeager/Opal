@@ -1,6 +1,6 @@
 
-#include "src/defines.h"
-#include "src/vulkan/vulkan.h"
+#include "src/common.h"
+#include "src/vulkan/vulkan_common.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -70,19 +70,15 @@ void PopulateVertexLayout(OpalState _state, OpalCreateStateInfo _createInfo)
   }
 
   stateLayout->elementCount = inLayout->elementCount;
-  stateLayout->pElementFormats = (OpalFormat*)LapisMemAlloc(
-    sizeof(OpalFormat) * stateLayout->elementCount);
-  LapisMemCopy(
-    inLayout->pElementFormats,
-    stateLayout->pElementFormats,
-    sizeof(OpalFormat) * stateLayout->elementCount);
+  stateLayout->pElementFormats = LapisMemAllocArray(OpalFormat, stateLayout->elementCount);
+  LapisMemCopy(inLayout->pElementFormats, stateLayout->pElementFormats, sizeof(OpalFormat) * stateLayout->elementCount);
 }
 
-OpalResult OpalCreateState(OpalCreateStateInfo _info,  OpalState* _outState)
+OpalResult OpalCreateState(OpalCreateStateInfo _createInfo,  OpalState* _outState)
 {
   if (_outState == NULL)
   {
-    printf("Opal CreateState input error\n");
+    OPAL_LOG_ERROR("Opal CreateState input error\n");
     return Opal_Unknown;
   }
 
@@ -90,52 +86,66 @@ OpalResult OpalCreateState(OpalCreateStateInfo _info,  OpalState* _outState)
 
   if (newState == NULL)
   {
-    printf("Opal state memory not allocated\n");
+    LapisMemFree(newState);
+    OPAL_LOG_ERROR("Opal state memory not allocated\n");
     return Opal_Unknown;
   }
 
-  PopulateVertexLayout(newState, _info);
-  newState->objectShaderArgsInfo = *_info.pCustomObjectShaderArgumentLayout;
+  PopulateVertexLayout(newState, _createInfo);
+  newState->objectShaderArgsInfo = *_createInfo.pCustomObjectShaderArgumentLayout;
 
-  switch (_info.api)
+  switch (_createInfo.api)
   {
   case Opal_Api_Vulkan:
   {
     // Define vulkan backend functions
-    newState->backend.ShutdownState = OpalVkShutdownState;
-    newState->backend.RenderFrame = OpalVkRenderFrame;
-    newState->backend.GetSwapchainExtents = OpalVkGetSwapchainExtents;
-    // Buffer =====
-    newState->backend.CreateBuffer = OpalVkCreateBuffer;
-    newState->backend.DestroyBuffer = OpalVkDestroyBuffer;
-    newState->backend.BufferPushData = OpalVkBufferPushData;
-    // Image =====
-    newState->backend.CreateImage = OpalVkCreateImage;
-    newState->backend.DestroyImage = OpalVkDestroyImage;
-    // Material =====
-    newState->backend.CreateShader = OpalVkCreateShader;
-    newState->backend.DestroyShader = OpalVkDestroyShader;
-    newState->backend.CreateMaterial = OpalVkCreateMaterial;
-    newState->backend.DestroyMaterial = OpalVkDestroyMaterial;
-    // Rendering =====
-    newState->backend.CreateRenderable = OpalVkCreateRenderable;
-    newState->backend.CreateRenderpass = OpalVkCreateRenderpassAndFramebuffers;
-    newState->backend.BindMaterial = OpalVkBindMaterial;
-    newState->backend.BindRenderable = OpalVkBindRenderable;
-    newState->backend.RenderMesh = OpalVkRenderMesh;
-    newState->backend.NextSubpass = OpalVkNextSubpass;
 
-    OPAL_ATTEMPT(
-      OpalVkInitState(_info, newState),
-      {
-        //OPAL_LOG_ERROR("Failed to initialize the Vulkan backend\n");
-        return Opal_Failure_Backend;
-      });
-  } break;
+    newState->backend.ShutdownState       = OpalVkShutdownState;
+    newState->backend.RenderFrame         = OpalVkRenderFrame;
+    newState->backend.GetSwapchainExtents = OpalVkGetSwapchainExtents;
+
+    // Buffer =====
+
+    newState->backend.CreateBuffer        = OpalVkCreateBuffer;
+    newState->backend.DestroyBuffer       = OpalVkDestroyBuffer;
+    newState->backend.BufferPushData      = OpalVkBufferPushData;
+
+    // Image =====
+
+    newState->backend.CreateImage         = OpalVkCreateImage;
+    newState->backend.DestroyImage        = OpalVkDestroyImage;
+
+    // Material =====
+
+    newState->backend.CreateShader        = OpalVkCreateShader;
+    newState->backend.DestroyShader       = OpalVkDestroyShader;
+
+    newState->backend.CreateMaterial      = OpalVkCreateMaterial;
+    newState->backend.DestroyMaterial     = OpalVkDestroyMaterial;
+
+    // Rendering =====
+
+    newState->backend.CreateRenderable    = OpalVkCreateObject;
+    newState->backend.CreateRenderpass    = OpalVkCreateRenderpassAndFramebuffers;
+
+    newState->backend.BindMaterial        = OpalVkBindMaterial;
+    newState->backend.BindObject      = OpalVkBindObject;
+    newState->backend.RenderMesh          = OpalVkRenderMesh;
+    newState->backend.NextSubpass         = OpalVkNextSubpass;
+
+    // Initialize
+
+    OPAL_ATTEMPT(OpalVkInitState(_createInfo, newState),
+    {
+      OPAL_LOG_ERROR("Failed to initialize the Vulkan backend\n");
+      return Opal_Failure_Backend;
+    });
+  } break; // Opal_Api_Vulkan
 
   default: break;
   }
-  newState->api = _info.api;
+
+  newState->api = _createInfo.api;
 
   *_outState = newState;
   return Opal_Success;
@@ -153,35 +163,29 @@ void OpalDestroyState(OpalState* _state)
 
 OpalResult OpalRenderFrame(OpalState _state, const OpalFrameData* _frameData)
 {
-  OPAL_ATTEMPT(
-    _state->backend.RenderFrame(_state, _frameData),
-    {
-      OPAL_LOG_ERROR("Failed to render the frame\n");
-      return Opal_Failure_Backend;
-    });
+  OPAL_ATTEMPT(_state->backend.RenderFrame(_state, _frameData),
+  {
+    OPAL_LOG_ERROR("Failed to render the frame\n");
+    return Opal_Failure_Backend;
+  });
 
-  return Opal_Success;
-}
-
-OpalResult OpalCreateRenderable(
-  OpalState _state,
-  OpalMesh _mesh,
-  OpalMaterial _material,
-  OpalShaderArg* _objectArguments,
-  OpalRenderable* _renderable)
-{
-  *_renderable = (OpalRenderable)LapisMemAllocZero(sizeof(OpalRenderable_T));
-
-  (*_renderable)->mesh = _mesh;
-  (*_renderable)->material = _material;
-
-  OPAL_ATTEMPT(
-    _state->backend.CreateRenderable(_state, _objectArguments, *_renderable),
-    return Opal_Failure_Backend);
   return Opal_Success;
 }
 
 OpalExtents2D OpalGetSwapchainExtents(OpalState _state)
 {
   return _state->backend.GetSwapchainExtents(_state);
+}
+
+OpalResult OpalCreateObject(OpalState _state, OpalShaderArg* _objectArguments, OpalObject* _renderable)
+{
+  *_renderable = (OpalObject_T*)LapisMemAllocZero(sizeof(OpalObject_T));
+
+  OPAL_ATTEMPT(_state->backend.CreateRenderable(_state, _objectArguments, *_renderable),
+  {
+    LapisMemFree(*_renderable);
+    return Opal_Failure_Backend;
+  });
+
+  return Opal_Success;
 }

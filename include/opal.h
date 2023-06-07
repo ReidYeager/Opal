@@ -19,10 +19,7 @@ OpalExtents2D OpalGetSwapchainExtents(OpalState _state);
 // =====
 // Buffer
 // =====
-OpalResult OpalCreateBuffer(
-  OpalState _state,
-  OpalCreateBufferInfo _createInfo,
-  OpalBuffer* _outBuffer);
+OpalResult OpalCreateBuffer(OpalState _state, OpalCreateBufferInfo _createInfo, OpalBuffer* _outBuffer);
 void OpalDestroyBuffer(OpalState _state, OpalBuffer* _buffer);
 OpalResult OpalBufferPushData(OpalState _state, OpalBuffer _buffer, void* _data);
 
@@ -41,10 +38,7 @@ OpalResult OpalCreateShaders(
   OpalCreateShaderInfo* _pCreateInfos,
   OpalShader* _pOutShaders);
 void OpalDestroyShader(OpalState _state, OpalShader* _shader);
-OpalResult OpalCreateMaterial(
-  OpalState _state,
-  OpalCreateMaterialInfo _createInfo,
-  OpalMaterial* _outMaterial);
+OpalResult OpalCreateMaterial(OpalState _state, OpalCreateMaterialInfo _createInfo, OpalMaterial* _outMaterial);
 void OpalDestroyMaterial(OpalState _state, OpalMaterial* _material);
 
 // =====
@@ -56,20 +50,11 @@ void OpalDestroyMesh(OpalState _state, OpalMesh* _mesh);
 // =====
 // Rendering
 // =====
-OpalResult OpalCreateRenderable(
-  OpalState _state,
-  OpalMesh _mesh,
-  OpalMaterial _material,
-  OpalShaderArg* objectArguments,
-  OpalRenderable* _renderable);
-
-OpalResult OpalCreateRenderpass(
-  OpalState _state,
-  OpalCreateRenderpassInfo _createInfo,
-  OpalRenderpass* _outRenderpass);
+OpalResult OpalCreateObject(OpalState _state, OpalShaderArg* objectArguments, OpalObject* _renderable);
+OpalResult OpalCreateRenderpass(OpalState _state, OpalCreateRenderpassInfo _createInfo, OpalRenderpass* _outRenderpass);
 
 void OpalBindMaterial(OpalState _state, OpalMaterial _material);
-void OpalBindRenderable(OpalState _state, OpalRenderable _renderable);
+void OpalBindObject(OpalState _state, OpalObject _renderable);
 void OpalRenderMesh(OpalState _state, OpalMesh _mesh);
 void OpalNextSubpass(OpalState _state);
 

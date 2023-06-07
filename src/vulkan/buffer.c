@@ -1,6 +1,6 @@
 
 #include "src/defines.h"
-#include "src/vulkan/vulkan.h"
+#include "src/vulkan/vulkan_common.h"
 
 #include <vulkan/vulkan.h>
 
@@ -52,8 +52,7 @@ OpalResult CreateBuffer(OvkState_T* _state, OpalCreateBufferInfo _createInfo, Ov
     | ObuToVk(Opal_Buffer_Usage_Shader_Uniform, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT);
 #undef ObuToVk
 
-  OVK_ATTEMPT(
-    vkCreateBuffer(_state->device, &createInfo, NULL, &_buffer->buffer),
+  OVK_ATTEMPT(vkCreateBuffer(_state->device, &createInfo, NULL, &_buffer->buffer),
     return Opal_Failure_Vk_Create);
 
   return Opal_Success;
@@ -71,7 +70,7 @@ uint32_t GetMemTypeIndex(OvkState_T* _state, uint32_t _supportedTypes, VkMemoryP
     }
   }
 
-  OPAL_LOG_VK_ERROR("Failed to find a suitable memory type for the buffer\n");
+  OVK_LOG_ERROR("Failed to find a suitable memory type for the buffer\n");
   return ~0u;
 }
 
@@ -82,34 +81,27 @@ OpalResult AllocateMemory(OvkState_T* _state, OpalCreateBufferInfo _createInfo, 
 
 #define ObuToVk(opal, vk) ((vk) * ((_createInfo.usage & (opal)) != 0))
   VkMemoryPropertyFlags memProperties =
-    ObuToVk(
-      Opal_Buffer_Usage_Cpu_Read,
-      VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+    ObuToVk(Opal_Buffer_Usage_Cpu_Read, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 #undef ObuToVk
 
   VkMemoryAllocateInfo allocInfo = { 0 };
   allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
   allocInfo.pNext = NULL;
   allocInfo.allocationSize = _createInfo.size;
-  allocInfo.memoryTypeIndex =
-    GetMemTypeIndex(_state, bufferMemRequirements.memoryTypeBits, memProperties);
+  allocInfo.memoryTypeIndex = GetMemTypeIndex(_state, bufferMemRequirements.memoryTypeBits, memProperties);
 
   if (allocInfo.memoryTypeIndex == ~0u)
   {
     return Opal_Failure_Vk_Create;
   }
 
-  OVK_ATTEMPT(
-    vkAllocateMemory(_state->device, &allocInfo, NULL, &_buffer->memory),
+  OVK_ATTEMPT(vkAllocateMemory(_state->device, &allocInfo, NULL, &_buffer->memory),
     return Opal_Failure_Vk_Create);
 
   return Opal_Success;
 }
 
-OpalResult OpalVkCreateBuffer(
-  OpalState _oState,
-  OpalCreateBufferInfo _createInfo,
-  OpalBuffer _oBuffer)
+OpalResult OpalVkCreateBuffer(OpalState _oState, OpalCreateBufferInfo _createInfo, OpalBuffer _oBuffer)
 {
   OvkState_T* state = (OvkState_T*)_oState->backend.state;
   OvkBuffer_T* buffer = &_oBuffer->backend.vulkan;
@@ -122,11 +114,11 @@ OpalResult OpalVkCreateBuffer(
   _oBuffer->paddedSize = PadBufferSize(state, _createInfo.usage, _createInfo.size);
   _createInfo.size = _oBuffer->paddedSize;
 
-  OPAL_ATTEMPT(CreateBuffer(state, _createInfo, buffer), return Opal_Failure_Vk_Create);
-  OPAL_ATTEMPT(AllocateMemory(state, _createInfo, buffer), return Opal_Failure_Vk_Create);
-
-  OVK_ATTEMPT(
-    vkBindBufferMemory(state->device, buffer->buffer, buffer->memory, 0),
+  OPAL_ATTEMPT(CreateBuffer(state, _createInfo, buffer),
+    return Opal_Failure_Vk_Create);
+  OPAL_ATTEMPT(AllocateMemory(state, _createInfo, buffer),
+    return Opal_Failure_Vk_Create);
+  OVK_ATTEMPT(vkBindBufferMemory(state->device, buffer->buffer, buffer->memory, 0),
     return Opal_Failure_Vk_Create);
 
   return Opal_Success;
@@ -157,12 +149,7 @@ OpalResult TransferBufferData(OvkState_T* _state, OpalBuffer _src, OpalBuffer _d
   region.dstOffset = 0;
   region.size = _size;
 
-  vkCmdCopyBuffer(
-    cmd,
-    _src->backend.vulkan.buffer,
-    _dst->backend.vulkan.buffer,
-    1,
-    &region);
+  vkCmdCopyBuffer(cmd, _src->backend.vulkan.buffer, _dst->backend.vulkan.buffer, 1, &region);
 
   OvkEndSingleUseCommand(_state, _state->transientCommantPool, _state->queueTransfer, cmd);
 
@@ -195,14 +182,7 @@ OpalResult OpalVkBufferPushData(OpalState _oState, OpalBuffer _oBuffer, void* _d
 
   // Copy data =====
   void* mappedMemory;
-  OVK_ATTEMPT(
-    vkMapMemory(
-      state->device,
-      _oBuffer->backend.vulkan.memory,
-      0,
-      _oBuffer->size,
-      0,
-      &mappedMemory),
+  OVK_ATTEMPT(vkMapMemory(state->device, _oBuffer->backend.vulkan.memory, 0, _oBuffer->size, 0, &mappedMemory),
     return Opal_Failure_Vk_Misc);
   LapisMemCopy(_data, mappedMemory, _oBuffer->size);
   vkUnmapMemory(state->device, _oBuffer->backend.vulkan.memory);

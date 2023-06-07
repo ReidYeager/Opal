@@ -1,6 +1,6 @@
 
 #include "src/defines.h"
-#include "src/vulkan/vulkan.h"
+#include "src/vulkan/vulkan_common.h"
 
 #include <vulkan/vulkan.h>
 
@@ -12,8 +12,7 @@ OpalResult OvkBeginSingleUseCommand(OvkState_T* _state, VkCommandPool _pool, VkC
   allocInfo.commandPool = _pool;
   allocInfo.commandBufferCount = 1;
 
-  OVK_ATTEMPT(
-    vkAllocateCommandBuffers(_state->device, &allocInfo, _cmd),
+  OVK_ATTEMPT(vkAllocateCommandBuffers(_state->device, &allocInfo, _cmd),
     return Opal_Failure_Vk_Misc);
 
   VkCommandBufferBeginInfo beginInfo = { 0 };
@@ -21,33 +20,29 @@ OpalResult OvkBeginSingleUseCommand(OvkState_T* _state, VkCommandPool _pool, VkC
   beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
   beginInfo.pInheritanceInfo = NULL;
 
-  OVK_ATTEMPT(
-    vkBeginCommandBuffer(*_cmd, &beginInfo),
+  OVK_ATTEMPT(vkBeginCommandBuffer(*_cmd, &beginInfo),
     return Opal_Failure_Vk_Misc);
 
   return Opal_Success;
 }
 
-OpalResult OvkEndSingleUseCommand(
-  OvkState_T* _state,
-  VkCommandPool _pool,
-  VkQueue _queue,
-  VkCommandBuffer _cmd)
+OpalResult OvkEndSingleUseCommand(OvkState_T* _state, VkCommandPool _pool, VkQueue _queue, VkCommandBuffer _cmd)
 {
-  OVK_ATTEMPT(vkEndCommandBuffer(_cmd), return Opal_Failure_Vk_Misc);
+  OVK_ATTEMPT(vkEndCommandBuffer(_cmd),
+    return Opal_Failure_Vk_Misc);
 
   VkSubmitInfo submitInfo = { 0 };
   submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
   submitInfo.commandBufferCount = 1;
   submitInfo.pCommandBuffers = &_cmd;
 
-  OVK_ATTEMPT(
-    vkQueueSubmit(_queue, 1, &submitInfo, VK_NULL_HANDLE),
+  OVK_ATTEMPT(vkQueueSubmit(_queue, 1, &submitInfo, VK_NULL_HANDLE),
     return Opal_Failure_Vk_Misc);
 
-  vkQueueWaitIdle(_queue);
-  vkFreeCommandBuffers(_state->device, _pool, 1, &_cmd);
+  OVK_ATTEMPT(vkQueueWaitIdle(_queue),
+    return Opal_Failure_Vk_Misc);
 
+  vkFreeCommandBuffers(_state->device, _pool, 1, &_cmd);
   return Opal_Success;
 }
 
@@ -56,10 +51,7 @@ VkPipelineLayout currentlyBoundPipelineLayout;
 
 void OpalVkBindMaterial(OpalState _oState, OpalMaterial _material)
 {
-  vkCmdBindPipeline(
-    currentCommandBuffer,
-    VK_PIPELINE_BIND_POINT_GRAPHICS,
-    _material->backend.vulkan.pipeline);
+  vkCmdBindPipeline(currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, _material->backend.vulkan.pipeline);
 
   currentlyBoundPipelineLayout = _material->backend.vulkan.pipelineLayout;
 
@@ -74,7 +66,7 @@ void OpalVkBindMaterial(OpalState _oState, OpalMaterial _material)
     NULL);
 }
 
-void OpalVkBindRenderable(OpalState _oState, OpalRenderable _renderable)
+void OpalVkBindObject(OpalState _oState, OpalObject _object)
 {
   vkCmdBindDescriptorSets(
     currentCommandBuffer,
@@ -82,7 +74,7 @@ void OpalVkBindRenderable(OpalState _oState, OpalRenderable _renderable)
     currentlyBoundPipelineLayout,
     1,
     1,
-    &_renderable->backend.vulkan.descSet,
+    &_object->backend.vulkan.descSet,
     0,
     NULL);
 }
@@ -109,10 +101,7 @@ void OpalVkNextSubpass()
   vkCmdNextSubpass(currentCommandBuffer, VK_SUBPASS_CONTENTS_INLINE);
 }
 
-OpalResult OvkRecordCommandBuffer(
-  OvkState_T* _state,
-  OvkFrame_T* _frame,
-  const OpalFrameData* _data)
+OpalResult OvkRecordCommandBuffer(OvkState_T* _state, OvkFrame_T* _frame, const OpalFrameData* _data)
 {
   uint32_t index = _frame->swapchainImageIndex;
   VkCommandBuffer cmd = _frame->cmd;
@@ -125,12 +114,11 @@ OpalResult OvkRecordCommandBuffer(
   cmdBeginInfo.pNext = NULL;
   cmdBeginInfo.flags = 0;
 
-  OVK_ATTEMPT(
-    vkBeginCommandBuffer(cmd, &cmdBeginInfo),
-    {
-      OPAL_LOG_VK_ERROR("Failed to begin command buffer : %u\n", index);
-      return Opal_Failure_Vk_Render;
-    });
+  OVK_ATTEMPT(vkBeginCommandBuffer(cmd, &cmdBeginInfo),
+  {
+    OVK_LOG_ERROR("Failed to begin command buffer : %u\n", index);
+    return Opal_Failure_Vk_Render;
+  });
 
   for (uint32_t i = 0; i < _data->renderpassCount; i++)
   {
@@ -144,24 +132,24 @@ OpalResult OvkRecordCommandBuffer(
     rpBeginInfo.pNext = NULL;
     rpBeginInfo.clearValueCount = orp.attachmentCount;
     rpBeginInfo.pClearValues = clearValues;
-    rpBeginInfo.renderArea.extent = (VkExtent2D){orp.extents.width, orp.extents.height};
-    rpBeginInfo.renderArea.offset = (VkOffset2D){ 0, 0 };
+    rpBeginInfo.renderArea.extent = (VkExtent2D){ orp.extents.width, orp.extents.height };
+    rpBeginInfo.renderArea.offset = (VkOffset2D){ orp.offset.width, orp.offset.height };
     rpBeginInfo.renderPass = vrp.renderpass;
     rpBeginInfo.framebuffer = vrp.framebuffers[index % vrp.framebufferCount];
 
     vkCmdBeginRenderPass(cmd, &rpBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-    OPAL_ATTEMPT(orp.Render(), return Opal_Failure);
+    OPAL_ATTEMPT(orp.Render(),
+      return Opal_Failure);
 
     vkCmdEndRenderPass(cmd);
   }
 
-  OVK_ATTEMPT(
-    vkEndCommandBuffer(cmd),
-    {
-      OPAL_LOG_VK_ERROR("Failed to end command buffer : %u\n", index);
-      return Opal_Failure_Vk_Render;
-    });
+  OVK_ATTEMPT(vkEndCommandBuffer(cmd),
+  {
+    OVK_LOG_ERROR("Failed to end command buffer : %u\n", index);
+    return Opal_Failure_Vk_Render;
+  });
 
   return Opal_Success;
 }

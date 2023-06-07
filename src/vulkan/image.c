@@ -1,6 +1,6 @@
 
 #include "src/defines.h"
-#include "src/vulkan/vulkan.h"
+#include "src/vulkan/vulkan_common.h"
 
 VkImageUsageFlags OpalImageUsageToVkImageUsage(OpalImageUsageFlags _usage)
 {
@@ -39,7 +39,7 @@ uint32_t GetMemoryTypeIndex(OvkState_T* _state, uint32_t _mask, VkMemoryProperty
     }
   }
 
-  OPAL_LOG_VK_ERROR("Failed to find a suitable memory type index\n");
+  OVK_LOG_ERROR("Failed to find a suitable memory type index\n");
   return ~0u;
 }
 
@@ -66,8 +66,7 @@ OpalResult OvkCreateImage(
   createInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
   createInfo.samples = VK_SAMPLE_COUNT_1_BIT;
 
-  OVK_ATTEMPT(
-    vkCreateImage(_state->device, &createInfo, NULL, _outImage),
+  OVK_ATTEMPT(vkCreateImage(_state->device, &createInfo, NULL, _outImage),
     return Opal_Failure_Vk_Create);
 
   return Opal_Success;
@@ -85,8 +84,7 @@ OpalResult OvkCreateImageMemory(OvkState_T* _state, VkImage _image, VkDeviceMemo
   allocInfo.memoryTypeIndex =
     GetMemoryTypeIndex(_state, memRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
-  OVK_ATTEMPT(
-    vkAllocateMemory(_state->device, &allocInfo, NULL, _outMemory),
+  OVK_ATTEMPT(vkAllocateMemory(_state->device, &allocInfo, NULL, _outMemory),
     return Opal_Failure_Vk_Create);
 
   return Opal_Success;
@@ -100,18 +98,15 @@ OpalResult OvkCreateImageAndMemory(
   VkImage* _outImage,
   VkDeviceMemory* _outMemory)
 {
-  OPAL_ATTEMPT(
-    OvkCreateImage(_state, _extents, _format, _usage, _outImage),
+  OPAL_ATTEMPT(OvkCreateImage(_state, _extents, _format, _usage, _outImage),
     return Opal_Failure_Vk_Create);
-  OPAL_ATTEMPT(
-    OvkCreateImageMemory(_state, *_outImage, _outMemory),
+  OPAL_ATTEMPT(OvkCreateImageMemory(_state, *_outImage, _outMemory),
     return Opal_Failure_Vk_Create);
-  OVK_ATTEMPT(
-    vkBindImageMemory(_state->device, *_outImage, *_outMemory, 0),
-    {
-      OPAL_LOG_VK_ERROR("Failed to bind image and memory\n");
-      return Opal_Failure_Vk_Create;
-    });
+  OVK_ATTEMPT(vkBindImageMemory(_state->device, *_outImage, *_outMemory, 0),
+  {
+    OVK_LOG_ERROR("Failed to bind image and memory\n");
+    return Opal_Failure_Vk_Create;
+  });
 
   return Opal_Success;
 }
@@ -136,8 +131,7 @@ OpalResult OvkCreateImageView(
   createInfo.subresourceRange.layerCount = 1;
   createInfo.subresourceRange.baseArrayLayer = 0;
 
-  OVK_ATTEMPT(
-    vkCreateImageView(_state->device, &createInfo, NULL, _outView),
+  OVK_ATTEMPT(vkCreateImageView(_state->device, &createInfo, NULL, _outView),
     return Opal_Failure_Vk_Create);
 
   return Opal_Success;
@@ -164,8 +158,7 @@ OpalResult OvkCreateImageSampler(OvkState_T* _state, VkSampler* _outSampler)
   createInfo.maxLod = 1.0f;
   createInfo.maxAnisotropy = 1.0f;
 
-  OVK_ATTEMPT(
-    vkCreateSampler(_state->device, &createInfo, NULL, _outSampler),
+  OVK_ATTEMPT(vkCreateSampler(_state->device, &createInfo, NULL, _outSampler),
     return Opal_Failure_Vk_Create);
 
   return Opal_Success;
@@ -174,8 +167,7 @@ OpalResult OvkCreateImageSampler(OvkState_T* _state, VkSampler* _outSampler)
 OpalResult TransitionImageLayout(OvkState_T* _state, OvkImage_T* _image, uint32_t _toWritable, VkPipelineStageFlagBits _shaderStage)
 {
   VkCommandBuffer cmd;
-  OPAL_ATTEMPT(
-    OvkBeginSingleUseCommand(_state, _state->graphicsCommandPool, &cmd),
+  OPAL_ATTEMPT(OvkBeginSingleUseCommand(_state, _state->graphicsCommandPool, &cmd),
     return Opal_Failure);
 
   VkImageMemoryBarrier memBarrier = { 0 };
@@ -211,8 +203,7 @@ OpalResult TransitionImageLayout(OvkState_T* _state, OvkImage_T* _image, uint32_
   }
 
   vkCmdPipelineBarrier(cmd, srcStage, dstStage, 0, 0, NULL, 0, NULL, 1, &memBarrier);
-  OPAL_ATTEMPT(
-    OvkEndSingleUseCommand(_state, _state->graphicsCommandPool, _state->queueGraphics, cmd),
+  OPAL_ATTEMPT(OvkEndSingleUseCommand(_state, _state->graphicsCommandPool, _state->queueGraphics, cmd),
     return Opal_Failure);
 
   _image->layout = memBarrier.newLayout;
@@ -226,8 +217,7 @@ OpalResult CopyBufferToImage(
   OvkImage_T* _image)
 {
   VkCommandBuffer cmd;
-  OPAL_ATTEMPT(
-    OvkBeginSingleUseCommand(_state, _state->graphicsCommandPool, &cmd),
+  OPAL_ATTEMPT(OvkBeginSingleUseCommand(_state, _state->graphicsCommandPool, &cmd),
     return Opal_Failure);
 
   VkBufferImageCopy copyRegion = { 0 };
@@ -241,16 +231,9 @@ OpalResult CopyBufferToImage(
   copyRegion.imageOffset = (VkOffset3D){ 0, 0, 0 };
   copyRegion.imageExtent = (VkExtent3D){ _extents.width, _extents.height, 1 };
 
-  vkCmdCopyBufferToImage(
-    cmd,
-    _buffer->buffer,
-    _image->image,
-    VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-    1,
-    &copyRegion);
+  vkCmdCopyBufferToImage(cmd, _buffer->buffer, _image->image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copyRegion);
 
-  OPAL_ATTEMPT(
-    OvkEndSingleUseCommand(_state, _state->graphicsCommandPool, _state->queueGraphics, cmd),
+  OPAL_ATTEMPT(OvkEndSingleUseCommand(_state, _state->graphicsCommandPool, _state->queueGraphics, cmd),
     return Opal_Failure);
 
   return Opal_Success;
@@ -272,14 +255,11 @@ OpalResult OpalVkImageFillData(
   OpalCreateBuffer(_oState, createBufferInfo, &imageDataCopyBuffer);
   OpalBufferPushData(_oState, imageDataCopyBuffer, _data);
 
-  OPAL_ATTEMPT(
-    TransitionImageLayout(state, _image, 0, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT),
+  OPAL_ATTEMPT(TransitionImageLayout(state, _image, 0, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT),
     return Opal_Failure_Vk_Create);
-  OPAL_ATTEMPT(
-    CopyBufferToImage(state, &imageDataCopyBuffer->backend.vulkan, _extents, _image),
+  OPAL_ATTEMPT(CopyBufferToImage(state, &imageDataCopyBuffer->backend.vulkan, _extents, _image),
     return Opal_Failure_Vk_Create);
-  OPAL_ATTEMPT(
-    TransitionImageLayout(state, _image, 1, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT),
+  OPAL_ATTEMPT(TransitionImageLayout(state, _image, 1, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT),
     return Opal_Failure_Vk_Create);
 
   OpalDestroyBuffer(_oState, &imageDataCopyBuffer);
@@ -302,12 +282,10 @@ OpalResult OpalVkCreateImage(OpalState _oState, OpalCreateImageInfo _createInfo,
       OpalImageUsageToVkImageUsage(_createInfo.usage),
       &image->image),
     return Opal_Failure_Vk_Create);
-  OPAL_ATTEMPT(
-    OvkCreateImageMemory(state, image->image, &image->memory),
+  OPAL_ATTEMPT(OvkCreateImageMemory(state, image->image, &image->memory),
     return Opal_Failure_Vk_Create);
 
-  OVK_ATTEMPT(
-    vkBindImageMemory(state->device, image->image, image->memory, 0),
+  OVK_ATTEMPT(vkBindImageMemory(state->device, image->image, image->memory, 0),
     return Opal_Failure_Vk_Create);
 
   OPAL_ATTEMPT(
@@ -319,13 +297,14 @@ OpalResult OpalVkCreateImage(OpalState _oState, OpalCreateImageInfo _createInfo,
       &image->view),
     return Opal_Failure_Vk_Create);
 
-  OPAL_ATTEMPT(OvkCreateImageSampler(state, &image->sampler), return Opal_Failure_Vk_Create);
+  OPAL_ATTEMPT(OvkCreateImageSampler(state, &image->sampler),
+    return Opal_Failure_Vk_Create);
 
   //TransitionImageLayout(state, image, true, VK_SHADER_STAGE_ALL_GRAPHICS);
 
   if (_createInfo.usage & Opal_Image_Usage_Color_Attachment)
-    //image->layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
     image->layout = VK_IMAGE_LAYOUT_ATTACHMENT_OPTIMAL;
+    //image->layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
   else if (_createInfo.usage & Opal_Image_Usage_Depth_Attachment)
     image->layout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_STENCIL_READ_ONLY_OPTIMAL;
   else if (_createInfo.usage & Opal_Image_Usage_Stencil_Attachment)
@@ -338,12 +317,7 @@ OpalResult OpalVkCreateImage(OpalState _oState, OpalCreateImageInfo _createInfo,
 
   if (_createInfo.pixelData != NULL)
   {
-    OpalVkImageFillData(
-      _oState,
-      image,
-      _createInfo.extents,
-      _createInfo.pixelFormat,
-      _createInfo.pixelData);
+    OpalVkImageFillData(_oState, image, _createInfo.extents, _createInfo.pixelFormat, _createInfo.pixelData);
   }
 
   return Opal_Success;

@@ -10,50 +10,6 @@
 #include <stdint.h>
 
 // =====
-// Opal Generic
-// =====
-
-#define OPAL_ATTEMPT(fn, failureAction) \
-{                                       \
-  OpalResult attemptResult = (fn);      \
-  if (attemptResult != Opal_Success)    \
-  {                                     \
-    OPAL_LOG_ERROR("Attempt failed : Result %d : \"%s\"\n\t\"%s\" : %u\n", attemptResult, #fn, __FILE__, __LINE__); \
-    __debugbreak();                     \
-    failureAction;                      \
-  }                                     \
-}
-
-// =====
-// Console
-// =====
-
-// TODO : Define a way to change print settings when using Opal binaries (Enabled, output location)
-#define OPAL_LOG(type, msg, ...) \
-  LapisConsolePrintMessage(      \
-    type,                        \
-    "Opal :: "##msg,             \
-    __VA_ARGS__)
-
-#define OPAL_LOG_ERROR(msg, ...) \
-  LapisConsolePrintMessage(      \
-    Lapis_Console_Error,         \
-    "Opal :: "##msg,              \
-    __VA_ARGS__)
-
-#define OPAL_LOG_VK(type, msg, ...) \
-  LapisConsolePrintMessage(         \
-    type,                           \
-    "Opal :: Vk :: "##msg,           \
-    __VA_ARGS__)
-
-#define OPAL_LOG_VK_ERROR(msg, ...) \
-  LapisConsolePrintMessage(         \
-    Lapis_Console_Error,            \
-    "Opal :: Vk :: "##msg,           \
-    __VA_ARGS__)
-
-// =====
 // Buffer
 // =====
 
@@ -129,15 +85,13 @@ typedef struct OpalMesh_T
 // Rendering
 // =====
 
-typedef struct OpalRenderable_T
+typedef struct OpalObject_T
 {
-  OpalMaterial material;
-  OpalMesh mesh;
   union
   {
     OvkRenderable_T vulkan;
   } backend;
-} OpalRenderable_T;
+} OpalObject_T;
 
 typedef struct OpalSubpass_T
 {
@@ -153,6 +107,7 @@ typedef struct OpalRenderpass_T
   } backend;
 
   OpalExtents2D extents;
+  OpalExtents2D offset;
 
   uint32_t subpassCount;
   OpalSubpass_T* subpasses;
@@ -180,45 +135,31 @@ typedef struct OpalState_T
     OpalExtents2D(*GetSwapchainExtents)(OpalState _oState);
 
     // Buffer =====
-    OpalResult(*CreateBuffer)(
-      OpalState _oState,
-      OpalCreateBufferInfo _createInfo,
-      OpalBuffer _oBuffer );
+    OpalResult(*CreateBuffer)(OpalState _oState, OpalCreateBufferInfo _createInfo, OpalBuffer _oBuffer );
     void(*DestroyBuffer)(OpalState _oState, OpalBuffer _oBuffer );
     OpalResult(*BufferPushData)(OpalState _oState, OpalBuffer _oBuffer, void* _data);
+
     // Image =====
-    OpalResult(*CreateImage)(
-      OpalState _oState,
-      OpalCreateImageInfo _createInfo,
-      OpalImage _oImage);
+    OpalResult(*CreateImage)(OpalState _oState, OpalCreateImageInfo _createInfo, OpalImage _oImage);
     void(*DestroyImage)(OpalState _oState, OpalImage _oImage);
+
     // Material =====
-    OpalResult(*CreateShader)(
-      OpalState _oState,
-      OpalCreateShaderInfo _createInfo,
-      OpalShader _oShader);
+    OpalResult(*CreateShader)(OpalState _oState, OpalCreateShaderInfo _createInfo, OpalShader _oShader);
     void(*DestroyShader)(OpalState _oState, OpalShader _oShader);
-    OpalResult(*CreateMaterial)(
-      OpalState _oState,
-      OpalCreateMaterialInfo _createInfo,
-      OpalMaterial _oMaterial);
+
+    OpalResult(*CreateMaterial)(OpalState _oState, OpalCreateMaterialInfo _createInfo, OpalMaterial _oMaterial);
     void(*DestroyMaterial)(OpalState _oState, OpalMaterial _oMaterial );
+
     // Mesh =====
     OpalResult(*CreateMesh)(OpalState _oState, OpalCreateMeshInfo _createInfo, OpalMesh _oMesh);
     void(*DestroyMesh)(OpalState _oState, OpalMesh _oMesh );
-    // Rendering =====
-    OpalResult(*CreateRenderable)(
-      OpalState _oState,
-      OpalShaderArg* _objectArguments,
-      OpalRenderable _renderable);
 
-    OpalResult(*CreateRenderpass)(
-      OpalState _oState,
-      OpalCreateRenderpassInfo _createInfo,
-      OpalRenderpass _outRenderpass);
+    // Rendering =====
+    OpalResult(*CreateRenderable)(OpalState _oState, OpalShaderArg* _objectArguments, OpalObject _oRenderable);
+    OpalResult(*CreateRenderpass)(OpalState _oState, OpalCreateRenderpassInfo _createInfo, OpalRenderpass _oRenderpass);
 
     void(*BindMaterial)(OpalState _oState, OpalMaterial _material);
-    void(*BindRenderable)(OpalState _oState, OpalRenderable _renderable);
+    void(*BindObject)(OpalState _oState, OpalObject _renderable);
     void(*RenderMesh)(OpalMesh _mesh);
     void(*NextSubpass)();
   } backend;

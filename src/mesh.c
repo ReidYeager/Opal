@@ -1,5 +1,5 @@
 
-#include "src/defines.h"
+#include "src/common.h"
 
 OpalResult OpalCreateMesh(OpalState _state, OpalCreateMeshInfo _createInfo, OpalMesh* _outMesh)
 {
@@ -10,13 +10,17 @@ OpalResult OpalCreateMesh(OpalState _state, OpalCreateMeshInfo _createInfo, Opal
   vertBufferInfo.size = _state->vertexLayout.structSize * _createInfo.vertexCount;
   vertBufferInfo.usage = Opal_Buffer_Usage_Vertex;
 
-  OPAL_ATTEMPT(
-    OpalCreateBuffer(_state, vertBufferInfo, &newMesh->vertexBuffer),
-    return Opal_Failure);
+  OPAL_ATTEMPT(OpalCreateBuffer(_state, vertBufferInfo, &newMesh->vertexBuffer),
+  {
+    LapisMemFree(newMesh);
+    return Opal_Failure;
+  });
 
-  OPAL_ATTEMPT(
-    OpalBufferPushData(_state, newMesh->vertexBuffer, _createInfo.pVertices),
-    return Opal_Failure);
+  OPAL_ATTEMPT(OpalBufferPushData(_state, newMesh->vertexBuffer, _createInfo.pVertices),
+  {
+    LapisMemFree(newMesh);
+    return Opal_Failure;
+  });
 
   newMesh->vertexCount = _createInfo.vertexCount;
 
@@ -25,13 +29,17 @@ OpalResult OpalCreateMesh(OpalState _state, OpalCreateMeshInfo _createInfo, Opal
   indexBufferInfo.size = sizeof(uint32_t) * _createInfo.indexCount;
   indexBufferInfo.usage = Opal_Buffer_Usage_Index;
 
-  OPAL_ATTEMPT(
-    OpalCreateBuffer(_state, indexBufferInfo, &newMesh->indexBuffer),
-    return Opal_Failure);
+  OPAL_ATTEMPT(OpalCreateBuffer(_state, indexBufferInfo, &newMesh->indexBuffer),
+  {
+    LapisMemFree(newMesh);
+    return Opal_Failure;
+  });
 
-  OPAL_ATTEMPT(
-    OpalBufferPushData(_state, newMesh->indexBuffer, _createInfo.pIndices),
-    return Opal_Failure);
+  OPAL_ATTEMPT(OpalBufferPushData(_state, newMesh->indexBuffer, _createInfo.pIndices),
+  {
+    LapisMemFree(newMesh);
+    return Opal_Failure;
+  });
 
   newMesh->indexCount = _createInfo.indexCount;
 
