@@ -139,6 +139,12 @@ typedef struct OpalRenderable_T
   } backend;
 } OpalRenderable_T;
 
+typedef struct OpalSubpass_T
+{
+  uint8_t usesDepth;
+  uint32_t colorAttachmentCount;
+} OpalSubpass_T;
+
 typedef struct OpalRenderpass_T
 {
   union
@@ -147,8 +153,12 @@ typedef struct OpalRenderpass_T
   } backend;
 
   OpalExtents2D extents;
+
+  uint32_t subpassCount;
+  OpalSubpass_T* subpasses;
+
   uint32_t attachmentCount;
-  OpalRenderpassAttachmentClearValues* clearValues;
+  OpalClearValue* clearValues;
   OpalResult(*Render)();
 } OpalRenderpass_T;
 

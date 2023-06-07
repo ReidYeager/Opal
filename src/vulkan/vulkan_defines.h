@@ -93,6 +93,9 @@ typedef struct OvkCreateRenderpassInfo {
 
   uint32_t subpassCount;
   OpalRenderpassSubpass* subpasses;
+
+  uint32_t dependencyCount;
+  OpalSubpassDependency* pDependencies;
 } OvkCreateRenderpassInfo;
 
 typedef struct OvkRenderpass_T {

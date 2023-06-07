@@ -214,10 +214,10 @@ typedef struct OpalClearDepth {
   uint32_t stencil;
 } OpalClearDepth;
 
-typedef union OpalRenderpassAttachmentClearValues{
+typedef union OpalClearValue{
   OpalClearColor color;
   OpalClearDepth depthStencil;
-} OpalRenderpassAttachmentClearValues;
+} OpalClearValue;
 
 typedef struct OpalRenderpassAttachment {
   OpalRenderpassAttachmentUsage usage;
@@ -225,7 +225,7 @@ typedef struct OpalRenderpassAttachment {
   OpalRenderpassAttachmentLoadOp loadOperation;
   uint8_t shouldStoreReneredData;
 
-  OpalRenderpassAttachmentClearValues clearValues;
+  OpalClearValue clearValues;
 } OpalRenderpassAttachment;
 
 #define OPAL_SUBPASS_NO_DEPTH ~0u
@@ -240,12 +240,21 @@ typedef struct OpalRenderpassSubpass {
   uint32_t* pPreserveAttachmentIndices;
 } OpalRenderpassSubpass;
 
+typedef struct OpalSubpassDependency {
+  uint32_t srcSubpassIndex;
+  uint32_t dstSubpassIndex;
+} OpalSubpassDependency;
+
 typedef struct OpalCreateRenderpassInfo {
   uint32_t imageCount;
   OpalImage* images;
   OpalRenderpassAttachment* imageAttachments;
+
   uint32_t subpassCount;
   OpalRenderpassSubpass* subpasses;
+
+  uint32_t dependencyCount;
+  OpalSubpassDependency* pDependencies;
 
   OpalResult(*RenderFunction)();
   uint8_t rendersToSwapchain;

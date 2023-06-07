@@ -246,8 +246,8 @@ OpalResult CreatePipeline(
   rasterStateInfo.pNext = NULL;
   rasterStateInfo.flags = 0;
 
-  //rasterStateInfo.cullMode = VK_CULL_MODE_BACK_BIT;
-  rasterStateInfo.cullMode = VK_CULL_MODE_NONE;
+  rasterStateInfo.cullMode = VK_CULL_MODE_BACK_BIT;
+  //rasterStateInfo.cullMode = VK_CULL_MODE_NONE;
   rasterStateInfo.polygonMode = VK_POLYGON_MODE_FILL;
 
   rasterStateInfo.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
@@ -293,7 +293,8 @@ OpalResult CreatePipeline(
   blendStateInfo.pNext = NULL;
   blendStateInfo.flags = 0;
   blendStateInfo.logicOpEnable = VK_FALSE;
-  blendStateInfo.attachmentCount = 1;
+  blendStateInfo.attachmentCount =
+    _createInfo.renderpass->subpasses[_createInfo.subpassIndex].colorAttachmentCount;
   blendStateInfo.pAttachments = blendAttachmentState;
 
   // Dynamic states =====
