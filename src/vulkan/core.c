@@ -12,31 +12,35 @@ VkFormat OpalFormatToVkFormat(OpalFormat _inFormat)
 {
   switch (_inFormat)
   {
-  case Opal_Format_8_Bit_Int_1: return VK_FORMAT_R8_SINT;
-  case Opal_Format_8_Bit_Int_2: return VK_FORMAT_R8G8_SINT;
-  case Opal_Format_8_Bit_Int_3: return VK_FORMAT_R8G8B8_SINT;
-  case Opal_Format_8_Bit_Int_4: return VK_FORMAT_R8G8B8A8_SINT;
-  case Opal_Format_8_Bit_Uint_1: return VK_FORMAT_R8_UINT;
-  case Opal_Format_8_Bit_Uint_2: return VK_FORMAT_R8G8_UINT;
-  case Opal_Format_8_Bit_Uint_3: return VK_FORMAT_R8G8B8_UINT;
-  case Opal_Format_8_Bit_Uint_4: return VK_FORMAT_R8G8B8A8_UINT;
-  case Opal_Format_8_Bit_Unorm_1: return VK_FORMAT_R8_UNORM;
-  case Opal_Format_8_Bit_Unorm_2: return VK_FORMAT_R8G8_UNORM;
-  case Opal_Format_8_Bit_Unorm_3: return VK_FORMAT_R8G8B8_UNORM;
-  case Opal_Format_8_Bit_Unorm_4: return VK_FORMAT_R8G8B8A8_UNORM;
-  case Opal_Format_32_Bit_Int_1: return VK_FORMAT_R32_SINT;
-  case Opal_Format_32_Bit_Int_2: return VK_FORMAT_R32G32_SINT;
-  case Opal_Format_32_Bit_Int_3: return VK_FORMAT_R32G32B32_SINT;
-  case Opal_Format_32_Bit_Int_4: return VK_FORMAT_R32G32B32A32_SINT;
-  case Opal_Format_32_Bit_Uint_1: return VK_FORMAT_R32_UINT;
-  case Opal_Format_32_Bit_Uint_2: return VK_FORMAT_R32G32_UINT;
-  case Opal_Format_32_Bit_Uint_3: return VK_FORMAT_R32G32B32_UINT;
-  case Opal_Format_32_Bit_Uint_4: return VK_FORMAT_R32G32B32A32_UINT;
-  case Opal_Format_32_Bit_Float_1: return VK_FORMAT_R32_SFLOAT;
-  case Opal_Format_32_Bit_Float_2: return VK_FORMAT_R32G32_SFLOAT;
-  case Opal_Format_32_Bit_Float_3: return VK_FORMAT_R32G32B32_SFLOAT;
-  case Opal_Format_32_Bit_Float_4: return VK_FORMAT_R32G32B32A32_SFLOAT;
-  case Opal_Format_24_Bit_Depth_8_Bit_Stencil : return VK_FORMAT_D24_UNORM_S8_UINT;
+  case Opal_Format_Int8_1: return VK_FORMAT_R8_SINT;
+  case Opal_Format_Int8_2: return VK_FORMAT_R8G8_SINT;
+  case Opal_Format_Int8_3: return VK_FORMAT_R8G8B8_SINT;
+  case Opal_Format_Int8_4: return VK_FORMAT_R8G8B8A8_SINT;
+  case Opal_Format_Uint8_1: return VK_FORMAT_R8_UINT;
+  case Opal_Format_Uint8_2: return VK_FORMAT_R8G8_UINT;
+  case Opal_Format_Uint8_3: return VK_FORMAT_R8G8B8_UINT;
+  case Opal_Format_Uint8_4: return VK_FORMAT_R8G8B8A8_UINT;
+  case Opal_Format_Unorm8_1: return VK_FORMAT_R8_UNORM;
+  case Opal_Format_Unorm8_2: return VK_FORMAT_R8G8_UNORM;
+  case Opal_Format_Unorm8_3: return VK_FORMAT_R8G8B8_UNORM;
+  case Opal_Format_Unorm8_4: return VK_FORMAT_R8G8B8A8_UNORM;
+  case Opal_Format_Int32_1: return VK_FORMAT_R32_SINT;
+  case Opal_Format_Int32_2: return VK_FORMAT_R32G32_SINT;
+  case Opal_Format_Int32_3: return VK_FORMAT_R32G32B32_SINT;
+  case Opal_Format_Int32_4: return VK_FORMAT_R32G32B32A32_SINT;
+  case Opal_Format_Uint32_1: return VK_FORMAT_R32_UINT;
+  case Opal_Format_Uint32_2: return VK_FORMAT_R32G32_UINT;
+  case Opal_Format_Uint32_3: return VK_FORMAT_R32G32B32_UINT;
+  case Opal_Format_Uint32_4: return VK_FORMAT_R32G32B32A32_UINT;
+  case Opal_Format_Float32_1: return VK_FORMAT_R32_SFLOAT;
+  case Opal_Format_Float32_2: return VK_FORMAT_R32G32_SFLOAT;
+  case Opal_Format_Float32_3: return VK_FORMAT_R32G32B32_SFLOAT;
+  case Opal_Format_Float32_4: return VK_FORMAT_R32G32B32A32_SFLOAT;
+  case Opal_Format_Float64_1: return VK_FORMAT_R64_SFLOAT;
+  case Opal_Format_Float64_2: return VK_FORMAT_R64G64_SFLOAT;
+  case Opal_Format_Float64_3: return VK_FORMAT_R64G64B64_SFLOAT;
+  case Opal_Format_Float64_4: return VK_FORMAT_R64G64B64A64_SFLOAT;
+  case Opal_Format_Depth24_Stencil8 : return VK_FORMAT_D24_UNORM_S8_UINT;
   default: return VK_FORMAT_UNDEFINED;
   }
 }

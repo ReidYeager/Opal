@@ -11,31 +11,35 @@ uint32_t OpalFormatToSize(OpalFormat _format) // TODO : Find a better place to p
 {
   switch (_format)
   {
-  case Opal_Format_8_Bit_Int_1: return 1;
-  case Opal_Format_8_Bit_Int_2: return 2;
-  case Opal_Format_8_Bit_Int_3: return 3;
-  case Opal_Format_8_Bit_Int_4: return 4;
-  case Opal_Format_8_Bit_Uint_1: return 1;
-  case Opal_Format_8_Bit_Uint_2: return 2;
-  case Opal_Format_8_Bit_Uint_3: return 3;
-  case Opal_Format_8_Bit_Uint_4: return 4;
-  case Opal_Format_8_Bit_Unorm_1: return 1;
-  case Opal_Format_8_Bit_Unorm_2: return 2;
-  case Opal_Format_8_Bit_Unorm_3: return 3;
-  case Opal_Format_8_Bit_Unorm_4: return 4;
-  case Opal_Format_32_Bit_Int_1: return 4;
-  case Opal_Format_32_Bit_Int_2: return 8;
-  case Opal_Format_32_Bit_Int_3: return 12;
-  case Opal_Format_32_Bit_Int_4: return 16;
-  case Opal_Format_32_Bit_Uint_1: return 4;
-  case Opal_Format_32_Bit_Uint_2: return 8;
-  case Opal_Format_32_Bit_Uint_3: return 12;
-  case Opal_Format_32_Bit_Uint_4: return 16;
-  case Opal_Format_32_Bit_Float_1: return 4;
-  case Opal_Format_32_Bit_Float_2: return 8;
-  case Opal_Format_32_Bit_Float_3: return 12;
-  case Opal_Format_32_Bit_Float_4: return 16;
-  case Opal_Format_24_Bit_Depth_8_Bit_Stencil: return 4;
+  case Opal_Format_Int8_1: return 1;
+  case Opal_Format_Int8_2: return 2;
+  case Opal_Format_Int8_3: return 3;
+  case Opal_Format_Int8_4: return 4;
+  case Opal_Format_Uint8_1: return 1;
+  case Opal_Format_Uint8_2: return 2;
+  case Opal_Format_Uint8_3: return 3;
+  case Opal_Format_Uint8_4: return 4;
+  case Opal_Format_Unorm8_1: return 1;
+  case Opal_Format_Unorm8_2: return 2;
+  case Opal_Format_Unorm8_3: return 3;
+  case Opal_Format_Unorm8_4: return 4;
+  case Opal_Format_Int32_1: return 4;
+  case Opal_Format_Int32_2: return 8;
+  case Opal_Format_Int32_3: return 12;
+  case Opal_Format_Int32_4: return 16;
+  case Opal_Format_Uint32_1: return 4;
+  case Opal_Format_Uint32_2: return 8;
+  case Opal_Format_Uint32_3: return 12;
+  case Opal_Format_Uint32_4: return 16;
+  case Opal_Format_Float32_1: return 4;
+  case Opal_Format_Float32_2: return 8;
+  case Opal_Format_Float32_3: return 12;
+  case Opal_Format_Float32_4: return 16;
+  case Opal_Format_Float64_1: return 8;
+  case Opal_Format_Float64_2: return 16;
+  case Opal_Format_Float64_3: return 24;
+  case Opal_Format_Float64_4: return 32;
+  case Opal_Format_Depth24_Stencil8: return 4;
   default: return 0;
   }
 }
@@ -51,9 +55,9 @@ void PopulateVertexLayout(OpalState _state, OpalCreateStateInfo _createInfo)
     stateLayout->pElementFormats = (OpalFormat*)LapisMemAlloc(
       sizeof(OpalFormat) * stateLayout->elementCount);
 
-    stateLayout->pElementFormats[0] = Opal_Format_32_Bit_Float_3; // Vec3 Position
-    stateLayout->pElementFormats[1] = Opal_Format_32_Bit_Float_3; // Vec3 Normal
-    stateLayout->pElementFormats[2] = Opal_Format_32_Bit_Float_2; // Vec2 Uv
+    stateLayout->pElementFormats[0] = Opal_Format_Float32_3; // Vec3 Position
+    stateLayout->pElementFormats[1] = Opal_Format_Float32_3; // Vec3 Normal
+    stateLayout->pElementFormats[2] = Opal_Format_Float32_2; // Vec2 Uv
 
     stateLayout->structSize = (4 * 3) * 2 + (4 * 2);
 
