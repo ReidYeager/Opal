@@ -1,7 +1,7 @@
 
 #include "src/common.h"
 
-uint8_t CompareExtents(OpalExtents2D _a, OpalExtents2D _b)
+bool CompareExtents(OpalExtents2D _a, OpalExtents2D _b)
 {
   return (_a.width == _b.width) && (_a.height == _b.height);
 }
@@ -13,7 +13,7 @@ OpalResult OpalCreateRenderpass(OpalState _state, OpalCreateRenderpassInfo _crea
     return Opal_Failure;
   }
 
-  uint8_t usesSwapchain = _createInfo.rendersToSwapchain != 0;
+  bool usesSwapchain = _createInfo.rendersToSwapchain != 0;
   uint32_t totalImageCount = _createInfo.imageCount + usesSwapchain;
 
   OpalRenderpass newRenderpass = (OpalRenderpass)LapisMemAllocZero(sizeof(OpalRenderpass_T));

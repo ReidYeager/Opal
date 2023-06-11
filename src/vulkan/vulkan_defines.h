@@ -84,7 +84,7 @@ typedef struct OvkRenderpassAttachment {
   OvkRenderpassAttachmentUsage usage;
 
   OvkRenderpassAttachmentLoadOp loadOperation;
-  uint8_t shouldStoreReneredData;
+  bool shouldStoreReneredData;
 } OvkRenderpassAttachment;
 
 typedef struct OvkCreateRenderpassInfo {

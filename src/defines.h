@@ -95,7 +95,7 @@ typedef struct OpalObject_T
 
 typedef struct OpalSubpass_T
 {
-  uint8_t usesDepth;
+  bool usesDepth;
   uint32_t colorAttachmentCount;
 } OpalSubpass_T;
 

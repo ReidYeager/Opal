@@ -227,7 +227,7 @@ typedef struct OpalRenderpassAttachment {
   OpalRenderpassAttachmentUsage usage;
 
   OpalRenderpassAttachmentLoadOp loadOperation;
-  uint8_t shouldStoreReneredData;
+  bool shouldStoreReneredData;
 
   OpalClearValue clearValues;
 } OpalRenderpassAttachment;
@@ -261,7 +261,7 @@ typedef struct OpalCreateRenderpassInfo {
   OpalSubpassDependency* pDependencies;
 
   OpalResult(*RenderFunction)();
-  uint8_t rendersToSwapchain;
+  bool rendersToSwapchain;
 } OpalCreateRenderpassInfo;
 
 // =====
