@@ -92,7 +92,7 @@ typedef struct OvkCreateRenderpassInfo {
   OvkRenderpassAttachment* attachments;
 
   uint32_t subpassCount;
-  OpalRenderpassSubpass* subpasses;
+  OpalSubpassInfo* pSubpasses;
 
   uint32_t dependencyCount;
   OpalSubpassDependency* pDependencies;
@@ -156,7 +156,7 @@ typedef struct OvkState_T
   struct {
     VkSwapchainKHR swapchain;
     uint32_t imageCount;
-    VkImage* images;
+    VkImage* pImages;
     VkImageView* imageViews;
     VkSurfaceFormatKHR format;
     VkExtent2D extents;

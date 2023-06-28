@@ -8,7 +8,7 @@
 OpalResult OpalVkCreateDescriptorSetLayout(
   OvkState_T* _state,
   uint32_t _shaderArgCount,
-  OpalShaderArgTypes* _pShaderArgs,
+  OpalShaderArgumentTypes* _pShaderArgs,
   VkDescriptorSetLayout* _outLayout)
 {
   VkDescriptorSetLayoutBinding* bindings = LapisMemAllocZeroArray(VkDescriptorSetLayoutBinding, _shaderArgCount);
@@ -357,7 +357,7 @@ OpalResult CreatePipeline(
   blendStateInfo.flags = 0;
   blendStateInfo.logicOpEnable = VK_FALSE;
   blendStateInfo.attachmentCount =
-    _createInfo.renderpass->subpasses[_createInfo.subpassIndex].colorAttachmentCount;
+    _createInfo.renderpass->pSubpasses[_createInfo.subpassIndex].colorAttachmentCount;
   blendStateInfo.pAttachments = blendAttachmentState;
 
   // Dynamic states =====
@@ -398,7 +398,7 @@ OpalResult CreatePipeline(
 OpalResult OvkUpdateShaderArguments(
   OvkState_T* _state,
   uint32_t _argCount,
-  OpalShaderArg* args,
+  OpalShaderArg* pArguments,
   VkDescriptorSet _descriptorSet)
 {
   uint32_t bufferInfoCount = 0;
@@ -418,7 +418,7 @@ OpalResult OvkUpdateShaderArguments(
 
   for (uint32_t i = 0; i < _argCount; i++)
   {
-    OpalShaderArg argI = args[i];
+    OpalShaderArg argI = pArguments[i];
     newWrite.dstBinding = argI.index;
 
     switch (argI.type)

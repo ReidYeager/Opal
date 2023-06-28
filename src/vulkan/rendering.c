@@ -154,7 +154,7 @@ OpalResult ConstructVkSubpasses(
 
   for (uint32_t subpassIndex = 0; subpassIndex < _createInfo.subpassCount; subpassIndex++)
   {
-    OpalRenderpassSubpass inSub = _createInfo.subpasses[subpassIndex];
+    OpalSubpassInfo inSub = _createInfo.pSubpasses[subpassIndex];
 
     VkAttachmentReference* colorAttachments = LapisMemAllocZeroArray(VkAttachmentReference, inSub.colorAttachmentCount);
     for (uint32_t i = 0; i < inSub.colorAttachmentCount; i++)
@@ -171,9 +171,9 @@ OpalResult ConstructVkSubpasses(
     VkSubpassDescription sub = { 0 };
     sub.flags = 0;
     sub.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-    if (_createInfo.subpasses[subpassIndex].depthAttachmentIndex != OPAL_SUBPASS_NO_DEPTH)
+    if (_createInfo.pSubpasses[subpassIndex].depthAttachmentIndex != OPAL_SUBPASS_NO_DEPTH)
     {
-      sub.pDepthStencilAttachment = &_references[_createInfo.subpasses[subpassIndex].depthAttachmentIndex];
+      sub.pDepthStencilAttachment = &_references[_createInfo.pSubpasses[subpassIndex].depthAttachmentIndex];
     }
     sub.colorAttachmentCount = inSub.colorAttachmentCount;
     sub.pColorAttachments = colorAttachments;
@@ -219,13 +219,13 @@ OpalResult OvkCreateRenderpass(OvkState_T* _state, OvkCreateRenderpassInfo _crea
 {
   VkAttachmentDescription* attachments;
   VkAttachmentReference* attachmentRefs;
-  VkSubpassDescription* subpasses;
+  VkSubpassDescription* pSubpasses;
   uint32_t depCount = 0;
   VkSubpassDependency* deps;
 
   OPAL_ATTEMPT(ConstructVkAttachments(_state, _createInfo, &attachments, &attachmentRefs),
     return Opal_Failure_Vk_Create);
-  OPAL_ATTEMPT(ConstructVkSubpasses(_state, _createInfo, attachmentRefs, &subpasses),
+  OPAL_ATTEMPT(ConstructVkSubpasses(_state, _createInfo, attachmentRefs, &pSubpasses),
     return Opal_Failure_Vk_Create);
   OPAL_ATTEMPT(ConstructVkDependencies(_state, _createInfo, &depCount, &deps),
     return Opal_Failure_Vk_Create);
@@ -237,7 +237,7 @@ OpalResult OvkCreateRenderpass(OvkState_T* _state, OvkCreateRenderpassInfo _crea
   createInfo.attachmentCount = _createInfo.attachmentCount;
   createInfo.pAttachments = attachments;
   createInfo.subpassCount = _createInfo.subpassCount;
-  createInfo.pSubpasses = subpasses;
+  createInfo.pSubpasses = pSubpasses;
   createInfo.dependencyCount = depCount;
   createInfo.pDependencies = deps;
 
@@ -246,10 +246,10 @@ OpalResult OvkCreateRenderpass(OvkState_T* _state, OvkCreateRenderpassInfo _crea
 
   for (uint32_t i = 0; i < _createInfo.subpassCount; i++)
   {
-    LapisMemFree(subpasses[i].pColorAttachments);
-    LapisMemFree(subpasses[i].pInputAttachments);
+    LapisMemFree(pSubpasses[i].pColorAttachments);
+    LapisMemFree(pSubpasses[i].pInputAttachments);
   }
-  LapisMemFree(subpasses);
+  LapisMemFree(pSubpasses);
   LapisMemFree(attachmentRefs);
   LapisMemFree(attachments);
   LapisMemFree(deps);
@@ -275,18 +275,18 @@ OpalResult OpalVkCreateRenderpassAndFramebuffers(
   rpInfo.attachmentCount = attachmentCount;
   rpInfo.attachments = LapisMemAllocZeroArray(OvkRenderpassAttachment, attachmentCount);
   rpInfo.subpassCount = _createInfo.subpassCount;
-  rpInfo.subpasses = _createInfo.subpasses;
+  rpInfo.pSubpasses = _createInfo.pSubpasses;
   rpInfo.dependencyCount = _createInfo.dependencyCount;
   rpInfo.pDependencies = _createInfo.pDependencies;
 
   for (uint32_t i = 0; i < _createInfo.imageCount; i++)
   {
-    rpInfo.attachments[i].dataFormat = _createInfo.images[i]->backend.vulkan.format;
-    rpInfo.attachments[i].shouldStoreReneredData = _createInfo.imageAttachments[i].shouldStoreReneredData;
-    rpInfo.attachments[i].loadOperation = (OvkRenderpassAttachmentLoadOp)_createInfo.imageAttachments[i].loadOperation;
-    rpInfo.attachments[i].usage = (OvkRenderpassAttachmentUsage)_createInfo.imageAttachments[i].usage;
+    rpInfo.attachments[i].dataFormat = _createInfo.pImages[i]->backend.vulkan.format;
+    rpInfo.attachments[i].shouldStoreReneredData = _createInfo.pImageAttachments[i].shouldStoreReneredData;
+    rpInfo.attachments[i].loadOperation = (OvkRenderpassAttachmentLoadOp)_createInfo.pImageAttachments[i].loadOperation;
+    rpInfo.attachments[i].usage = (OvkRenderpassAttachmentUsage)_createInfo.pImageAttachments[i].usage;
 
-    views[i] = _createInfo.images[i]->backend.vulkan.view;
+    views[i] = _createInfo.pImages[i]->backend.vulkan.view;
   }
 
   if (_createInfo.rendersToSwapchain)
@@ -296,7 +296,7 @@ OpalResult OpalVkCreateRenderpassAndFramebuffers(
     rpInfo.attachments[attachmentCount - 1].loadOperation = Ovk_Attachment_LoadOp_Clear;
     rpInfo.attachments[attachmentCount - 1].usage = Ovk_Attachment_Usage_Presented;
 
-    OpalRenderpassSubpass finalSub = _createInfo.subpasses[_createInfo.subpassCount - 1];
+    OpalSubpassInfo finalSub = _createInfo.pSubpasses[_createInfo.subpassCount - 1];
 
     uint32_t colorCount = finalSub.colorAttachmentCount;
     uint32_t* colorIndices = LapisMemAllocZeroArray(uint32_t, colorCount + 1);
@@ -309,13 +309,13 @@ OpalResult OpalVkCreateRenderpassAndFramebuffers(
     finalSub.pColorAttachmentIndices = colorIndices;
     finalSub.colorAttachmentCount++;
 
-    _createInfo.subpasses[_createInfo.subpassCount - 1] = finalSub;
+    _createInfo.pSubpasses[_createInfo.subpassCount - 1] = finalSub;
   }
 
   OPAL_ATTEMPT(OvkCreateRenderpass(state, rpInfo, &outOvkRp->renderpass),
   {
     if (_createInfo.rendersToSwapchain)
-      LapisMemFree(_createInfo.subpasses[_createInfo.subpassCount - 1].pColorAttachmentIndices);
+      LapisMemFree(_createInfo.pSubpasses[_createInfo.subpassCount - 1].pColorAttachmentIndices);
     return Opal_Failure_Vk_Create;
   });
 
@@ -330,7 +330,7 @@ OpalResult OpalVkCreateRenderpassAndFramebuffers(
     OPAL_ATTEMPT(
       OvkCreateFramebuffer(
         state,
-        (VkExtent2D){_createInfo.images[0]->extents.width, _createInfo.images[0]->extents.height},
+        (VkExtent2D){_createInfo.pImages[0]->extents.width, _createInfo.pImages[0]->extents.height},
         outOvkRp->renderpass,
         attachmentCount,
         views,

@@ -122,8 +122,8 @@ OpalResult OvkRecordCommandBuffer(OvkState_T* _state, OvkFrame_T* _frame, const 
 
   for (uint32_t i = 0; i < _data->renderpassCount; i++)
   {
-    OpalRenderpass_T orp = *_data->renderpasses[i];
-    OvkRenderpass_T vrp = _data->renderpasses[i]->backend.vulkan;
+    OpalRenderpass_T orp = *_data->pRenderpasses[i];
+    OvkRenderpass_T vrp = _data->pRenderpasses[i]->backend.vulkan;
 
     VkClearValue* clearValues = (VkClearValue*)orp.clearValues;
 

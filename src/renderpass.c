@@ -17,9 +17,9 @@ OpalResult OpalCreateRenderpass(OpalState _state, OpalCreateRenderpassInfo _crea
   uint32_t totalImageCount = _createInfo.imageCount + usesSwapchain;
 
   OpalRenderpass newRenderpass = (OpalRenderpass)LapisMemAllocZero(sizeof(OpalRenderpass_T));
-  newRenderpass->clearValues = LapisMemAllocZeroArray(OpalClearValue, totalImageCount);
+  newRenderpass->clearValues = LapisMemAllocZeroArray(OpalClearValues, totalImageCount);
 
-  OpalExtents2D matchExtents = _createInfo.images[0]->extents;
+  OpalExtents2D matchExtents = _createInfo.pImages[0]->extents;
   if (usesSwapchain)
   {
     matchExtents = OpalGetSwapchainExtents(_state);
@@ -28,7 +28,7 @@ OpalResult OpalCreateRenderpass(OpalState _state, OpalCreateRenderpassInfo _crea
 
   for (uint32_t i = 0; i < _createInfo.imageCount; i++)
   {
-    if (!CompareExtents(_createInfo.images[i]->extents, matchExtents))
+    if (!CompareExtents(_createInfo.pImages[i]->extents, matchExtents))
     {
       LapisMemFree(newRenderpass->clearValues);
       LapisMemFree(newRenderpass);
@@ -36,22 +36,22 @@ OpalResult OpalCreateRenderpass(OpalState _state, OpalCreateRenderpassInfo _crea
       return Opal_Failure;
     }
 
-    newRenderpass->clearValues[i] = _createInfo.imageAttachments[i].clearValues;
+    newRenderpass->clearValues[i] = _createInfo.pImageAttachments[i].clearValues;
   }
 
   // Fill subpass info
   newRenderpass->subpassCount = _createInfo.subpassCount;
-  newRenderpass->subpasses = LapisMemAllocZeroArray(OpalSubpass_T, _createInfo.subpassCount);
+  newRenderpass->pSubpasses = LapisMemAllocZeroArray(OpalSubpass_T, _createInfo.subpassCount);
   for (uint32_t i = 0; i < newRenderpass->subpassCount; i++)
   {
-    newRenderpass->subpasses[i].colorAttachmentCount = _createInfo.subpasses[i].colorAttachmentCount;
+    newRenderpass->pSubpasses[i].colorAttachmentCount = _createInfo.pSubpasses[i].colorAttachmentCount;
     if (_createInfo.rendersToSwapchain && i == newRenderpass->subpassCount - 1)
     {
       // Add color attachment for the swapchain
-      newRenderpass->subpasses[i].colorAttachmentCount++;
+      newRenderpass->pSubpasses[i].colorAttachmentCount++;
     }
 
-    newRenderpass->subpasses[i].usesDepth = _createInfo.subpasses[i].depthAttachmentIndex != OPAL_SUBPASS_NO_DEPTH;
+    newRenderpass->pSubpasses[i].usesDepth = _createInfo.pSubpasses[i].depthAttachmentIndex != OPAL_SUBPASS_NO_DEPTH;
   }
 
   newRenderpass->attachmentCount = totalImageCount;
@@ -70,22 +70,22 @@ OpalResult OpalCreateRenderpass(OpalState _state, OpalCreateRenderpassInfo _crea
   return Opal_Success;
 }
 
-void OpalBindMaterial(OpalState _state, OpalMaterial _material)
+void OpalCmdBindMaterial(OpalState _state, OpalMaterial _material)
 {
   _state->backend.BindMaterial(_state, _material);
 }
 
-void OpalBindObject(OpalState _state, OpalObject _object)
+void OpalCmdBindObject(OpalState _state, OpalObject _object)
 {
   _state->backend.BindObject(_state, _object);
 }
 
-void OpalRenderMesh(OpalState _state, OpalMesh _mesh)
+void OpalCmdRenderMesh(OpalState _state, OpalMesh _mesh)
 {
   _state->backend.RenderMesh(_mesh);
 }
 
-void OpalNextSubpass(OpalState _state)
+void OpalCmdNextSubpass(OpalState _state)
 {
   _state->backend.NextSubpass();
 }

@@ -110,10 +110,10 @@ typedef struct OpalRenderpass_T
   OpalExtents2D offset;
 
   uint32_t subpassCount;
-  OpalSubpass_T* subpasses;
+  OpalSubpass_T* pSubpasses;
 
   uint32_t attachmentCount;
-  OpalClearValue* clearValues;
+  OpalClearValues* clearValues;
   OpalResult(*Render)();
 } OpalRenderpass_T;
 
@@ -155,7 +155,7 @@ typedef struct OpalState_T
     void(*DestroyMesh)(OpalState _oState, OpalMesh _oMesh );
 
     // Rendering =====
-    OpalResult(*CreateRenderable)(OpalState _oState, OpalShaderArg* _objectArguments, OpalObject _oRenderable);
+    OpalResult(*CreateObject)(OpalState _oState, OpalShaderArg* _objectArguments, OpalObject _oRenderable);
     OpalResult(*CreateRenderpass)(OpalState _oState, OpalCreateRenderpassInfo _createInfo, OpalRenderpass _oRenderpass);
 
     void(*BindMaterial)(OpalState _oState, OpalMaterial _material);

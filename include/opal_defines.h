@@ -118,14 +118,14 @@ typedef struct OpalShader_T* OpalShader;
 typedef struct OpalMaterial_T* OpalMaterial;
 
 // Argument =====
-typedef enum OpalShaderArgTypes
+typedef enum OpalShaderArgumentTypes
 {
   Opal_Shader_Arg_Uniform_Buffer,
   Opal_Shader_Arg_Samped_Image,
   Opal_Shader_Arg_Subpass_Input
-} OpalShaderArgTypes;
+} OpalShaderArgumentTypes;
 
-typedef union OpalShaderArgInputTypeValues
+typedef union OpalShaderArgInputValue
 {
   OpalBuffer buffer;
   OpalImage image;
@@ -133,14 +133,14 @@ typedef union OpalShaderArgInputTypeValues
     uint32_t attachmentIndex;
     OpalImage image;
   } inputAttachment;
-} OpalShaderArgInputTypeValues;
+} OpalShaderArgInputValue;
 
 typedef struct OpalShaderArg
 {
   uint32_t index;
 
-  OpalShaderArgTypes type;
-  OpalShaderArgInputTypeValues inputValue;
+  OpalShaderArgumentTypes type;
+  OpalShaderArgInputValue inputValue;
 } OpalShaderArg;
 
 // Shader =====
@@ -218,23 +218,23 @@ typedef struct OpalClearDepth {
   uint32_t stencil;
 } OpalClearDepth;
 
-typedef union OpalClearValue{
+typedef union OpalClearValues{
   OpalClearColor color;
   OpalClearDepth depthStencil;
-} OpalClearValue;
+} OpalClearValues;
 
-typedef struct OpalRenderpassAttachment {
+typedef struct OpalImageAttachment {
   OpalRenderpassAttachmentUsage usage;
 
   OpalRenderpassAttachmentLoadOp loadOperation;
   bool shouldStoreReneredData;
 
-  OpalClearValue clearValues;
-} OpalRenderpassAttachment;
+  OpalClearValues clearValues;
+} OpalImageAttachment;
 
 #define OPAL_SUBPASS_NO_DEPTH ~0u
 
-typedef struct OpalRenderpassSubpass {
+typedef struct OpalSubpassInfo {
   uint32_t depthAttachmentIndex;
   uint32_t colorAttachmentCount;
   uint32_t* pColorAttachmentIndices;
@@ -242,7 +242,7 @@ typedef struct OpalRenderpassSubpass {
   uint32_t* pInputAttachmentIndices;
   uint32_t preserveAttachmentCount;
   uint32_t* pPreserveAttachmentIndices;
-} OpalRenderpassSubpass;
+} OpalSubpassInfo;
 
 typedef struct OpalSubpassDependency {
   uint32_t srcSubpassIndex;
@@ -251,11 +251,11 @@ typedef struct OpalSubpassDependency {
 
 typedef struct OpalCreateRenderpassInfo {
   uint32_t imageCount;
-  OpalImage* images;
-  OpalRenderpassAttachment* imageAttachments;
+  OpalImage* pImages;
+  OpalImageAttachment* pImageAttachments;
 
   uint32_t subpassCount;
-  OpalRenderpassSubpass* subpasses;
+  OpalSubpassInfo* pSubpasses;
 
   uint32_t dependencyCount;
   OpalSubpassDependency* pDependencies;
@@ -273,7 +273,7 @@ typedef struct OpalState_T* OpalState;
 typedef struct OpalObjectShaderArgumentsInfo
 {
   uint32_t argumentCount;
-  OpalShaderArgTypes* args;
+  OpalShaderArgumentTypes* pArguments;
 } OpalObjectShaderArgumentsInfo;
 
 typedef struct OpalCreateStateInfo
@@ -282,9 +282,6 @@ typedef struct OpalCreateStateInfo
   LapisWindow window; // TODO : Allow headless when nullptr
   OpalVertexLayoutInfo* pCustomVertexLayout;
   OpalObjectShaderArgumentsInfo* pCustomObjectShaderArgumentLayout;
-
-  uint32_t renderpassCount;
-  OpalRenderpassAttachment* pCustomRenderpasses;
 } OpalCreateStateInfo;
 
 typedef struct OpalObject_T* OpalObject;
@@ -292,10 +289,7 @@ typedef struct OpalObject_T* OpalObject;
 typedef struct OpalFrameData
 {
   uint32_t renderpassCount;
-  OpalRenderpass* renderpasses;
-
-  uint32_t renderableCount;
-  OpalObject renderables[512];
+  OpalRenderpass* pRenderpasses;
 } OpalFrameData;
 
 #endif // !GEM_OPAL_DEFINES_H

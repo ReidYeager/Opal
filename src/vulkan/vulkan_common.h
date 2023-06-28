@@ -8,13 +8,13 @@
 #define OVK_LOG(type, msg, ...) \
   LapisConsolePrintMessage(     \
     type,                       \
-    "Opal :: Vk :: "##msg,      \
+    "Opal :: Vk :: " msg,      \
     __VA_ARGS__)
 
 #define OVK_LOG_ERROR(msg, ...) \
   LapisConsolePrintMessage(     \
     Lapis_Console_Error,        \
-    "*** Opal :: Vk :: "##msg,  \
+    "*** Opal :: Vk :: " msg,  \
     __VA_ARGS__)
 
 #if defined(_DEBUG)
@@ -61,7 +61,7 @@ OpalResult OpalVkRenderFrame(OpalState _oState, const OpalFrameData* _oFrameData
 OpalResult OpalVkCreateDescriptorSetLayout(
   OvkState_T* _state,
   uint32_t _shaderArgCount,
-  OpalShaderArgTypes* _pShaderArgs,
+  OpalShaderArgumentTypes* _pShaderArgs,
   VkDescriptorSetLayout* _outLayout);
 OpalResult OpalVkCreateDescriptorSet(OvkState_T* _state, VkDescriptorSetLayout _layout, VkDescriptorSet* _outSet);
 
@@ -119,7 +119,7 @@ OpalResult OpalVkCreateObject(OpalState _oState, OpalShaderArg* _objectArguments
 OpalResult OvkUpdateShaderArguments(
   OvkState_T* _state,
   uint32_t _argCount,
-  OpalShaderArg* args,
+  OpalShaderArg* pArguments,
   VkDescriptorSet _descriptorSet);
 
 // Rendering =====

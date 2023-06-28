@@ -465,9 +465,9 @@ OpalResult CreateSwapchain(OvkState_T* _state, LapisWindow _window)
 
   // Images =====
   vkGetSwapchainImagesKHR(_state->device, _state->swapchain.swapchain, &imageCount, NULL);
-  _state->swapchain.images = (VkImage*)LapisMemAlloc(sizeof(VkImage) * imageCount);
+  _state->swapchain.pImages = (VkImage*)LapisMemAlloc(sizeof(VkImage) * imageCount);
   _state->swapchain.imageViews = (VkImageView*)LapisMemAlloc(sizeof(VkImageView) * imageCount);
-  vkGetSwapchainImagesKHR(_state->device, _state->swapchain.swapchain, &imageCount, _state->swapchain.images);
+  vkGetSwapchainImagesKHR(_state->device, _state->swapchain.swapchain, &imageCount, _state->swapchain.pImages);
 
   // Image views =====
   VkImageViewCreateInfo ivCreateInfo = { 0 };
@@ -484,7 +484,7 @@ OpalResult CreateSwapchain(OvkState_T* _state, LapisWindow _window)
 
   for (uint32_t i = 0; i < imageCount; i++)
   {
-    ivCreateInfo.image = _state->swapchain.images[i];
+    ivCreateInfo.image = _state->swapchain.pImages[i];
 
     OVK_ATTEMPT(vkCreateImageView(_state->device, &ivCreateInfo, NULL, &_state->swapchain.imageViews[i]),
       return Opal_Failure_Vk_Create);
@@ -663,13 +663,13 @@ OpalResult OpalVkInitState(OpalCreateStateInfo _createInfo, OpalState _oState)
   });
 
   uint32_t count = 0;
-  OpalShaderArgTypes* args = NULL;
+  OpalShaderArgumentTypes* pArguments = NULL;
   if (_createInfo.pCustomObjectShaderArgumentLayout != NULL)
   {
     count = _createInfo.pCustomObjectShaderArgumentLayout->argumentCount;
-    args = _createInfo.pCustomObjectShaderArgumentLayout->args;
+    pArguments = _createInfo.pCustomObjectShaderArgumentLayout->pArguments;
   }
-  OPAL_ATTEMPT(OpalVkCreateDescriptorSetLayout(state, count, args, &state->objectSetLayout),
+  OPAL_ATTEMPT(OpalVkCreateDescriptorSetLayout(state, count, pArguments, &state->objectSetLayout),
   {
     LapisMemFree(state);
     OVK_LOG_ERROR("Failed to create object descriptor set layout\n");
@@ -734,7 +734,7 @@ void OpalVkShutdownState(OpalState _oState)
     // Images destroyed with the swapchain itself
   }
   vkDestroySwapchainKHR(state->device, state->swapchain.swapchain, NULL);
-  LapisMemFree(state->swapchain.images);
+  LapisMemFree(state->swapchain.pImages);
   LapisMemFree(state->swapchain.imageViews);
 
   vkDestroyDescriptorPool(state->device, state->descriptorPool, NULL);

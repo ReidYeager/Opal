@@ -44,40 +44,6 @@ uint32_t OpalFormatToSize(OpalFormat _format) // TODO : Find a better place to p
   }
 }
 
-void PopulateVertexLayout(OpalState _state, OpalCreateStateInfo _createInfo)
-{
-  OpalVertexLayoutInfo* stateLayout = &_state->vertexLayout;
-  OpalVertexLayoutInfo* inLayout = _createInfo.pCustomVertexLayout;
-
-  if (inLayout == NULL)
-  {
-    stateLayout->elementCount = 3;
-    stateLayout->pElementFormats = (OpalFormat*)LapisMemAlloc(
-      sizeof(OpalFormat) * stateLayout->elementCount);
-
-    stateLayout->pElementFormats[0] = Opal_Format_Float32_3; // Vec3 Position
-    stateLayout->pElementFormats[1] = Opal_Format_Float32_3; // Vec3 Normal
-    stateLayout->pElementFormats[2] = Opal_Format_Float32_2; // Vec2 Uv
-
-    stateLayout->structSize = (4 * 3) * 2 + (4 * 2);
-
-    return;
-  }
-
-  stateLayout->structSize = inLayout->structSize;
-  if (stateLayout->structSize == 0)
-  {
-    for (uint32_t i = 0; i < inLayout->elementCount; i++)
-    {
-      stateLayout->structSize += OpalFormatToSize(inLayout->pElementFormats[i]);
-    }
-  }
-
-  stateLayout->elementCount = inLayout->elementCount;
-  stateLayout->pElementFormats = LapisMemAllocArray(OpalFormat, stateLayout->elementCount);
-  LapisMemCopy(inLayout->pElementFormats, stateLayout->pElementFormats, sizeof(OpalFormat) * stateLayout->elementCount);
-}
-
 OpalResult OpalCreateState(OpalCreateStateInfo _createInfo,  OpalState* _outState)
 {
   if (_outState == NULL)
@@ -95,7 +61,7 @@ OpalResult OpalCreateState(OpalCreateStateInfo _createInfo,  OpalState* _outStat
     return Opal_Unknown;
   }
 
-  PopulateVertexLayout(newState, _createInfo);
+  DefineVertexLayout_Opal(newState, _createInfo);
   newState->objectShaderArgsInfo = *_createInfo.pCustomObjectShaderArgumentLayout;
 
   switch (_createInfo.api)
@@ -109,18 +75,15 @@ OpalResult OpalCreateState(OpalCreateStateInfo _createInfo,  OpalState* _outStat
     newState->backend.GetSwapchainExtents = OpalVkGetSwapchainExtents;
 
     // Buffer =====
-
     newState->backend.CreateBuffer        = OpalVkCreateBuffer;
     newState->backend.DestroyBuffer       = OpalVkDestroyBuffer;
     newState->backend.BufferPushData      = OpalVkBufferPushData;
 
     // Image =====
-
     newState->backend.CreateImage         = OpalVkCreateImage;
     newState->backend.DestroyImage        = OpalVkDestroyImage;
 
     // Material =====
-
     newState->backend.CreateShader        = OpalVkCreateShader;
     newState->backend.DestroyShader       = OpalVkDestroyShader;
 
@@ -128,12 +91,11 @@ OpalResult OpalCreateState(OpalCreateStateInfo _createInfo,  OpalState* _outStat
     newState->backend.DestroyMaterial     = OpalVkDestroyMaterial;
 
     // Rendering =====
-
-    newState->backend.CreateRenderable    = OpalVkCreateObject;
+    newState->backend.CreateObject    = OpalVkCreateObject;
     newState->backend.CreateRenderpass    = OpalVkCreateRenderpassAndFramebuffers;
 
     newState->backend.BindMaterial        = OpalVkBindMaterial;
-    newState->backend.BindObject      = OpalVkBindObject;
+    newState->backend.BindObject          = OpalVkBindObject;
     newState->backend.RenderMesh          = OpalVkRenderMesh;
     newState->backend.NextSubpass         = OpalVkNextSubpass;
 
@@ -185,7 +147,7 @@ OpalResult OpalCreateObject(OpalState _state, OpalShaderArg* _objectArguments, O
 {
   *_renderable = (OpalObject_T*)LapisMemAllocZero(sizeof(OpalObject_T));
 
-  OPAL_ATTEMPT(_state->backend.CreateRenderable(_state, _objectArguments, *_renderable),
+  OPAL_ATTEMPT(_state->backend.CreateObject(_state, _objectArguments, *_renderable),
   {
     LapisMemFree(*_renderable);
     return Opal_Failure_Backend;

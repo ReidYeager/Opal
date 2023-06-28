@@ -50,13 +50,13 @@ void OpalDestroyMesh(OpalState _state, OpalMesh* _mesh);
 // =====
 // Rendering
 // =====
-OpalResult OpalCreateObject(OpalState _state, OpalShaderArg* objectArguments, OpalObject* _renderable);
+OpalResult OpalCreateObject(OpalState _state, OpalShaderArg* _objectArguments, OpalObject* _renderable);
 OpalResult OpalCreateRenderpass(OpalState _state, OpalCreateRenderpassInfo _createInfo, OpalRenderpass* _outRenderpass);
 
-void OpalBindMaterial(OpalState _state, OpalMaterial _material);
-void OpalBindObject(OpalState _state, OpalObject _renderable);
-void OpalRenderMesh(OpalState _state, OpalMesh _mesh);
-void OpalNextSubpass(OpalState _state);
+void OpalCmdBindMaterial(OpalState _state, OpalMaterial _material);
+void OpalCmdBindObject(OpalState _state, OpalObject _renderable);
+void OpalCmdRenderMesh(OpalState _state, OpalMesh _mesh);
+void OpalCmdNextSubpass(OpalState _state);
 
 
 #ifdef __cplusplus

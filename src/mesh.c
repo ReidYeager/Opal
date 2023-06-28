@@ -55,3 +55,37 @@ void OpalDestroyMesh(OpalState _state, OpalMesh* _mesh)
   LapisMemFree(mesh);
   *_mesh = NULL;
 }
+
+void DefineVertexLayout_Opal(OpalState _state, OpalCreateStateInfo _createInfo)
+{
+  OpalVertexLayoutInfo* stateLayout = &_state->vertexLayout;
+  OpalVertexLayoutInfo* inLayout = _createInfo.pCustomVertexLayout;
+
+  if (inLayout == NULL)
+  {
+    stateLayout->elementCount = 3;
+    stateLayout->pElementFormats = (OpalFormat*)LapisMemAlloc(
+      sizeof(OpalFormat) * stateLayout->elementCount);
+
+    stateLayout->pElementFormats[0] = Opal_Format_Float32_3; // Vec3 Position
+    stateLayout->pElementFormats[1] = Opal_Format_Float32_3; // Vec3 Normal
+    stateLayout->pElementFormats[2] = Opal_Format_Float32_2; // Vec2 Uv
+
+    stateLayout->structSize = (4 * 3) * 2 + (4 * 2);
+
+    return;
+  }
+
+  stateLayout->structSize = inLayout->structSize;
+  if (stateLayout->structSize == 0)
+  {
+    for (uint32_t i = 0; i < inLayout->elementCount; i++)
+    {
+      stateLayout->structSize += OpalFormatToSize(inLayout->pElementFormats[i]);
+    }
+  }
+
+  stateLayout->elementCount = inLayout->elementCount;
+  stateLayout->pElementFormats = LapisMemAllocArray(OpalFormat, stateLayout->elementCount);
+  LapisMemCopy(inLayout->pElementFormats, stateLayout->pElementFormats, sizeof(OpalFormat) * stateLayout->elementCount);
+}
