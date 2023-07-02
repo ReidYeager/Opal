@@ -111,6 +111,7 @@ OpalResult OpalVkCreateShader(OpalState _oState, OpalCreateShaderInfo _createInf
 void OpalVkDestroyShader(OpalState _oState, OpalShader _oShader);
 OpalResult OpalVkCreateMaterial(OpalState _state, OpalCreateMaterialInfo _createInfo, OpalMaterial _Material);
 void OpalVkDestroyMaterial(OpalState _oState, OpalMaterial _oMaterial);
+OpalResult OpalVkMaterialRecreate(OpalState _oState, OpalMaterial _oMaterial);
 
 // Renderable =====
 

@@ -48,18 +48,45 @@ void OpalDestroyShader(OpalState _state, OpalShader* _shader)
   *_shader = NULL;
 }
 
+OpalResult OpalShaderRecreate(OpalState _state, OpalShader _shader, OpalCreateShaderInfo _createInfo)
+{
+  _state->backend.DestroyShader(_state, _shader);
+
+  OPAL_ATTEMPT(_state->backend.CreateShader(_state, _createInfo, _shader),
+    return Opal_Failure_Backend);
+
+  _shader->type = _createInfo.type;
+}
+
 OpalResult OpalCreateMaterial(OpalState _state, OpalCreateMaterialInfo _createInfo, OpalMaterial* _outMaterial)
 {
   OpalMaterial_T* newMaterial = (OpalMaterial_T*)LapisMemAllocZero(sizeof(OpalMaterial_T));
 
+  newMaterial->renderpass = _createInfo.renderpass;
+  newMaterial->subpassIndex = _createInfo.subpassIndex;
+  newMaterial->shaderCount = _createInfo.shaderCount;
+  newMaterial->pShaders = LapisMemAllocZeroArray(OpalShader, _createInfo.shaderCount);
+  LapisMemCopy(_createInfo.pShaders, newMaterial->pShaders, sizeof(OpalShader) * _createInfo.shaderCount);
+
   OPAL_ATTEMPT(_state->backend.CreateMaterial(_state, _createInfo, newMaterial),
   {
+    LapisMemFree(newMaterial->pShaders);
     LapisMemFree(newMaterial);
     return Opal_Failure_Backend;
   });
 
   *_outMaterial = newMaterial;
   return Opal_Success;
+}
+
+OpalResult OpalMaterialRecreate(OpalState _state, OpalShader* _pNewShaders, OpalMaterial _material)
+{
+  if (_pNewShaders != NULL)
+  {
+    _material->pShaders = _pNewShaders;
+  }
+
+  return _state->backend.RecreateMaterial(_state, _material);
 }
 
 void OpalDestroyMaterial(OpalState _state, OpalMaterial* _material)

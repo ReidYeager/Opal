@@ -57,6 +57,12 @@ typedef struct OpalShader_T
 
 typedef struct OpalMaterial_T
 {
+  uint32_t subpassIndex;
+  OpalRenderpass renderpass;
+
+  uint32_t shaderCount;
+  OpalShader* pShaders;
+
   union
   {
     void* null;
@@ -149,6 +155,8 @@ typedef struct OpalState_T
 
     OpalResult(*CreateMaterial)(OpalState _oState, OpalCreateMaterialInfo _createInfo, OpalMaterial _oMaterial);
     void(*DestroyMaterial)(OpalState _oState, OpalMaterial _oMaterial );
+
+    OpalResult(*RecreateMaterial)(OpalState _oState, OpalMaterial _oMaterial);
 
     // Mesh =====
     OpalResult(*CreateMesh)(OpalState _oState, OpalCreateMeshInfo _createInfo, OpalMesh _oMesh);

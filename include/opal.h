@@ -38,8 +38,11 @@ OpalResult OpalCreateShaders(
   OpalCreateShaderInfo* _pCreateInfos,
   OpalShader* _pOutShaders);
 void OpalDestroyShader(OpalState _state, OpalShader* _shader);
+OpalResult OpalShaderRecreate(OpalState _state, OpalShader _shader, OpalCreateShaderInfo _createInfo);
+
 OpalResult OpalCreateMaterial(OpalState _state, OpalCreateMaterialInfo _createInfo, OpalMaterial* _outMaterial);
 void OpalDestroyMaterial(OpalState _state, OpalMaterial* _material);
+OpalResult OpalMaterialRecreate(OpalState _state, OpalShader* _pNewShaders, OpalMaterial _material);
 
 // =====
 // Mesh
@@ -51,7 +54,10 @@ void OpalDestroyMesh(OpalState _state, OpalMesh* _mesh);
 // Rendering
 // =====
 OpalResult OpalCreateObject(OpalState _state, OpalShaderArg* _objectArguments, OpalObject* _renderable);
+void OpalDestroyObject(OpalState _state, OpalObject* _object);
+
 OpalResult OpalCreateRenderpass(OpalState _state, OpalCreateRenderpassInfo _createInfo, OpalRenderpass* _outRenderpass);
+void OpalDestroyRenderpass(OpalState _state, OpalRenderpass* _renderpass);
 
 void OpalCmdBindMaterial(OpalState _state, OpalMaterial _material);
 void OpalCmdBindObject(OpalState _state, OpalObject _renderable);

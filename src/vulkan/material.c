@@ -94,7 +94,7 @@ void OpalVkDestroyShader(OpalState _oState, OpalShader _oShader)
   vkDestroyShaderModule(state->device, _oShader->backend.vulkan.module, NULL);
 }
 
-OpalResult CreateMaterialDescriptorSetLayout(
+OpalResult CreateMaterialDescriptorSetLayout_OpalVk(
   OvkState_T* _state,
   OpalCreateMaterialInfo _createInfo,
   OvkMaterial_T* _material)
@@ -152,7 +152,7 @@ OpalResult CreateMaterialDescriptorSetLayout(
   return Opal_Success;
 }
 
-OpalResult CreateMaterialDescriptorSet(OvkState_T* _state, OpalCreateMaterialInfo _createInfo, OvkMaterial_T* _material)
+OpalResult CreateMaterialDescriptorSet_OpalVk(OvkState_T* _state, OpalCreateMaterialInfo _createInfo, OvkMaterial_T* _material)
 {
   VkDescriptorSetAllocateInfo allocInfo = { 0 };
   allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
@@ -167,7 +167,7 @@ OpalResult CreateMaterialDescriptorSet(OvkState_T* _state, OpalCreateMaterialInf
   return Opal_Success;
 }
 
-OpalResult CreatePipelineLayout(OvkState_T* _state, OvkMaterial_T* _material)
+OpalResult CreatePipelineLayout_OpalVk(OvkState_T* _state, OvkMaterial_T* _material)
 {
   const uint32_t layoutCount = 2;
   VkDescriptorSetLayout layouts[2] = {
@@ -192,7 +192,7 @@ OpalResult CreatePipelineLayout(OvkState_T* _state, OvkMaterial_T* _material)
   return Opal_Success;
 }
 
-void BuildVertexAttributeDescriptions(
+void BuildVertexAttributeDescriptions_OpalVk(
   OpalVertexLayoutInfo _layout,
   uint32_t* _count,
   VkVertexInputAttributeDescription** _attributes)
@@ -218,26 +218,25 @@ void BuildVertexAttributeDescriptions(
   *_count = _layout.elementCount;
 }
 
-OpalResult CreatePipeline(
+OpalResult CreatePipeline_OpalVk(
   OvkState_T* _state,
-  OpalCreateMaterialInfo _createInfo,
   OpalVertexLayoutInfo _vertLayout,
-  OvkMaterial_T* _oMaterial)
+  OpalMaterial_T* _oMaterial)
 {
   // Shader stages =====
-  uint32_t shaderStageCount = _createInfo.shaderCount;
+  uint32_t shaderStageCount = _oMaterial->shaderCount;
   VkPipelineShaderStageCreateInfo* shaderStages =
-    LapisMemAllocZeroArray(VkPipelineShaderStageCreateInfo, _createInfo.shaderCount);
+    LapisMemAllocZeroArray(VkPipelineShaderStageCreateInfo, _oMaterial->shaderCount);
 
   VkPipelineShaderStageCreateInfo newShaderStage = { 0 };
   newShaderStage.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
   newShaderStage.pNext = NULL;
   newShaderStage.flags = 0;
   newShaderStage.pName = "main";
-  for (uint32_t i = 0; i < _createInfo.shaderCount; i++)
+  for (uint32_t i = 0; i < _oMaterial->shaderCount; i++)
   {
-    newShaderStage.module = _createInfo.pShaders[i]->backend.vulkan.module;
-    switch (_createInfo.pShaders[i]->type)
+    newShaderStage.module = _oMaterial->pShaders[i]->backend.vulkan.module;
+    switch (_oMaterial->pShaders[i]->type)
     {
     case Opal_Shader_Vertex: newShaderStage.stage = VK_SHADER_STAGE_VERTEX_BIT; break;
     case Opal_Shader_Fragment: newShaderStage.stage = VK_SHADER_STAGE_FRAGMENT_BIT; break;
@@ -255,7 +254,7 @@ OpalResult CreatePipeline(
   // TODO : Load vertex attributes from somewhere
   uint32_t vertAttributeCount = 0;
   VkVertexInputAttributeDescription* vertAttributes = NULL;
-  BuildVertexAttributeDescriptions(_vertLayout, &vertAttributeCount, &vertAttributes);
+  BuildVertexAttributeDescriptions_OpalVk(_vertLayout, &vertAttributeCount, &vertAttributes);
 
   VkVertexInputBindingDescription vertBinding;
   vertBinding.stride = _vertLayout.structSize;
@@ -357,7 +356,7 @@ OpalResult CreatePipeline(
   blendStateInfo.flags = 0;
   blendStateInfo.logicOpEnable = VK_FALSE;
   blendStateInfo.attachmentCount =
-    _createInfo.renderpass->pSubpasses[_createInfo.subpassIndex].colorAttachmentCount;
+    _oMaterial->renderpass->pSubpasses[_oMaterial->subpassIndex].colorAttachmentCount;
   blendStateInfo.pAttachments = blendAttachmentState;
 
   // Dynamic states =====
@@ -384,11 +383,11 @@ OpalResult CreatePipeline(
   createInfo.stageCount = shaderStageCount;
   createInfo.pStages = shaderStages;
 
-  createInfo.layout = _oMaterial->pipelineLayout;
-  createInfo.renderPass = _createInfo.renderpass->backend.vulkan.renderpass;
-  createInfo.subpass = _createInfo.subpassIndex;
+  createInfo.layout = _oMaterial->backend.vulkan.pipelineLayout;
+  createInfo.renderPass = _oMaterial->renderpass->backend.vulkan.renderpass;
+  createInfo.subpass = _oMaterial->subpassIndex;
 
-  OVK_ATTEMPT(vkCreateGraphicsPipelines(_state->device, NULL, 1, &createInfo, NULL, &_oMaterial->pipeline),
+  OVK_ATTEMPT(vkCreateGraphicsPipelines(_state->device, NULL, 1, &createInfo, NULL, &_oMaterial->backend.vulkan.pipeline),
     return Opal_Failure_Vk_Create);
 
   LapisMemFree(shaderStages);
@@ -484,29 +483,29 @@ OpalResult OvkUpdateShaderArguments(
 
 OpalResult OpalVkCreateMaterial(OpalState _oState, OpalCreateMaterialInfo _createInfo, OpalMaterial _oMaterial)
 {
-  OvkState_T* state = _oState->backend.state;
+  OvkState_T* state = (OvkState_T*)_oState->backend.state;
   OvkMaterial_T* newMaterial = &_oMaterial->backend.vulkan;
 
-  OPAL_ATTEMPT(CreateMaterialDescriptorSetLayout(state, _createInfo, newMaterial),
+  OPAL_ATTEMPT(CreateMaterialDescriptorSetLayout_OpalVk(state, _createInfo, newMaterial),
   {
     OVK_LOG_ERROR("Failed to create material : descriptor set layout\n");
     return Opal_Failure_Vk_Create;
   });
 
   // Descriptor set
-  OPAL_ATTEMPT(CreateMaterialDescriptorSet(state, _createInfo, newMaterial),
+  OPAL_ATTEMPT(CreateMaterialDescriptorSet_OpalVk(state, _createInfo, newMaterial),
   {
     OVK_LOG_ERROR("Failed to create material : descriptor set\n");
     return Opal_Failure_Vk_Create;
   });
 
-  OPAL_ATTEMPT(CreatePipelineLayout(state, newMaterial),
+  OPAL_ATTEMPT(CreatePipelineLayout_OpalVk(state, newMaterial),
   {
     OVK_LOG_ERROR("Failed to create material : pipeline layout\n");
     return Opal_Failure_Vk_Create;
   });
 
-  OPAL_ATTEMPT(CreatePipeline(state, _createInfo, _oState->vertexLayout, newMaterial),
+  OPAL_ATTEMPT(CreatePipeline_OpalVk(state, _oState->vertexLayout, _oMaterial),
   {
     OVK_LOG_ERROR("Failed to create material : pipeline\n");
     return Opal_Failure_Vk_Create;
@@ -516,6 +515,22 @@ OpalResult OpalVkCreateMaterial(OpalState _oState, OpalCreateMaterialInfo _creat
     OvkUpdateShaderArguments(state, _createInfo.shaderArgCount, _createInfo.pShaderArgs, newMaterial->descriptorSet),
   {
     OVK_LOG_ERROR("Failed to bind one or more shader arguments\n");
+    return Opal_Failure_Vk_Create;
+  });
+
+  return Opal_Success;
+}
+
+OpalResult OpalVkMaterialRecreate(OpalState _oState, OpalMaterial _oMaterial)
+{
+  OvkState_T* state = (OvkState_T*)_oState->backend.state;
+
+  vkDeviceWaitIdle(state->device);
+  vkDestroyPipeline(state->device, _oMaterial->backend.vulkan.pipeline, NULL);
+
+  OPAL_ATTEMPT(CreatePipeline_OpalVk(state, _oState->vertexLayout, _oMaterial),
+  {
+    OVK_LOG_ERROR("Failed to recreate material\n");
     return Opal_Failure_Vk_Create;
   });
 

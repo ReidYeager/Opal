@@ -90,6 +90,8 @@ OpalResult OpalCreateState(OpalCreateStateInfo _createInfo,  OpalState* _outStat
     newState->backend.CreateMaterial      = OpalVkCreateMaterial;
     newState->backend.DestroyMaterial     = OpalVkDestroyMaterial;
 
+    newState->backend.RecreateMaterial    = OpalVkMaterialRecreate;
+
     // Rendering =====
     newState->backend.CreateObject    = OpalVkCreateObject;
     newState->backend.CreateRenderpass    = OpalVkCreateRenderpassAndFramebuffers;
