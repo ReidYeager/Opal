@@ -93,13 +93,18 @@ OpalResult OpalCreateState(OpalCreateStateInfo _createInfo,  OpalState* _outStat
     newState->backend.RecreateMaterial    = OpalVkMaterialRecreate;
 
     // Rendering =====
-    newState->backend.CreateObject    = OpalVkCreateObject;
+    newState->backend.CreateObject        = OpalVkCreateObject;
     newState->backend.CreateRenderpass    = OpalVkCreateRenderpassAndFramebuffers;
 
     newState->backend.BindMaterial        = OpalVkBindMaterial;
     newState->backend.BindObject          = OpalVkBindObject;
     newState->backend.RenderMesh          = OpalVkRenderMesh;
     newState->backend.NextSubpass         = OpalVkNextSubpass;
+
+    // Window =====
+    newState->backend.InitializeWindow    = OpalVkInitializeWindow;
+    newState->backend.ShutdownWindow      = OpalVkShutdownWindow;
+    newState->backend.RecreateWindow      = OpalVkRecreateWindow;
 
     // Initialize
 

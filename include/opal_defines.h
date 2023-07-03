@@ -268,6 +268,8 @@ typedef struct OpalCreateRenderpassInfo {
 // Core
 // =====
 
+typedef struct OpalWindow_T* OpalWindow;
+
 typedef struct OpalState_T* OpalState;
 
 typedef struct OpalObjectShaderArgumentsInfo

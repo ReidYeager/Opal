@@ -107,6 +107,43 @@ typedef struct OvkRenderpass_T {
 } OvkRenderpass_T;
 
 // =====
+// Window
+// =====
+
+typedef struct OvkFrame_T
+{
+  uint32_t swapchainImageIndex;
+
+  VkFence fenceFrameAvailable;
+  VkSemaphore semImageAvailable;
+  VkSemaphore semRenderComplete;
+
+  VkCommandBuffer cmd;
+} OvkFrame_T;
+
+typedef struct OvkWindow_T
+{
+  VkExtent2D extents;
+  uint32_t frameCount;
+
+  VkSurfaceKHR surface;
+  VkSurfaceFormatKHR surfaceFormat;
+
+  struct {
+    VkSwapchainKHR swapchain;
+
+    VkPresentModeKHR presentMode;
+
+    VkImage* pImages;
+    VkImageView* pViews;
+  } swapchain;
+
+  uint32_t currentFrame;
+  OvkFrame_T* pFrames;
+
+} OvkWindow_T;
+
+// =====
 // Core
 // =====
 
@@ -125,23 +162,11 @@ typedef struct OvkGpu_T
   uint32_t queueIndexPresent;
 } OvkGpu_T;
 
-typedef struct OvkFrame_T
-{
-  uint32_t swapchainImageIndex;
-
-  VkFence fenceFrameAvailable;
-  VkSemaphore semImageAvailable;
-  VkSemaphore semRenderComplete;
-
-  VkCommandBuffer cmd;
-} OvkFrame_T;
-
 typedef struct OvkState_T
 {
   uint32_t isHeadless;
 
   VkInstance instance;
-  VkSurfaceKHR surface;
   OvkGpu_T gpu;
   VkDevice device;
 
@@ -153,26 +178,9 @@ typedef struct OvkState_T
 
   VkDescriptorPool descriptorPool;
 
-  struct {
-    VkSwapchainKHR swapchain;
-    uint32_t imageCount;
-    VkImage* pImages;
-    VkImageView* imageViews;
-    VkSurfaceFormatKHR format;
-    VkExtent2D extents;
-    VkPresentModeKHR presentMode;
-
-    VkImage* depthImages;
-    VkDeviceMemory* depthImageMemories;
-    VkImageView* depthImageViews;
-    VkFormat depthFormat;
-  } swapchain;
-
-  uint32_t currentFrameSlotIndex;
-  uint32_t frameSlotCount;
-  OvkFrame_T* frameSlots;
-
   VkDescriptorSetLayout objectSetLayout;
+
+  OvkWindow_T* window;
 } OvkState_T;
 
 #define maxFlightSlotCount 3

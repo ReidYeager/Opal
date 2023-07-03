@@ -265,7 +265,7 @@ OpalResult OpalVkCreateRenderpassAndFramebuffers(
   OvkState_T* state = (OvkState_T*)_oState->backend.state;
   OvkRenderpass_T* outOvkRp = &_outRenderpass->backend.vulkan;
 
-  uint32_t fbCount = _createInfo.rendersToSwapchain ? state->swapchain.imageCount : 1;
+  uint32_t fbCount = _createInfo.rendersToSwapchain ? state->window->frameCount : 1;
   uint32_t attachmentCount = _createInfo.imageCount + (_createInfo.rendersToSwapchain ? 1 : 0);
   VkImageView* views = LapisMemAllocZeroArray(VkImageView, attachmentCount);
 
@@ -291,7 +291,7 @@ OpalResult OpalVkCreateRenderpassAndFramebuffers(
 
   if (_createInfo.rendersToSwapchain)
   {
-    rpInfo.attachments[attachmentCount - 1].dataFormat = state->swapchain.format.format;
+    rpInfo.attachments[attachmentCount - 1].dataFormat = state->window->surfaceFormat.format;
     rpInfo.attachments[attachmentCount - 1].shouldStoreReneredData = 1;
     rpInfo.attachments[attachmentCount - 1].loadOperation = Ovk_Attachment_LoadOp_Clear;
     rpInfo.attachments[attachmentCount - 1].usage = Ovk_Attachment_Usage_Presented;
@@ -326,7 +326,7 @@ OpalResult OpalVkCreateRenderpassAndFramebuffers(
 
   for (uint32_t i = 0; i < fbCount; i++)
   {
-    views[_createInfo.imageCount] = state->swapchain.imageViews[i];
+    views[_createInfo.imageCount] = state->window->swapchain.pViews[i];
     OPAL_ATTEMPT(
       OvkCreateFramebuffer(
         state,

@@ -282,15 +282,15 @@ OpalResult CreatePipeline_OpalVk(
   VkViewport viewport = { 0 };
   viewport.x = 0;
   viewport.y = 0;
-  viewport.width = (float)_state->swapchain.extents.width;
-  viewport.height = (float)_state->swapchain.extents.height;
+  viewport.width = (float)_state->window->extents.width;
+  viewport.height = (float)_state->window->extents.height;
   viewport.minDepth = 0;
   viewport.maxDepth = 1;
 
   VkRect2D scissor = { 0 };
   scissor.extent = (VkExtent2D){
-    _state->swapchain.extents.width,
-    _state->swapchain.extents.height };
+    _state->window->extents.width,
+    _state->window->extents.height };
   scissor.offset = (VkOffset2D){ 0, 0 };
 
   VkPipelineViewportStateCreateInfo viewportStateInfo = { 0 };

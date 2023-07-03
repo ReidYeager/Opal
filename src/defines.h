@@ -124,6 +124,19 @@ typedef struct OpalRenderpass_T
 } OpalRenderpass_T;
 
 // =====
+// Window
+// =====
+typedef struct OpalWindow_T
+{
+  LapisWindow lapisWindow;
+
+  union
+  {
+    OvkWindow_T vulkan;
+  } backend;
+} OpalWindow_T;
+
+// =====
 // State
 // =====
 
@@ -170,7 +183,14 @@ typedef struct OpalState_T
     void(*BindObject)(OpalState _oState, OpalObject _renderable);
     void(*RenderMesh)(OpalMesh _mesh);
     void(*NextSubpass)();
+
+    // Window =====
+    OpalResult(*InitializeWindow)(const OpalState _oState, const LapisWindow _lapisWindow, OpalWindow _oWindow);
+    void(*ShutdownWindow)(OpalState _oState, OpalWindow _oWindow);
+    OpalResult(*RecreateWindow)(OpalState _oState, OpalWindow _oWindow);
   } backend;
+
+  OpalWindow_T window;
 } OpalState_T;
 
 #endif // !GEM_OPAL_DEFINES_H_PRIVATE

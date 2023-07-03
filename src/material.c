@@ -56,6 +56,8 @@ OpalResult OpalShaderRecreate(OpalState _state, OpalShader _shader, OpalCreateSh
     return Opal_Failure_Backend);
 
   _shader->type = _createInfo.type;
+
+  return Opal_Success;
 }
 
 OpalResult OpalCreateMaterial(OpalState _state, OpalCreateMaterialInfo _createInfo, OpalMaterial* _outMaterial)

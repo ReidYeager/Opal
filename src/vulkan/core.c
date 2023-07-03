@@ -99,23 +99,6 @@ OpalResult CreateInstance(OvkState_T* _state)
   return Opal_Success;
 }
 
-OpalResult CreateSurface(LapisWindow _window, OvkState_T* _state)
-{
-  if (_state->isHeadless)
-  {
-    return Opal_Success;
-  }
-
-  LapisResult result = LapisWindowVulkanCreateSurface(_window, _state->instance, &_state->surface);
-  if (result != Lapis_Success)
-  {
-    OVK_LOG_ERROR("Failed to create Lapis surface : result = %d\n", result);
-    return Opal_Failure_Vk_Create;
-  }
-
-  return Opal_Success;
-}
-
 uint32_t GetFamilyIndexForQueue(const OvkGpu_T* const _gpu, VkQueueFlags _flags)
 {
   uint32_t bestFit = ~0U;
@@ -192,7 +175,7 @@ OvkGpu_T CreateGpuInfo(OvkState_T* _state, VkPhysicalDevice _device)
 
   gpu.queueIndexGraphics = GetFamilyIndexForQueue(&gpu, VK_QUEUE_GRAPHICS_BIT);
   gpu.queueIndexTransfer = GetFamilyIndexForQueue(&gpu, VK_QUEUE_TRANSFER_BIT);
-  gpu.queueIndexPresent = GetFamilyIndexForPresent(&gpu, _state->surface);
+  gpu.queueIndexPresent = GetFamilyIndexForPresent(&gpu, _state->window->surface);
 
   return gpu;
 }
@@ -362,255 +345,18 @@ OpalResult CreateDescriptorPool(OvkState_T* _state)
   return Opal_Success;
 }
 
-OpalResult CreateSwapchain(OvkState_T* _state, LapisWindow _window)
-{
-  // Collect hardware information =====
-  VkSurfaceCapabilitiesKHR surfCapabilities;
-  vkGetPhysicalDeviceSurfaceCapabilitiesKHR(_state->gpu.device, _state->surface, &surfCapabilities);
-
-  uint32_t formatCount = 0;
-  VkSurfaceFormatKHR* formats;
-  vkGetPhysicalDeviceSurfaceFormatsKHR(_state->gpu.device, _state->surface, &formatCount, NULL);
-  formats = LapisMemAllocArray(VkSurfaceFormatKHR, formatCount);
-  vkGetPhysicalDeviceSurfaceFormatsKHR(_state->gpu.device, _state->surface, &formatCount, formats);
-
-  uint32_t presentModeCount = 0;
-  VkPresentModeKHR* presentModes;
-  vkGetPhysicalDeviceSurfacePresentModesKHR(_state->gpu.device, _state->surface, &presentModeCount, NULL);
-  presentModes = LapisMemAllocArray(VkPresentModeKHR, presentModeCount);
-  vkGetPhysicalDeviceSurfacePresentModesKHR(_state->gpu.device, _state->surface, &presentModeCount, presentModes);
-
-  // Choose information =====
-
-  // Image count
-  uint32_t imageCount = surfCapabilities.minImageCount + 1;
-  if (surfCapabilities.maxImageCount > 0 && imageCount > surfCapabilities.maxImageCount)
-  {
-    imageCount = surfCapabilities.maxImageCount;
-  }
-
-  // Format
-  VkSurfaceFormatKHR format = formats[0];
-  for (uint32_t i = 0; i < formatCount; i++)
-  {
-    if (formats[i].format == VK_FORMAT_B8G8R8A8_SRGB
-      && formats[i].colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR)
-    {
-      format = formats[i];
-      break;
-    }
-  }
-
-  // Present mode
-  VkPresentModeKHR presentMode = presentModes[0];
-  for (uint32_t i = 0; i < presentModeCount; i++)
-  {
-    if (presentModes[i] == VK_PRESENT_MODE_MAILBOX_KHR)
-    {
-      presentMode = presentModes[i];
-      break;
-    }
-  }
-
-  // Extents
-  VkExtent2D extents;
-  if (surfCapabilities.currentExtent.width != -1)
-  {
-    extents = surfCapabilities.currentExtent;
-  }
-  else
-  {
-    extents.width = LapisWindowGetWidth(_window);
-    extents.height = LapisWindowGetHeight(_window);
-  }
-
-  // Create =====
-  VkSwapchainCreateInfoKHR createInfo = { 0 };
-  createInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
-  createInfo.pNext = NULL;
-  createInfo.flags = 0;
-  createInfo.imageArrayLayers = 1;
-  createInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
-  createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
-  createInfo.preTransform = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR;
-  createInfo.clipped = VK_TRUE;
-  createInfo.imageColorSpace = format.colorSpace;
-  createInfo.imageFormat = format.format;
-  createInfo.imageExtent = extents;
-  createInfo.presentMode = presentMode;
-  createInfo.minImageCount = imageCount;
-  createInfo.surface = _state->surface;
-
-  uint32_t queueIndies[2] = { _state->gpu.queueIndexGraphics, _state->gpu.queueIndexTransfer };
-  if (_state->gpu.queueIndexGraphics == _state->gpu.queueIndexTransfer)
-  {
-    createInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
-  }
-  else
-  {
-    createInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
-    createInfo.queueFamilyIndexCount = 2;
-    createInfo.pQueueFamilyIndices = queueIndies;
-  }
-
-  OVK_ATTEMPT(vkCreateSwapchainKHR(_state->device, &createInfo, NULL, &_state->swapchain.swapchain),
-  {
-    LapisMemFree(formats);
-    LapisMemFree(presentModes);
-    return Opal_Failure_Vk_Create;
-  });
-
-  LapisMemFree(formats);
-  LapisMemFree(presentModes);
-
-  // Images =====
-  vkGetSwapchainImagesKHR(_state->device, _state->swapchain.swapchain, &imageCount, NULL);
-  _state->swapchain.pImages = (VkImage*)LapisMemAlloc(sizeof(VkImage) * imageCount);
-  _state->swapchain.imageViews = (VkImageView*)LapisMemAlloc(sizeof(VkImageView) * imageCount);
-  vkGetSwapchainImagesKHR(_state->device, _state->swapchain.swapchain, &imageCount, _state->swapchain.pImages);
-
-  // Image views =====
-  VkImageViewCreateInfo ivCreateInfo = { 0 };
-  ivCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-  ivCreateInfo.pNext = NULL;
-  ivCreateInfo.flags = 0;
-  ivCreateInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-  ivCreateInfo.format = format.format;
-  ivCreateInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-  ivCreateInfo.subresourceRange.levelCount = 1;
-  ivCreateInfo.subresourceRange.baseMipLevel = 0;
-  ivCreateInfo.subresourceRange.layerCount = 1;
-  ivCreateInfo.subresourceRange.baseArrayLayer = 0;
-
-  for (uint32_t i = 0; i < imageCount; i++)
-  {
-    ivCreateInfo.image = _state->swapchain.pImages[i];
-
-    OVK_ATTEMPT(vkCreateImageView(_state->device, &ivCreateInfo, NULL, &_state->swapchain.imageViews[i]),
-      return Opal_Failure_Vk_Create);
-  }
-
-  _state->swapchain.format = format;
-  _state->swapchain.extents = extents;
-  _state->swapchain.imageCount = imageCount;
-
-  return Opal_Success;
-}
-
-OpalResult CreateDepthBuffers(OvkState_T* _state)
-{
-  uint32_t imageCount = _state->swapchain.imageCount;
-  _state->swapchain.depthImages = (VkImage*)LapisMemAlloc(sizeof(VkImage) * imageCount);
-  _state->swapchain.depthImageMemories = (VkDeviceMemory*)LapisMemAlloc(sizeof(VkDeviceMemory) * imageCount);
-  _state->swapchain.depthImageViews = (VkImageView*)LapisMemAlloc(sizeof(VkImageView) * imageCount);
-  _state->swapchain.depthFormat = VK_FORMAT_D24_UNORM_S8_UINT;
-
-  for (uint32_t i = 0; i < imageCount; i++)
-  {
-    OPAL_ATTEMPT(
-      OvkCreateImage(
-        _state,
-        _state->swapchain.extents,
-        _state->swapchain.depthFormat,
-        VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
-        &_state->swapchain.depthImages[i]),
-      return Opal_Failure_Vk_Create);
-
-    OPAL_ATTEMPT(
-      OvkCreateImageMemory(
-        _state,
-        _state->swapchain.depthImages[i],
-        &_state->swapchain.depthImageMemories[i]),
-      return Opal_Failure_Vk_Create);
-
-    OVK_ATTEMPT(
-      vkBindImageMemory(
-        _state->device,
-        _state->swapchain.depthImages[i],
-        _state->swapchain.depthImageMemories[i], 0),
-      return Opal_Failure_Vk_Create);
-
-    OPAL_ATTEMPT(
-      OvkCreateImageView(
-        _state,
-        VK_IMAGE_ASPECT_DEPTH_BIT,
-        _state->swapchain.depthImages[i],
-        _state->swapchain.depthFormat,
-        &_state->swapchain.depthImageViews[i]),
-      return Opal_Failure_Vk_Create);
-  }
-
-  return Opal_Success;
-}
-
-OpalResult CreateSyncObjects(OvkState_T* _state)
-{
-  _state->frameSlots = LapisMemAllocArray(OvkFrame_T, maxFlightSlotCount);
-  _state->frameSlotCount = maxFlightSlotCount;
-
-  VkSemaphoreCreateInfo semaphoreCreateInfo = { 0 };
-  semaphoreCreateInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
-
-  VkFenceCreateInfo fenceCreateInfo = { 0 };
-  fenceCreateInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
-  fenceCreateInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
-
-  for (uint32_t i = 0; i < maxFlightSlotCount; i++)
-  {
-    OvkFrame_T* slot = &_state->frameSlots[i];
-
-    OVK_ATTEMPT(vkCreateFence(_state->device, &fenceCreateInfo, NULL, &slot->fenceFrameAvailable),
-    {
-      LapisMemFree(_state->frameSlots);
-      OVK_LOG_ERROR("Failed to create flight slot fence %d\n", i);
-      return Opal_Failure_Vk_Create;
-    });
-
-    OVK_ATTEMPT(vkCreateSemaphore(_state->device, &semaphoreCreateInfo, NULL, &slot->semRenderComplete),
-    {
-      LapisMemFree(_state->frameSlots);
-      OVK_LOG_ERROR("Failed to create render complete semaphore %d\n", i);
-      return Opal_Failure_Vk_Create;
-    });
-
-    OVK_ATTEMPT(vkCreateSemaphore(_state->device, &semaphoreCreateInfo, NULL, &slot->semImageAvailable),
-    {
-      LapisMemFree(_state->frameSlots);
-      OVK_LOG_ERROR("Failed to create image available semaphore %d\n", i);
-      return Opal_Failure_Vk_Create;
-    });
-  }
-
-  return Opal_Success;
-}
-
-OpalResult CreateCommandBuffers(OvkState_T* _state)
-{
-  VkCommandBufferAllocateInfo allocInfo = { 0 };
-  allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-  allocInfo.pNext = NULL;
-  allocInfo.commandBufferCount = 1;
-  allocInfo.commandPool = _state->graphicsCommandPool;
-  allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-
-  for (uint32_t i = 0; i < _state->frameSlotCount; i++)
-  {
-    OVK_ATTEMPT(vkAllocateCommandBuffers(_state->device, &allocInfo, &_state->frameSlots[i].cmd),
-      return Opal_Failure_Vk_Create);
-  }
-
-  return Opal_Success;
-}
-
 OpalResult OpalVkInitState(OpalCreateStateInfo _createInfo, OpalState _oState)
 {
   OvkState_T* state = (OvkState_T*)LapisMemAllocZero(sizeof(OvkState_T));
+  state->window = &_oState->window.backend.vulkan;
   _oState->backend.state = (void*)state;
 
   if (_createInfo.window == NULL)
   {
-    state->isHeadless = 1;
+    return Opal_Failure;
+    //state->isHeadless = 1;
   }
+  _oState->window.lapisWindow = _createInfo.window;
 
   OPAL_ATTEMPT(CreateInstance(state),
   {
@@ -619,13 +365,8 @@ OpalResult OpalVkInitState(OpalCreateStateInfo _createInfo, OpalState _oState)
     return Opal_Failure_Vk_Init;
   });
 
-  // TODO : Move surface creation to window setup
-  OPAL_ATTEMPT(CreateSurface(_createInfo.window, state),
-  {
-    LapisMemFree(state);
-    OVK_LOG_ERROR("Failed to create vulkan surface\n");
-    return Opal_Failure_Vk_Init;
-  });
+  OPAL_ATTEMPT(InitWindowPartialA_OpalVk(_oState, _createInfo.window, state->window),
+    return Opal_Failure);
 
   OPAL_ATTEMPT(SelectPhysicalDevice(state),
   {
@@ -676,28 +417,8 @@ OpalResult OpalVkInitState(OpalCreateStateInfo _createInfo, OpalState _oState)
     return Opal_Failure_Vk_Init;
   });
 
-  // TODO : Move swapchain creation to window setup
-  OPAL_ATTEMPT(CreateSwapchain(state, _createInfo.window),
-  {
-    LapisMemFree(state);
-    OVK_LOG_ERROR("Failed to create swapchain\n");
-    return Opal_Failure_Vk_Init;
-  });
-
-  // TODO : Modify frames objects to accommodate headless rendering
-  OPAL_ATTEMPT(CreateSyncObjects(state),
-  {
-    LapisMemFree(state);
-    OVK_LOG_ERROR("Failed to create sync objects\n");
-    return Opal_Failure_Vk_Init;
-  });
-
-  OPAL_ATTEMPT(CreateCommandBuffers(state),
-  {
-    LapisMemFree(state);
-    OVK_LOG_ERROR("Failed to create graphics command buffers\n");
-    return Opal_Failure_Vk_Init;
-  });
+  OPAL_ATTEMPT(InitWindowPartialB_OpalVk(_oState, _createInfo.window, state->window),
+    return Opal_Failure);
 
   OVK_LOG(Lapis_Console_Info, "Init complete\n");
 
@@ -710,38 +431,12 @@ void OpalVkShutdownState(OpalState _oState)
 
   vkDeviceWaitIdle(state->device);
 
-  //for (uint32_t i = 0; i < state->swapchain.imageCount; i++)
-  //{
-  //  vkDestroyFramebuffer(state->device, state->framebuffers[i], NULL);
-  //}
-  //LapisMemFree(state->framebuffers);
-
-  //vkDestroyRenderPass(state->device, state->renderpass, NULL);
-
-  for (uint32_t i = 0; i < state->frameSlotCount; i++)
-  {
-    OvkFrame_T* slot = &state->frameSlots[i];
-    vkDestroyFence(state->device, slot->fenceFrameAvailable, NULL);
-    vkDestroySemaphore(state->device, slot->semImageAvailable, NULL);
-    vkDestroySemaphore(state->device, slot->semRenderComplete, NULL);
-    vkFreeCommandBuffers(state->device, state->graphicsCommandPool, 1, &slot->cmd);
-  }
-  LapisMemFree(state->frameSlots);
-
-  for (uint32_t i = 0; i < state->swapchain.imageCount; i++)
-  {
-    vkDestroyImageView(state->device, state->swapchain.imageViews[i], NULL);
-    // Images destroyed with the swapchain itself
-  }
-  vkDestroySwapchainKHR(state->device, state->swapchain.swapchain, NULL);
-  LapisMemFree(state->swapchain.pImages);
-  LapisMemFree(state->swapchain.imageViews);
+  OpalVkShutdownWindow(_oState, state->window);
 
   vkDestroyDescriptorPool(state->device, state->descriptorPool, NULL);
   vkDestroyCommandPool(state->device, state->transientCommantPool, NULL);
   vkDestroyCommandPool(state->device, state->graphicsCommandPool, NULL);
   vkDestroyDevice(state->device, NULL);
-  vkDestroySurfaceKHR(state->instance, state->surface, NULL);
   vkDestroyInstance(state->instance, NULL);
 
   LapisMemFree(state->gpu.queueFamilyProperties);
@@ -755,8 +450,8 @@ void OpalVkShutdownState(OpalState _oState)
 OpalResult OpalVkRenderFrame(OpalState _oState, const OpalFrameData* _oFrameData)
 {
   OvkState_T* state = (OvkState_T*)_oState->backend.state;
-  uint32_t slotIndex = state->currentFrameSlotIndex;
-  OvkFrame_T* frameSlot = &state->frameSlots[slotIndex];
+  uint32_t slotIndex = state->window->currentFrame;
+  OvkFrame_T* frameSlot = &state->window->pFrames[slotIndex];
 
   // Setup =====
 
@@ -766,7 +461,7 @@ OpalResult OpalVkRenderFrame(OpalState _oState, const OpalFrameData* _oFrameData
   OVK_ATTEMPT(
     vkAcquireNextImageKHR(
       state->device,
-      state->swapchain.swapchain,
+      state->window->swapchain.swapchain,
       UINT64_MAX,
       frameSlot->semImageAvailable,
       VK_NULL_HANDLE,
@@ -806,13 +501,13 @@ OpalResult OpalVkRenderFrame(OpalState _oState, const OpalFrameData* _oFrameData
   presentInfo.waitSemaphoreCount = 1;
   presentInfo.pWaitSemaphores = &frameSlot->semRenderComplete;
   presentInfo.swapchainCount = 1;
-  presentInfo.pSwapchains = &state->swapchain.swapchain;
+  presentInfo.pSwapchains = &state->window->swapchain.swapchain;
   presentInfo.pImageIndices = &frameSlot->swapchainImageIndex;
 
   OVK_ATTEMPT(vkQueuePresentKHR(state->queuePresent, &presentInfo),
     return Opal_Failure_Vk_Render);
 
-  state->currentFrameSlotIndex = (state->currentFrameSlotIndex + 1) % maxFlightSlotCount;
+  state->window->currentFrame = (state->window->currentFrame + 1) % maxFlightSlotCount;
 
   return Opal_Success;
 }
@@ -820,6 +515,6 @@ OpalResult OpalVkRenderFrame(OpalState _oState, const OpalFrameData* _oFrameData
 OpalExtents2D OpalVkGetSwapchainExtents(OpalState _oState)
 {
   OvkState_T* state = (OvkState_T*)_oState->backend.state;
-  OpalExtents2D out = {state->swapchain.extents.width, state->swapchain.extents.height};
+  OpalExtents2D out = { state->window->extents.width, state->window->extents.height };
   return out;
 }

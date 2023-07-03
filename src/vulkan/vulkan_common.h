@@ -150,5 +150,13 @@ OpalResult OvkBeginSingleUseCommand(OvkState_T* _state, VkCommandPool _pool, VkC
 OpalResult OvkEndSingleUseCommand(OvkState_T* _state, VkCommandPool _pool, VkQueue _queue, VkCommandBuffer _cmd);
 OpalResult OvkRecordCommandBuffer(OvkState_T* _state, OvkFrame_T* _frame, const OpalFrameData* _data);
 
+// Window =====
+OpalResult OpalVkInitializeWindow(const OpalState _oState, const LapisWindow _lapisWindow, OpalWindow _oWindow);
+void OpalVkShutdownWindow(const OpalState _oState, OpalWindow _oWindow);
+OpalResult OpalVkRecreateWindow(const OpalState _oState, OpalWindow _oWindow);
+
+OpalResult InitWindowPartialA_OpalVk(const OpalState _oState, const LapisWindow _lapisWindow, OvkWindow_T* _window);
+OpalResult InitWindowPartialB_OpalVk(const OpalState _oState, const LapisWindow _lapisWindow, OvkWindow_T* _window);
+
 
 #endif // !GEM_OPAL_VULKAN_VULKAN_COMMON_H_
