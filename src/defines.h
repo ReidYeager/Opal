@@ -34,16 +34,37 @@
   }                                           \
 }
 
+typedef struct OvkSync_T
+{
+  VkFence fenceFrameAvailable;
+  VkSemaphore semImageAvailable;
+  VkSemaphore semRenderComplete;
+} OvkSync_T;
+
 typedef struct OpalWindow_T
 {
   LapisWindow* lWindow;
 
-  uint32_t width;
-  uint32_t height;
+  uint32_t imageCount;
+  struct
+  {
+    uint32_t width;
+    uint32_t height;
+  } extents;
 
   struct
   {
     VkSurfaceKHR surface;
+    VkPresentModeKHR presentMode;
+    VkFormat format;
+    struct
+    {
+      VkSwapchainKHR swapchain;
+      VkImage* pImages;
+      VkImageView* pViews;
+    }swapchain;
+
+    OvkSync_T* pSync;
   }vk;
 } OpalWindow_T;
 

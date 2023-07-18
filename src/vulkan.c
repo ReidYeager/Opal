@@ -15,7 +15,7 @@ OpalResult CreateDescriptorPool_Ovk();
 OpalResult OvkInit()
 {
   OPAL_ATTEMPT(CreateInstance_Ovk());
-  if (LapisWindowVulkanCreateSurface(*oState.window.lWindow, oState.vk.instance, &oState.window.vk.surface) != Lapis_Success)
+  if (LapisWindowVulkanCreateSurface(*oState.window.lWindow, oState.vk.instance, &oState.window.vk.surface))
   {
     OpalLog("Failed to create surface for lapis window\n");
     return Opal_Failure;
@@ -38,7 +38,6 @@ void OvkShutdown()
   vkDestroyCommandPool(oState.vk.device, oState.vk.transientCommandPool, oState.vk.allocator);
 
   vkDestroyDevice(oState.vk.device, oState.vk.allocator);
-  vkDestroySurfaceKHR(oState.vk.instance, oState.window.vk.surface, oState.vk.allocator);
   vkDestroyInstance(oState.vk.instance, oState.vk.allocator);
 
   OpalLog("Vk shutdown complete\n");
