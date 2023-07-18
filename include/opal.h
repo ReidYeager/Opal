@@ -1,72 +1,9 @@
 
 #ifndef GEM_OPAL_H
-#define GEM_OPAL_H
-
-#ifdef __cplusplus
-extern "C" {
-#endif // __cplusplus
+#define GEM_OPAL_H 1
 
 #include "include/opal_defines.h"
 
-uint32_t OpalFormatToSize(OpalFormat _format);
+OpalResult OpalInit(OpalInitInfo _createInfo);
 
-OpalResult OpalCreateState(OpalCreateStateInfo _info,  OpalState* _outState);
-void OpalDestroyState(OpalState* _state);
-OpalResult OpalRenderFrame(OpalState _state, const OpalFrameData* _frameData);
-
-OpalExtents2D OpalGetSwapchainExtents(OpalState _state);
-
-// =====
-// Buffer
-// =====
-OpalResult OpalCreateBuffer(OpalState _state, OpalCreateBufferInfo _createInfo, OpalBuffer* _outBuffer);
-void OpalDestroyBuffer(OpalState _state, OpalBuffer* _buffer);
-OpalResult OpalBufferPushData(OpalState _state, OpalBuffer _buffer, void* _data);
-
-// =====
-// Image
-// =====
-OpalResult OpalCreateImage(OpalState _state, OpalCreateImageInfo _createInfo, OpalImage* _outImage);
-void OpalDestroyImage(OpalState _state, OpalImage* _image);
-
-// =====
-// Material
-// =====
-OpalResult OpalCreateShaders(
-  OpalState _state,
-  uint32_t _createCount,
-  OpalCreateShaderInfo* _pCreateInfos,
-  OpalShader* _pOutShaders);
-void OpalDestroyShader(OpalState _state, OpalShader* _shader);
-OpalResult OpalShaderRecreate(OpalState _state, OpalShader _shader, OpalCreateShaderInfo _createInfo);
-
-OpalResult OpalCreateMaterial(OpalState _state, OpalCreateMaterialInfo _createInfo, OpalMaterial* _outMaterial);
-void OpalDestroyMaterial(OpalState _state, OpalMaterial* _material);
-OpalResult OpalMaterialRecreate(OpalState _state, OpalShader* _pNewShaders, OpalMaterial _material);
-
-// =====
-// Mesh
-// =====
-OpalResult OpalCreateMesh(OpalState _state, OpalCreateMeshInfo _createInfo, OpalMesh* _outMesh);
-void OpalDestroyMesh(OpalState _state, OpalMesh* _mesh);
-
-// =====
-// Rendering
-// =====
-OpalResult OpalCreateObject(OpalState _state, OpalShaderArg* _objectArguments, OpalObject* _renderable);
-void OpalDestroyObject(OpalState _state, OpalObject* _object);
-
-OpalResult OpalCreateRenderpass(OpalState _state, OpalCreateRenderpassInfo _createInfo, OpalRenderpass* _outRenderpass);
-void OpalDestroyRenderpass(OpalState _state, OpalRenderpass* _renderpass);
-
-void OpalCmdBindMaterial(OpalState _state, OpalMaterial _material);
-void OpalCmdBindObject(OpalState _state, OpalObject _renderable);
-void OpalCmdRenderMesh(OpalState _state, OpalMesh _mesh);
-void OpalCmdNextSubpass(OpalState _state);
-
-
-#ifdef __cplusplus
-}
-#endif // __cplusplus
-
-#endif // !define GEM_OPAL_H
+#endif // !GEM_OPAL_H

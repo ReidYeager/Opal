@@ -1,196 +1,89 @@
 
-#ifndef GEM_OPAL_DEFINES_H_PRIVATE
-#define GEM_OPAL_DEFINES_H_PRIVATE
+#ifndef GEM_OPAL_LOCAL_DEFINES_H_
+#define GEM_OPAL_LOCAL_DEFINES_H_ 1
 
 #include "include/opal.h"
-#include "src/vulkan/vulkan_defines.h"
 
-#include <lapis.h>
+#include <vulkan/vulkan.h>
 
-#include <stdint.h>
+#include <stdbool.h>
+#include <stdio.h>
 
-// =====
-// Buffer
-// =====
+#define OpalLog(message, ...)              \
+{                                          \
+  printf("Opal :: " message, __VA_ARGS__); \
+}
 
-typedef struct OpalBuffer_T
-{
-  uint64_t size;
-  uint64_t paddedSize;
+#define OPAL_ATTEMPT(fn)                \
+{                                       \
+  OpalResult oResult = (fn);            \
+  if (oResult)                          \
+  {                                     \
+    OpalLog("Failure : %d\n", oResult); \
+    return Opal_Failure;                \
+  }                                     \
+}
 
-  union
-  {
-    void* null;
-    OvkBuffer_T vulkan;
-  } backend;
-} OpalBuffer_T;
+#define OVK_ATTEMPT(fn)                       \
+{                                             \
+  VkResult vResult = (fn);                    \
+  if (vResult != VK_SUCCESS)                  \
+  {                                           \
+    OpalLog("Vulkan failed : %d\n", vResult); \
+    return Opal_Failure;                      \
+  }                                           \
+}
 
-// =====
-// Image
-// =====
-
-typedef struct OpalImage_T
-{
-  OpalExtents2D extents;
-
-  union
-  {
-    void* null;
-    OvkImage_T vulkan;
-  } backend;
-} OpalImage_T;
-
-// =====
-// Material
-// =====
-
-typedef struct OpalShader_T
-{
-  OpalShaderTypes type;
-
-  union
-  {
-    void* null;
-    OvkShader_T vulkan;
-  } backend;
-} OpalShader_T;
-
-typedef struct OpalMaterial_T
-{
-  uint32_t subpassIndex;
-  OpalRenderpass renderpass;
-
-  uint32_t shaderCount;
-  OpalShader* pShaders;
-
-  union
-  {
-    void* null;
-    OvkMaterial_T vulkan;
-  } backend;
-} OpalMaterial_T;
-
-// =====
-// Mesh
-// =====
-
-typedef struct OpalMesh_T
-{
-  uint32_t vertexCount;
-  OpalBuffer vertexBuffer;
-  uint32_t indexCount;
-  OpalBuffer indexBuffer;
-
-  union
-  {
-    OvkMesh_T vulkan;
-  } backend;
-} OpalMesh_T;
-
-// =====
-// Rendering
-// =====
-
-typedef struct OpalObject_T
-{
-  union
-  {
-    OvkRenderable_T vulkan;
-  } backend;
-} OpalObject_T;
-
-typedef struct OpalSubpass_T
-{
-  bool usesDepth;
-  uint32_t colorAttachmentCount;
-} OpalSubpass_T;
-
-typedef struct OpalRenderpass_T
-{
-  union
-  {
-    OvkRenderpass_T vulkan;
-  } backend;
-
-  OpalExtents2D extents;
-  OpalExtents2D offset;
-
-  uint32_t subpassCount;
-  OpalSubpass_T* pSubpasses;
-
-  uint32_t attachmentCount;
-  OpalClearValues* clearValues;
-  OpalResult(*Render)();
-} OpalRenderpass_T;
-
-// =====
-// Window
-// =====
 typedef struct OpalWindow_T
 {
-  LapisWindow lapisWindow;
+  LapisWindow* lWindow;
 
-  union
+  uint32_t width;
+  uint32_t height;
+
+  struct
   {
-    OvkWindow_T vulkan;
-  } backend;
+    VkSurfaceKHR surface;
+  }vk;
 } OpalWindow_T;
 
-// =====
-// State
-// =====
+typedef struct OpalVkGpu_T
+{
+  VkPhysicalDevice device;
+  VkPhysicalDeviceFeatures features;
+  VkPhysicalDeviceProperties properties;
+  VkPhysicalDeviceMemoryProperties memoryProperties;
+
+  uint32_t queueFamilyPropertiesCount;
+  VkQueueFamilyProperties* queueFamilyProperties;
+
+  uint32_t queueIndexGraphics;
+  uint32_t queueIndexTransfer;
+  uint32_t queueIndexPresent;
+} OpalVkGpu_T;
 
 typedef struct OpalState_T
 {
-  OpalApi api;
-  OpalVertexLayoutInfo vertexLayout;
-  OpalObjectShaderArgumentsInfo objectShaderArgsInfo;
-
-  struct {
-    void* state;
-    void(*ShutdownState)(OpalState _oState);
-    OpalResult(*RenderFrame)(OpalState _oState, const OpalFrameData* _frameData);
-
-    OpalExtents2D(*GetSwapchainExtents)(OpalState _oState);
-
-    // Buffer =====
-    OpalResult(*CreateBuffer)(OpalState _oState, OpalCreateBufferInfo _createInfo, OpalBuffer _oBuffer );
-    void(*DestroyBuffer)(OpalState _oState, OpalBuffer _oBuffer );
-    OpalResult(*BufferPushData)(OpalState _oState, OpalBuffer _oBuffer, void* _data);
-
-    // Image =====
-    OpalResult(*CreateImage)(OpalState _oState, OpalCreateImageInfo _createInfo, OpalImage _oImage);
-    void(*DestroyImage)(OpalState _oState, OpalImage _oImage);
-
-    // Material =====
-    OpalResult(*CreateShader)(OpalState _oState, OpalCreateShaderInfo _createInfo, OpalShader _oShader);
-    void(*DestroyShader)(OpalState _oState, OpalShader _oShader);
-
-    OpalResult(*CreateMaterial)(OpalState _oState, OpalCreateMaterialInfo _createInfo, OpalMaterial _oMaterial);
-    void(*DestroyMaterial)(OpalState _oState, OpalMaterial _oMaterial );
-
-    OpalResult(*RecreateMaterial)(OpalState _oState, OpalMaterial _oMaterial);
-
-    // Mesh =====
-    OpalResult(*CreateMesh)(OpalState _oState, OpalCreateMeshInfo _createInfo, OpalMesh _oMesh);
-    void(*DestroyMesh)(OpalState _oState, OpalMesh _oMesh );
-
-    // Rendering =====
-    OpalResult(*CreateObject)(OpalState _oState, OpalShaderArg* _objectArguments, OpalObject _oRenderable);
-    OpalResult(*CreateRenderpass)(OpalState _oState, OpalCreateRenderpassInfo _createInfo, OpalRenderpass _oRenderpass);
-
-    void(*BindMaterial)(OpalState _oState, OpalMaterial _material);
-    void(*BindObject)(OpalState _oState, OpalObject _renderable);
-    void(*RenderMesh)(OpalMesh _mesh);
-    void(*NextSubpass)();
-
-    // Window =====
-    OpalResult(*InitializeWindow)(const OpalState _oState, const LapisWindow _lapisWindow, OpalWindow _oWindow);
-    void(*ShutdownWindow)(OpalState _oState, OpalWindow _oWindow);
-    OpalResult(*RecreateWindow)(OpalState _oState, OpalWindow _oWindow);
-  } backend;
-
   OpalWindow_T window;
-} OpalState_T;
 
-#endif // !GEM_OPAL_DEFINES_H_PRIVATE
+  struct
+  {
+    const VkAllocationCallbacks* allocator;
+    VkInstance instance;
+    VkPhysicalDevice gpu;
+    OpalVkGpu_T gpuInfo;
+    VkDevice device;
+
+    VkQueue queueGraphics;
+    VkQueue queueTransfer;
+    VkQueue queuePresent;
+
+    VkCommandPool transientCommandPool;
+    VkCommandPool graphicsCommandPool;
+
+    VkDescriptorPool descriptorPool;
+  } vk;
+} OpalState_T;
+extern OpalState_T oState;
+
+#endif // !GEM_OPAL_LOCAL_DEFINES_H_
