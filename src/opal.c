@@ -35,3 +35,22 @@ void OpalShutdown()
   OvkShutdown();
 }
 
+OpalResult OpalRenderpassInit(OpalRenderpass* _renderpass)
+{
+  OpalRenderpass_T* newRenderpass = LapisMemAllocZeroSingle(OpalRenderpass_T);
+
+  OPAL_ATTEMPT(OvkRenderpassInit(newRenderpass), LapisMemFree(newRenderpass););
+
+  OpalLog("Renderpass init complete\n");
+  *_renderpass = newRenderpass;
+  return Opal_Success;
+}
+
+void OpalRenderpassShutdown(OpalRenderpass* _renderpass)
+{
+  OvkRenderpassShutdown(*_renderpass);
+  LapisMemFree(*_renderpass);
+  *_renderpass = NULL;
+  OpalLog("Renderpass shutdown complete\n");
+}
+

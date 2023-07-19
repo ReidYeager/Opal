@@ -11,6 +11,10 @@ extern "C" {
 OpalResult OpalInit(OpalInitInfo _createInfo);
 void OpalShutdown();
 
+typedef struct OpalRenderpass_T* OpalRenderpass;
+OpalResult OpalRenderpassInit(OpalRenderpass* _renderpass);
+void OpalRenderpassShutdown(OpalRenderpass* _renderpass);
+
 #ifdef __cplusplus
 }
 #endif // __cplusplus

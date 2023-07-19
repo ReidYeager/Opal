@@ -6,12 +6,21 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(Vulkan REQUIRED)
 
-file(GLOB_RECURSE HeaderFiles CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/**/*.h")
-file(GLOB_RECURSE CSourceFiles CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/**/*.c")
+#file(GLOB_RECURSE HeaderFiles CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/**/*.h")
+#file(GLOB_RECURSE CSourceFiles CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/**/*.c")
 
 add_library (Opal STATIC
-  ${HeaderFiles}
-  ${CSourceFiles}
+  "include/opal_defines.h"
+  "include/opal.h"
+
+  "src/common.h"
+  "src/define_renderpass.h"
+  "src/define_window.h"
+  "src/defines.h"
+  "src/opal.c"
+  "src/vulkan.c"
+  "src/vulkan_renderpass.c"
+  "src/vulkan_window.c"
 )
 
 set_target_properties(Opal PROPERTIES LINKER_LANGUAGE C)

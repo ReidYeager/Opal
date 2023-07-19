@@ -118,7 +118,7 @@ void ChooseSwapchainFormat_Ovk(const OpalWindow_T* const _window, VkSurfaceForma
   *_format = formats[0];
   for (uint32_t i = 0; i < formatCount; i++)
   {
-    if (formats[i].format == VK_FORMAT_B8G8R8A8_SRGB
+    if (formats[i].format == VK_FORMAT_R8G8B8A8_SRGB
       && formats[i].colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR)
     {
       *_format = formats[i];
