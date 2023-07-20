@@ -6,73 +6,6 @@ OpalResult CreateSwapchain_Ovk(OpalWindow_T* _window);
 OpalResult CreateSwapchainImages_Ovk(OpalWindow_T* _window);
 OpalResult CreateSync_Ovk(OpalWindow_T* _window);
 
-uint32_t GetMemoryTypeIndex(uint32_t _mask, VkMemoryPropertyFlags _flags)
-{
-  const VkPhysicalDeviceMemoryProperties* memProps = &oState.vk.gpuInfo.memoryProperties;
-  for (uint32_t i = 0; i < memProps->memoryTypeCount; i++)
-  {
-    if (_mask & (1 << i) && (memProps->memoryTypes[i].propertyFlags & _flags) == _flags)
-    {
-      return i;
-    }
-  }
-
-  OpalLog("Vulkan image failed to find a suitable memory type index\n");
-  return ~0u;
-}
-
-OpalResult SuperTmpCreateBufferImage(OpalWindow_T* _window)
-{
-  OpalImage_T* image = &_window->renderBufferImage;
-  image->format = Opal_Image_Format_R8G8B8A8;
-
-  VkImageCreateInfo iCreateInfo = { 0 };
-  iCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-  iCreateInfo.extent.width = _window->extents.width;
-  iCreateInfo.extent.height = _window->extents.height;
-  iCreateInfo.extent.depth = 1;
-  iCreateInfo.format = _window->vk.format;
-  iCreateInfo.usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
-  iCreateInfo.mipLevels = 1;
-  iCreateInfo.arrayLayers = 1;
-  iCreateInfo.imageType = VK_IMAGE_TYPE_2D;
-  iCreateInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
-  iCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-  iCreateInfo.samples = VK_SAMPLE_COUNT_1_BIT;
-
-  image->vk.format = _window->vk.format;
-  image->width = _window->extents.width;
-  image->height = _window->extents.height;
-
-  OVK_ATTEMPT(vkCreateImage(oState.vk.device, &iCreateInfo, oState.vk.allocator, &image->vk.image));
-
-  VkMemoryRequirements memReq = { 0 };
-  vkGetImageMemoryRequirements(oState.vk.device, image->vk.image, &memReq);
-
-  VkMemoryAllocateInfo memAllocInfo = { 0 };
-  memAllocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-  memAllocInfo.allocationSize = memReq.size;
-  memAllocInfo.memoryTypeIndex = GetMemoryTypeIndex(memReq.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-
-  OVK_ATTEMPT(vkAllocateMemory(oState.vk.device, &memAllocInfo, oState.vk.allocator, &image->vk.memory));
-  OVK_ATTEMPT(vkBindImageMemory(oState.vk.device, image->vk.image, image->vk.memory, 0)); 
-
-  VkImageViewCreateInfo vCreateInfo = { 0 };
-  vCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-  vCreateInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-  vCreateInfo.image = image->vk.image;
-  vCreateInfo.format = image->vk.format;
-  vCreateInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-  vCreateInfo.subresourceRange.levelCount = 1;
-  vCreateInfo.subresourceRange.baseMipLevel = 0;
-  vCreateInfo.subresourceRange.layerCount = 1;
-  vCreateInfo.subresourceRange.baseArrayLayer = 0;
-
-  OVK_ATTEMPT(vkCreateImageView(oState.vk.device, &vCreateInfo, oState.vk.allocator, &image->vk.view));
-
-  return Opal_Success;
-}
-
 OpalResult OvkWindowInit(OpalWindow_T* _window)
 {
   if (_window->vk.surface != VK_NULL_HANDLE)
@@ -85,6 +18,14 @@ OpalResult OvkWindowInit(OpalWindow_T* _window)
   OPAL_ATTEMPT(CreateSwapchainImages_Ovk(_window));
   OPAL_ATTEMPT(CreateSync_Ovk(_window));
 
+  // TODO : Replace with better framebuffer solution
+  OpalImageInitInfo iInitInfo = { 0 };
+  iInitInfo.extent = _window->extents;
+  iInitInfo.extent.depth = 1;
+  iInitInfo.format = Opal_Image_Format_R8G8B8A8;
+  iInitInfo.usage = Opal_Image_Usage_Presented;
+  OPAL_ATTEMPT(OpalImageInit(&_window->renderBufferImage, &iInitInfo));
+
   OpalLog("Vk window init complete\n");
 
   return Opal_Success;
@@ -92,10 +33,6 @@ OpalResult OvkWindowInit(OpalWindow_T* _window)
 
 OpalResult OvkWindowReinit(OpalWindow_T* _window)
 {
-  vkDestroyImageView(oState.vk.device, _window->renderBufferImage.vk.view, oState.vk.allocator);
-  vkDestroyImage(oState.vk.device, _window->renderBufferImage.vk.image, oState.vk.allocator);
-  vkFreeMemory(oState.vk.device, _window->renderBufferImage.vk.memory, oState.vk.allocator);
-
   for (uint32_t i = 0; i < _window->imageCount; i++)
   {
     vkDestroyImageView(oState.vk.device, _window->vk.swapchain.pViews[i], oState.vk.allocator);
@@ -106,9 +43,15 @@ OpalResult OvkWindowReinit(OpalWindow_T* _window)
   vkDestroySwapchainKHR(oState.vk.device, _window->vk.swapchain.swapchain, oState.vk.allocator);
   vkDestroySurfaceKHR(oState.vk.instance, _window->vk.surface, oState.vk.allocator);
 
+  _window->extents.width = LapisWindowGetWidth(_window->lWindow);
+  _window->extents.height = LapisWindowGetHeight(_window->lWindow);
+
   OPAL_ATTEMPT(CreateSurface_Ovk(_window));
   OPAL_ATTEMPT(CreateSwapchain_Ovk(_window));
   OPAL_ATTEMPT(CreateSwapchainImages_Ovk(_window));
+
+  // TODO : Replace with better framebuffer solution
+  OPAL_ATTEMPT(OpalImageResize(_window->renderBufferImage, _window->extents))
 
   OpalLog("Vk window re-init complete\n");
 
@@ -117,9 +60,8 @@ OpalResult OvkWindowReinit(OpalWindow_T* _window)
 
 OpalResult OvkWindowShutdown(OpalWindow_T* _window)
 {
-  vkDestroyImageView(oState.vk.device, _window->renderBufferImage.vk.view, oState.vk.allocator);
-  vkDestroyImage(oState.vk.device, _window->renderBufferImage.vk.image, oState.vk.allocator);
-  vkFreeMemory(oState.vk.device, _window->renderBufferImage.vk.memory, oState.vk.allocator);
+  // TODO : Replace with better framebuffer solution
+  OpalImageShutdown(&_window->renderBufferImage);
 
   for (uint32_t i = 0; i < _window->imageCount; i++)
   {
@@ -193,7 +135,7 @@ void ChooseSwapchainFormat_Ovk(const OpalWindow_T* const _window, VkSurfaceForma
   *_format = formats[0];
   for (uint32_t i = 0; i < formatCount; i++)
   {
-    if (formats[i].format == VK_FORMAT_R8G8B8A8_SRGB
+    if (formats[i].format == VK_FORMAT_B8G8R8A8_SRGB
       && formats[i].colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR)
     {
       *_format = formats[i];
@@ -313,8 +255,6 @@ OpalResult CreateSwapchainImages_Ovk(OpalWindow_T* _window)
 
     OVK_ATTEMPT(vkCreateImageView(oState.vk.device, &viewCreateInfo, NULL, &_window->vk.swapchain.pViews[i]));
   }
-
-  OPAL_ATTEMPT(SuperTmpCreateBufferImage(_window));
 
   return Opal_Success;
 }

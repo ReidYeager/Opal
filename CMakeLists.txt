@@ -18,7 +18,9 @@ add_library (Opal STATIC
   "src/define_window.h"
   "src/defines.h"
   "src/opal.c"
+  "src/opal_image.c"
   "src/vulkan.c"
+  "src/vulkan_image.c"
   "src/vulkan_renderpass.c"
   "src/vulkan_window.c"
 )

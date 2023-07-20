@@ -34,14 +34,10 @@ typedef struct OpalWindow_T
   LapisWindow* lWindow;
 
   uint32_t imageCount;
-  struct
-  {
-    uint32_t width;
-    uint32_t height;
-  } extents;
+  OpalExtent extents;
 
   // Used for framebuffers, contents copied to appropriate swapchain image during SwapBuffers
-  OpalImage_T renderBufferImage;
+  OpalImage_T* renderBufferImage;
 
   OvkWindow_T vk;
 } OpalWindow_T;
