@@ -3,6 +3,8 @@
 #define GEM_OPAL_WINDOW_H_ 1
 
 #include "include/opal_defines.h"
+#include "src/define_image.h"
+
 #include <vulkan/vulkan.h>
 
 typedef struct OvkSync_T
@@ -37,6 +39,9 @@ typedef struct OpalWindow_T
     uint32_t width;
     uint32_t height;
   } extents;
+
+  // Used for framebuffers, contents copied to appropriate swapchain image during SwapBuffers
+  OpalImage_T renderBufferImage;
 
   OvkWindow_T vk;
 } OpalWindow_T;

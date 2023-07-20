@@ -35,7 +35,17 @@ void OpalShutdown()
   OvkShutdown();
 }
 
+void OpalGetDefaultWindow(OpalWindow* _window)
+{
+  *_window = &oState.window;
+}
+
 OpalResult OpalRenderpassInit(OpalRenderpass* _renderpass)
+void OpalWindowGetImage(OpalWindow _window, OpalImage* _outImage)
+{
+  *_outImage = &_window->renderBufferImage;
+}
+
 {
   OpalRenderpass_T* newRenderpass = LapisMemAllocZeroSingle(OpalRenderpass_T);
 

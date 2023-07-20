@@ -4,40 +4,13 @@
 
 #include "include/opal.h"
 
+#include "src/define_image.h"
 #include "src/define_renderpass.h"
 #include "src/define_window.h"
 
 #include <vulkan/vulkan.h>
 
 #include <stdbool.h>
-#include <stdio.h>
-
-#define OpalLog(message, ...)              \
-{                                          \
-  printf("Opal :: " message, __VA_ARGS__); \
-}
-
-#define OPAL_ATTEMPT(fn, ...)           \
-{                                       \
-  OpalResult oResult = (fn);            \
-  if (oResult)                          \
-  {                                     \
-    OpalLog("Failure : %d\n", oResult); \
-    { __VA_ARGS__ }                     \
-    return Opal_Failure;                \
-  }                                     \
-}
-
-#define OVK_ATTEMPT(fn, ...)                  \
-{                                             \
-  VkResult vResult = (fn);                    \
-  if (vResult != VK_SUCCESS)                  \
-  {                                           \
-    OpalLog("Vulkan failed : %d\n", vResult); \
-    { __VA_ARGS__ }                           \
-    return Opal_Failure;                      \
-  }                                           \
-}
 
 typedef struct OpalVkGpu_T
 {

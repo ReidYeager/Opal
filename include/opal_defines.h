@@ -6,6 +6,7 @@
 extern "C" {
 #endif // __cplusplus
 
+#include "include/opal_define_image.h"
 #include <lapis.h>
 
 typedef enum OpalResult

@@ -13,6 +13,7 @@ void OpalShutdown();
 
 typedef struct OpalRenderpass_T* OpalRenderpass;
 OpalResult OpalRenderpassInit(OpalRenderpass* _renderpass);
+void OpalWindowGetImage(OpalWindow _window, OpalImage* _outImage);
 void OpalRenderpassShutdown(OpalRenderpass* _renderpass);
 
 #ifdef __cplusplus
