@@ -13,6 +13,7 @@ void OpalShutdown();
 
 void OpalGetDefaultWindow(OpalWindow* _window);
 void OpalWindowGetImage(OpalWindow _window, OpalImage* _outImage);
+OpalResult OpalWindowResize(OpalWindow _window, uint32_t _width, uint32_t _height);
 
 OpalResult OpalImageInit(OpalImage* _image, OpalImageInitInfo const* _initInfo);
 void OpalImageShutdown(OpalImage* _image);

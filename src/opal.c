@@ -45,6 +45,17 @@ void OpalWindowGetImage(OpalWindow _window, OpalImage* _outImage)
   *_outImage = _window->renderBufferImage;
 }
 
+OpalResult OpalWindowResize(OpalWindow _window, uint32_t _width, uint32_t _height)
+{
+  _window->extents.width = _width;
+  _window->extents.height = _height;
+  _window->extents.depth = 1;
+
+  OPAL_ATTEMPT(OvkWindowReinit(_window));
+
+  OpalLog("Window resized to %u, %u\n", _width, _height);
+}
+
 OpalResult OpalRenderpassInit(OpalRenderpass* _renderpass)
 {
   OpalRenderpass_T* newRenderpass = LapisMemAllocZeroSingle(OpalRenderpass_T);
