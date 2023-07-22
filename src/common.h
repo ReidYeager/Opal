@@ -42,15 +42,16 @@ OpalResult OvkWindowInit(OpalWindow_T* _window);
 OpalResult OvkWindowReinit(OpalWindow_T* _window);
 OpalResult OvkWindowShutdown(OpalWindow_T* _window);
 
-OpalResult OvkRenderpassInit(OpalRenderpass_T* _renderpass);
-void OvkRenderpassShutdown(OpalRenderpass_T* _renderpass);
-
-OpalResult OvkFramebufferInit();
-OpalResult OvkFramebufferReinit();
-void OvkFramebufferShutdown();
 OpalResult OvkImageInit(OpalImage_T* _image, OpalImageInitInfo const* _initInfo);
 void OvkImageShutdown(OpalImage_T* _image);
 OpalResult OvkImageResize(OpalImage_T* _image, OpalExtent _extents);
+
+OpalResult OvkRenderpassInit(OpalRenderpass_T* _renderpass);
+void OvkRenderpassShutdown(OpalRenderpass_T* _renderpass);
+
+OpalResult OvkFramebufferInit(OpalFramebuffer_T* _framebuffer, OpalFramebufferInitInfo const* _initInfo);
+OpalResult OvkFramebufferReinit(OpalFramebuffer_T _framebuffer);
+void OvkFramebufferShutdown(OpalFramebuffer_T* _framebuffer);
 
 
 

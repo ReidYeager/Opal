@@ -64,3 +64,22 @@ void OpalRenderpassShutdown(OpalRenderpass* _renderpass)
   OpalLog("Renderpass shutdown complete\n");
 }
 
+OpalResult OpalFramebufferInit(OpalFramebuffer* _framebuffer, OpalFramebufferInitInfo const* _initInfo)
+{
+  OpalFramebuffer_T* newFramebuffer = LapisMemAllocZeroSingle(OpalFramebuffer_T);
+
+  OPAL_ATTEMPT(OvkFramebufferInit(newFramebuffer, _initInfo));
+
+  OpalLog("Framebuffer init complete\n");
+  *_framebuffer = newFramebuffer;
+  return Opal_Success;
+}
+
+void OpalFramebufferShutdown(OpalFramebuffer* _framebuffer)
+{
+  OvkFramebufferShutdown(*_framebuffer);
+  LapisMemFree(*_framebuffer);
+  *_framebuffer = NULL;
+  OpalLog("Framebuffer shutdown complete\n");
+}
+

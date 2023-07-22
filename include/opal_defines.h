@@ -15,7 +15,17 @@ typedef enum OpalResult
   Opal_Failure
 } OpalResult;
 
-#define OPAL_HANDLE(name) typedef struct name##_T* name
+#define DEFINE_OPAL_HANDLE(name) typedef struct name##_T* name
+
+DEFINE_OPAL_HANDLE(OpalWindow);
+DEFINE_OPAL_HANDLE(OpalRenderpass);
+DEFINE_OPAL_HANDLE(OpalFramebuffer);
+
+typedef struct OpalFramebufferInitInfo
+{
+  OpalRenderpass renderpass;
+} OpalFramebufferInitInfo;
+
 
 typedef struct OpalInitInfo
 {
