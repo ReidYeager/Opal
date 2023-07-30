@@ -14,6 +14,25 @@ typedef struct OpalExtent
   uint32_t depth;
 } OpalExtent;
 
+typedef union OpalColorValue
+{
+  float float32[4];
+  int32_t int32[4];
+  uint32_t uint32[4];
+} OpalColorValue;
+
+typedef struct OpalDepthStencilValue
+{
+  float depth;
+  uint32_t stencil;
+} OpalDepthStencilValue;
+
+typedef union OpalClearValue
+{
+  OpalColorValue color;
+  OpalDepthStencilValue depthStencil;
+} OpalClearValue;
+
 typedef enum OpalImageFormat
 {
   Opal_Image_Format_R8G8B8A8,
@@ -30,7 +49,7 @@ typedef enum OpalImageUsageBits
   Opal_Image_Usage_Copy_Src = 0x04,
   Opal_Image_Usage_Copy_Dst = 0x08,
 
-  Opal_Image_Usage_Presented = Opal_Image_Usage_Color | Opal_Image_Usage_Copy_Src,
+  //Opal_Image_Usage_Presented = Opal_Image_Usage_Color | Opal_Image_Usage_Copy_Src,
 } OpalImageUsage;
 
 typedef struct OpalImageInitInfo

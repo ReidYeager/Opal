@@ -22,7 +22,7 @@ OpalResult OpalInit(OpalInitInfo _initInfo)
 
   OPAL_ATTEMPT(OvkWindowInit(&oState.window));
 
-  OPAL_ATTEMPT(OvkWindowReinit(&oState.window));
+  //OPAL_ATTEMPT(OvkWindowReinit(&oState.window));
 
   return Opal_Success;
 }
@@ -57,11 +57,15 @@ OpalResult OpalWindowResize(OpalWindow _window, uint32_t _width, uint32_t _heigh
   return Opal_Success;
 }
 
-OpalResult OpalRenderpassInit(OpalRenderpass* _renderpass)
+OpalResult OpalRenderpassInit(OpalRenderpass* _renderpass, OpalRenderpassInitInfo _initInfo)
 {
   OpalRenderpass_T* newRenderpass = LapisMemAllocZeroSingle(OpalRenderpass_T);
 
-  OPAL_ATTEMPT(OvkRenderpassInit(newRenderpass), LapisMemFree(newRenderpass););
+  OPAL_ATTEMPT(OvkRenderpassInit(newRenderpass, _initInfo), LapisMemFree(newRenderpass););
+
+  newRenderpass->imageCount = _initInfo.imageCount;
+  newRenderpass->pClearValues = LapisMemAllocZeroArray(OpalClearValue, _initInfo.imageCount);
+  LapisMemCopy(_initInfo.pClearValues, newRenderpass->pClearValues, sizeof(OpalClearValue) * _initInfo.imageCount);
 
   OpalLog("Renderpass init complete\n");
   *_renderpass = newRenderpass;
@@ -81,6 +85,9 @@ OpalResult OpalFramebufferInit(OpalFramebuffer* _framebuffer, OpalFramebufferIni
   OpalFramebuffer_T* newFramebuffer = LapisMemAllocZeroSingle(OpalFramebuffer_T);
 
   OPAL_ATTEMPT(OvkFramebufferInit(newFramebuffer, _initInfo));
+
+  newFramebuffer->ppImages = NULL;
+  newFramebuffer->extent = oState.window.extents;
 
   OpalLog("Framebuffer init complete\n");
   *_framebuffer = newFramebuffer;
@@ -132,3 +139,36 @@ void OpalMaterialShutdown(OpalMaterial* _material)
   *_material = NULL;
   OpalLog("Material shutdown complete\n");
 }
+
+OpalResult OpalRenderBegin()
+{
+  OPAL_ATTEMPT(OvkRenderBegin());
+  return Opal_Success;
+}
+
+OpalResult OpalRenderEnd()
+{
+  OPAL_ATTEMPT(OvkRenderEnd());
+  return Opal_Success;
+}
+
+void OpalRenderBeginRenderpass(OpalRenderpass _renderpass, OpalFramebuffer _framebuffer)
+{
+  OvkRenderBeginRenderpass(_renderpass, _framebuffer);
+}
+
+void OpalRenderEndRenderpass(OpalRenderpass _renderpass)
+{
+  OvkRenderEndRenderpass(_renderpass);
+}
+
+void OpalRenderBindMaterial(OpalMaterial _material)
+{
+  OvkRenderBindMaterial(_material);
+}
+
+void OpalRenderVertices(uint32_t _count)
+{
+  OvkRenderVertices(_count);
+}
+

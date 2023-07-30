@@ -23,9 +23,11 @@ add_library (Opal STATIC
   "src/opal.c"
   "src/opal_image.c"
   "src/vulkan.c"
+  "src/vulkan_command.c"
   "src/vulkan_framebuffer.c"
   "src/vulkan_image.c"
   "src/vulkan_material.c"
+  "src/vulkan_render.c"
   "src/vulkan_renderpass.c"
   "src/vulkan_window.c"
 )

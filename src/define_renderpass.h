@@ -12,6 +12,9 @@ typedef struct OvkRenderpass_T
 
 typedef struct OpalRenderpass_T
 {
+  uint32_t imageCount;
+  OpalClearValue* pClearValues;
+
   OvkRenderpass_T vk;
 } OpalRenderpass_T;
 

@@ -104,8 +104,8 @@ OpalResult CreatePipeline_Ovk(OpalMaterial_T* _material, OpalMaterialInitInfo _i
   vertexInputStateInfo.flags = 0;
   vertexInputStateInfo.vertexAttributeDescriptionCount = vertAttributeCount;
   vertexInputStateInfo.pVertexAttributeDescriptions = pVertexAttributes;
-  vertexInputStateInfo.vertexBindingDescriptionCount = 1;
-  vertexInputStateInfo.pVertexBindingDescriptions = &vertBinding;
+  vertexInputStateInfo.vertexBindingDescriptionCount = 0;
+  vertexInputStateInfo.pVertexBindingDescriptions = NULL;
 
   // Input assembly state =====
   VkPipelineInputAssemblyStateCreateInfo inputAssembyStateInfo = { 0 };

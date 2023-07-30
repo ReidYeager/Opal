@@ -12,6 +12,7 @@ typedef struct OvkSync_T
   VkFence fenceFrameAvailable;
   VkSemaphore semImageAvailable;
   VkSemaphore semRenderComplete;
+  VkCommandBuffer cmdBuffer;
 } OvkSync_T;
 
 typedef struct OvkWindow_T

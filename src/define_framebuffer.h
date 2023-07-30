@@ -17,6 +17,7 @@ typedef struct OvkFramebuffer_T
 
 typedef struct OpalFramebuffer_T
 {
+  OpalExtent extent;
   OpalImage_T** ppImages;
 
   OvkFramebuffer_T vk;

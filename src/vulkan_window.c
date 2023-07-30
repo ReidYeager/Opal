@@ -23,7 +23,7 @@ OpalResult OvkWindowInit(OpalWindow_T* _window)
   iInitInfo.extent = _window->extents;
   iInitInfo.extent.depth = 1;
   iInitInfo.format = Opal_Image_Format_R8G8B8A8;
-  iInitInfo.usage = Opal_Image_Usage_Presented;
+  iInitInfo.usage = Opal_Image_Usage_Color | Opal_Image_Usage_Copy_Src;
   OPAL_ATTEMPT(OpalImageInit(&_window->renderBufferImage, &iInitInfo));
 
   OpalLog("Vk window init complete\n");
@@ -185,7 +185,7 @@ OpalResult CreateSwapchain_Ovk(OpalWindow_T* _window)
   createInfo.flags = 0;
   createInfo.imageArrayLayers = 1;
   createInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
-  createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+  createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
   createInfo.preTransform = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR;
   createInfo.clipped = VK_TRUE;
   createInfo.imageColorSpace = format.colorSpace;
@@ -211,6 +211,7 @@ OpalResult CreateSwapchain_Ovk(OpalWindow_T* _window)
 
   _window->extents.width = extents.width;
   _window->extents.height = extents.height;
+  _window->extents.depth = 1;
   _window->vk.format = format.format;
   _window->vk.presentMode = presentMode;
 
@@ -270,12 +271,19 @@ OpalResult CreateSync_Ovk(OpalWindow_T* _window)
   fenceCreateInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
   fenceCreateInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
 
+  VkCommandBufferAllocateInfo cmdInfo = { 0 };
+  cmdInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+  cmdInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+  cmdInfo.commandBufferCount = 1;
+  cmdInfo.commandPool = oState.vk.graphicsCommandPool;
+
   for (uint32_t i = 0; i < _window->imageCount; i++)
   {
     OvkSync_T* sync = &_window->vk.pSync[i];
     OVK_ATTEMPT(vkCreateFence(oState.vk.device, &fenceCreateInfo, oState.vk.allocator, &sync->fenceFrameAvailable));
     OVK_ATTEMPT(vkCreateSemaphore(oState.vk.device, &semCreateInfo, oState.vk.allocator, &sync->semImageAvailable));
     OVK_ATTEMPT(vkCreateSemaphore(oState.vk.device, &semCreateInfo, oState.vk.allocator, &sync->semRenderComplete));
+    OVK_ATTEMPT(vkAllocateCommandBuffers(oState.vk.device, &cmdInfo, &sync->cmdBuffer));
   }
 
   return Opal_Success;

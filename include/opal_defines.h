@@ -23,6 +23,12 @@ DEFINE_OPAL_HANDLE(OpalFramebuffer);
 DEFINE_OPAL_HANDLE(OpalShader);
 DEFINE_OPAL_HANDLE(OpalMaterial);
 
+typedef struct OpalRenderpassInitInfo
+{
+  uint32_t imageCount;
+  OpalClearValue* pClearValues;
+} OpalRenderpassInitInfo;
+
 typedef struct OpalFramebufferInitInfo
 {
   OpalRenderpass renderpass;

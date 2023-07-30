@@ -2,14 +2,14 @@
 #include "src/define_renderpass.h"
 #include "src/common.h"
 
-OpalResult OvkRenderpassInit(OpalRenderpass_T* _renderpass)
+OpalResult OvkRenderpassInit(OpalRenderpass_T* _renderpass, OpalRenderpassInitInfo _initInfo)
 {
   VkAttachmentDescription attachment = { 0 };
   attachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-  attachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+  attachment.finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;// VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
   attachment.format = oState.window.vk.format;
   attachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-  attachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+  attachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
   attachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
   attachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
   attachment.samples = VK_SAMPLE_COUNT_1_BIT; // used for multi-sampling
