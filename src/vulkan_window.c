@@ -43,8 +43,8 @@ OpalResult OvkWindowReinit(OpalWindow_T* _window)
   vkDestroySwapchainKHR(oState.vk.device, _window->vk.swapchain.swapchain, oState.vk.allocator);
   vkDestroySurfaceKHR(oState.vk.instance, _window->vk.surface, oState.vk.allocator);
 
-  _window->extents.width = LapisWindowGetWidth(_window->lWindow);
-  _window->extents.height = LapisWindowGetHeight(_window->lWindow);
+  _window->extents.width = LapisWindowGetWidth(*_window->lWindow);
+  _window->extents.height = LapisWindowGetHeight(*_window->lWindow);
 
   OPAL_ATTEMPT(CreateSurface_Ovk(_window));
   OPAL_ATTEMPT(CreateSwapchain_Ovk(_window));

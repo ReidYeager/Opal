@@ -16,6 +16,7 @@ add_library (Opal STATIC
   "src/common.h"
   "src/define_framebuffer.h"
   "src/define_image.h"
+  "src/define_material.h"
   "src/define_renderpass.h"
   "src/define_window.h"
   "src/defines.h"
@@ -24,6 +25,7 @@ add_library (Opal STATIC
   "src/vulkan.c"
   "src/vulkan_framebuffer.c"
   "src/vulkan_image.c"
+  "src/vulkan_material.c"
   "src/vulkan_renderpass.c"
   "src/vulkan_window.c"
 )

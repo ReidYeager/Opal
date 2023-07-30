@@ -6,6 +6,7 @@
 
 #include "src/define_framebuffer.h"
 #include "src/define_image.h"
+#include "src/define_material.h"
 #include "src/define_renderpass.h"
 #include "src/define_window.h"
 

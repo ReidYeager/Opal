@@ -54,6 +54,7 @@ OpalResult OpalWindowResize(OpalWindow _window, uint32_t _width, uint32_t _heigh
   OPAL_ATTEMPT(OvkWindowReinit(_window));
 
   OpalLog("Window resized to %u, %u\n", _width, _height);
+  return Opal_Success;
 }
 
 OpalResult OpalRenderpassInit(OpalRenderpass* _renderpass)
@@ -94,3 +95,40 @@ void OpalFramebufferShutdown(OpalFramebuffer* _framebuffer)
   OpalLog("Framebuffer shutdown complete\n");
 }
 
+OpalResult OpalShaderInit(OpalShader* _shader, OpalShaderInitInfo _initInfo)
+{
+  OpalShader_T* newShader = LapisMemAllocZeroSingle(OpalShader_T);
+
+  OPAL_ATTEMPT(OvkShaderInit(newShader, &_initInfo), LapisMemFree(newShader));
+
+  OpalLog("Shader init complete\n");
+  *_shader = newShader;
+  return Opal_Success;
+}
+
+void OpalShaderShutdown(OpalShader* _shader)
+{
+  OvkShaderShutdown(*_shader);
+  LapisMemFree(*_shader);
+  *_shader = NULL;
+  OpalLog("Shader shutdown complete\n");
+}
+
+OpalResult OpalMaterialInit(OpalMaterial* _material, OpalMaterialInitInfo _initInfo)
+{
+  OpalMaterial_T* newMaterial = LapisMemAllocZeroSingle(OpalMaterial_T);
+
+  OPAL_ATTEMPT(OvkMaterialInit(newMaterial, &_initInfo), LapisMemFree(newMaterial));
+
+  OpalLog("Material init complete\n");
+  *_material = newMaterial;
+  return Opal_Success;
+}
+
+void OpalMaterialShutdown(OpalMaterial* _material)
+{
+  OvkMaterialShutdown(*_material);
+  LapisMemFree(*_material);
+  *_material = NULL;
+  OpalLog("Material shutdown complete\n");
+}

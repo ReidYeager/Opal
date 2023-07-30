@@ -53,6 +53,12 @@ OpalResult OvkFramebufferInit(OpalFramebuffer_T* _framebuffer, OpalFramebufferIn
 OpalResult OvkFramebufferReinit(OpalFramebuffer_T _framebuffer);
 void OvkFramebufferShutdown(OpalFramebuffer_T* _framebuffer);
 
+OpalResult OvkShaderInit(OpalShader_T* _shader, OpalShaderInitInfo const* _initInfo);
+void OvkShaderShutdown(OpalShader_T* _shader);
+
+OpalResult OvkMaterialInit(OpalMaterial_T* _material, OpalMaterialInitInfo const* _initInfo);
+void OvkMaterialShutdown(OpalMaterial_T* _material);
+
 
 
 #endif // !GEM_OPAL_LOCAL_COMMON_H_

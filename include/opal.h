@@ -25,6 +25,12 @@ void OpalRenderpassShutdown(OpalRenderpass* _renderpass);
 OpalResult OpalFramebufferInit(OpalFramebuffer* _framebuffer, OpalFramebufferInitInfo const* _initInfo);
 void OpalFramebufferShutdown(OpalFramebuffer* _framebuffer);
 
+OpalResult OpalShaderInit(OpalShader* _shader, OpalShaderInitInfo _initInfo);
+void OpalShaderShutdown(OpalShader* _shader);
+
+OpalResult OpalMaterialInit(OpalMaterial* _material, OpalMaterialInitInfo _initInfo);
+void OpalMaterialShutdown(OpalMaterial* _material);
+
 #ifdef __cplusplus
 }
 #endif // __cplusplus
