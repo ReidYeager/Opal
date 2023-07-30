@@ -45,15 +45,11 @@ void OpalWindowGetImage(OpalWindow _window, OpalImage* _outImage)
   *_outImage = _window->renderBufferImage;
 }
 
-OpalResult OpalWindowResize(OpalWindow _window, uint32_t _width, uint32_t _height)
+OpalResult OpalWindowReinit(OpalWindow _window)
 {
-  _window->extents.width = _width;
-  _window->extents.height = _height;
-  _window->extents.depth = 1;
-
   OPAL_ATTEMPT(OvkWindowReinit(_window));
 
-  OpalLog("Window resized to %u, %u\n", _width, _height);
+  OpalLog("Window resized to %u, %u\n", _window->extents.width, _window->extents.height);
   return Opal_Success;
 }
 
@@ -88,6 +84,7 @@ OpalResult OpalFramebufferInit(OpalFramebuffer* _framebuffer, OpalFramebufferIni
 
   newFramebuffer->ppImages = NULL;
   newFramebuffer->extent = oState.window.extents;
+  newFramebuffer->ownerRenderpass = _initInfo->renderpass;
 
   OpalLog("Framebuffer init complete\n");
   *_framebuffer = newFramebuffer;
@@ -100,6 +97,15 @@ void OpalFramebufferShutdown(OpalFramebuffer* _framebuffer)
   LapisMemFree(*_framebuffer);
   *_framebuffer = NULL;
   OpalLog("Framebuffer shutdown complete\n");
+}
+
+OpalResult OpalFramebufferReinit(OpalFramebuffer _framebuffer)
+{
+  OPAL_ATTEMPT(OvkFramebufferReinit(_framebuffer));
+
+  _framebuffer->extent = oState.window.extents;
+
+  return Opal_Success;
 }
 
 OpalResult OpalShaderInit(OpalShader* _shader, OpalShaderInitInfo _initInfo)
@@ -127,6 +133,12 @@ OpalResult OpalMaterialInit(OpalMaterial* _material, OpalMaterialInitInfo _initI
 
   OPAL_ATTEMPT(OvkMaterialInit(newMaterial, &_initInfo), LapisMemFree(newMaterial));
 
+  newMaterial->ownerRenderpass = _initInfo.renderpass;
+  newMaterial->subpassIndex = _initInfo.subpassIndex;
+  newMaterial->shaderCount = _initInfo.shaderCount;
+  newMaterial->pShaders = LapisMemAllocZeroArray(OpalShader, _initInfo.shaderCount);
+  LapisMemCopy(_initInfo.pShaders, newMaterial->pShaders, sizeof(OpalShader) * _initInfo.shaderCount);
+
   OpalLog("Material init complete\n");
   *_material = newMaterial;
   return Opal_Success;
@@ -138,6 +150,12 @@ void OpalMaterialShutdown(OpalMaterial* _material)
   LapisMemFree(*_material);
   *_material = NULL;
   OpalLog("Material shutdown complete\n");
+}
+
+OpalResult OpalMaterialReinit(OpalMaterial _material)
+{
+  OPAL_ATTEMPT(OvkMaterialReinit(_material));
+  return Opal_Success;
 }
 
 OpalResult OpalRenderBegin()

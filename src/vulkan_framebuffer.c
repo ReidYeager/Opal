@@ -17,8 +17,15 @@ OpalResult OvkFramebufferInit(OpalFramebuffer_T* _framebuffer, OpalFramebufferIn
   return Opal_Success;
 }
 
-OpalResult OvkFramebufferReinit(OpalFramebuffer_T _framebuffer)
+OpalResult OvkFramebufferReinit(OpalFramebuffer_T* _framebuffer)
 {
+  vkDestroyFramebuffer(oState.vk.device, _framebuffer->vk.framebuffer, oState.vk.allocator);
+
+  OpalFramebufferInitInfo newInitInfo = { 0 };
+  newInitInfo.renderpass = _framebuffer->ownerRenderpass;
+
+  OPAL_ATTEMPT(OvkFramebufferInit(_framebuffer, &newInitInfo));
+
   return Opal_Success;
 }
 

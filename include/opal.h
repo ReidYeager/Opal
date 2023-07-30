@@ -13,7 +13,7 @@ void OpalShutdown();
 
 void OpalGetDefaultWindow(OpalWindow* _window);
 void OpalWindowGetImage(OpalWindow _window, OpalImage* _outImage);
-OpalResult OpalWindowResize(OpalWindow _window, uint32_t _width, uint32_t _height);
+OpalResult OpalWindowReinit(OpalWindow _window);
 
 OpalResult OpalImageInit(OpalImage* _image, OpalImageInitInfo const* _initInfo);
 void OpalImageShutdown(OpalImage* _image);
@@ -24,12 +24,14 @@ void OpalRenderpassShutdown(OpalRenderpass* _renderpass);
 
 OpalResult OpalFramebufferInit(OpalFramebuffer* _framebuffer, OpalFramebufferInitInfo const* _initInfo);
 void OpalFramebufferShutdown(OpalFramebuffer* _framebuffer);
+OpalResult OpalFramebufferReinit(OpalFramebuffer _framebuffer);
 
 OpalResult OpalShaderInit(OpalShader* _shader, OpalShaderInitInfo _initInfo);
 void OpalShaderShutdown(OpalShader* _shader);
 
 OpalResult OpalMaterialInit(OpalMaterial* _material, OpalMaterialInitInfo _initInfo);
 void OpalMaterialShutdown(OpalMaterial* _material);
+OpalResult OpalMaterialReinit(OpalMaterial _material);
 
 OpalResult OpalRenderBegin();
 OpalResult OpalRenderEnd();

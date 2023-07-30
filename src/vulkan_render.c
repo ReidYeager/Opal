@@ -25,45 +25,36 @@ OpalResult OvkRenderBegin()
   return Opal_Success;
 }
 
-OpalResult TransitionRenderBufferImage_Ovk(VkImage _image, VkImageLayout _layout, bool _toWritable)
+OpalResult CopyRenderBufferToSwapchain_Ovk()
 {
-  VkCommandBuffer cmd;
-  OPAL_ATTEMPT(OvkBeginSingleUseCommand(oState.vk.graphicsCommandPool, &cmd));
+  VkImageSubresourceLayers subres = { 0 };
+  subres.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+  subres.baseArrayLayer = 0;
+  subres.layerCount = 1;
+  subres.mipLevel = 0;
 
-  VkImageMemoryBarrier memBarrier = { 0 };
-  memBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-  memBarrier.pNext = NULL;
-  memBarrier.oldLayout = _layout;
-  memBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-  memBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-  memBarrier.image = _image;
-  memBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-  memBarrier.subresourceRange.levelCount = 1;
-  memBarrier.subresourceRange.baseMipLevel = 0;
-  memBarrier.subresourceRange.layerCount = 1;
-  memBarrier.subresourceRange.baseArrayLayer = 0;
+  VkImageCopy imageCopy = { 0 };
+  imageCopy.extent = (VkExtent3D){ oState.window.extents.width, oState.window.extents.height, oState.window.extents.depth };
+  imageCopy.srcOffset = (VkOffset3D){ 0, 0, 0 };
+  imageCopy.srcSubresource = subres;
+  imageCopy.dstOffset = (VkOffset3D){ 0, 0, 0 };
+  imageCopy.dstSubresource = subres;
 
-  VkPipelineStageFlagBits srcStage, dstStage;
+  OPAL_ATTEMPT(OvkTransitionImageLayout(oState.window.vk.swapchain.pImages[swapchainImageIndex], VK_IMAGE_LAYOUT_UNDEFINED, true));
 
-  if (_toWritable)
-  {
-    memBarrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
-    memBarrier.srcAccessMask = 0;
-    memBarrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
-    srcStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
-    dstStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
-  }
-  else
-  {
-    memBarrier.newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-    memBarrier.srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
-    memBarrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-    srcStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
-    dstStage = VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT;
-  }
+  VkCommandBuffer tmpcmd;
+  OPAL_ATTEMPT(OvkBeginSingleUseCommand(oState.vk.transientCommandPool, &tmpcmd));
+  vkCmdCopyImage(
+    tmpcmd,
+    oState.window.renderBufferImage->vk.image,
+    VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+    oState.window.vk.swapchain.pImages[swapchainImageIndex],
+    VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+    1,
+    &imageCopy);
+  OPAL_ATTEMPT(OvkEndSingleUseCommand(oState.vk.transientCommandPool, oState.vk.queueTransfer, tmpcmd));
 
-  vkCmdPipelineBarrier(cmd, srcStage, dstStage, 0, 0, NULL, 0, NULL, 1, &memBarrier);
-  OPAL_ATTEMPT(OvkEndSingleUseCommand(oState.vk.graphicsCommandPool, oState.vk.queueGraphics, cmd));
+  OPAL_ATTEMPT(OvkTransitionImageLayout(oState.window.vk.swapchain.pImages[swapchainImageIndex], VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, false));
 
   return Opal_Success;
 }
@@ -90,36 +81,7 @@ OpalResult OvkRenderEnd()
 
   // Present =====
 
-  VkImageSubresourceLayers subres = { 0 };
-  subres.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-  subres.baseArrayLayer = 0;
-  subres.layerCount = 1;
-  subres.mipLevel = 0;
-
-  VkImageCopy imageCopy = { 0 };
-  imageCopy.extent = (VkExtent3D){ oState.window.extents.width, oState.window.extents.height, oState.window.extents.depth };
-  imageCopy.srcOffset = (VkOffset3D){ 0, 0, 0 };
-  imageCopy.srcSubresource = subres;
-  imageCopy.dstOffset = (VkOffset3D){ 0, 0, 0 };
-  imageCopy.dstSubresource = subres;
-
-  TransitionRenderBufferImage_Ovk(oState.window.renderBufferImage->vk.image, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, true);
-  OvkTransitionImageLayout(oState.window.vk.swapchain.pImages[swapchainImageIndex], VK_IMAGE_LAYOUT_UNDEFINED, true);
-
-  VkCommandBuffer tmpcmd;
-  OvkBeginSingleUseCommand(oState.vk.transientCommandPool, &tmpcmd);
-  vkCmdCopyImage(
-    tmpcmd,
-    oState.window.renderBufferImage->vk.image,
-    VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,// VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-    oState.window.vk.swapchain.pImages[swapchainImageIndex],
-    VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,// VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
-    1,
-    &imageCopy);
-  OvkEndSingleUseCommand(oState.vk.transientCommandPool, oState.vk.queueTransfer, tmpcmd);
-
-  OvkTransitionImageLayout(oState.window.vk.swapchain.pImages[swapchainImageIndex], VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, false);
-  TransitionRenderBufferImage_Ovk(oState.window.renderBufferImage->vk.image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, false);
+  OPAL_ATTEMPT(CopyRenderBufferToSwapchain_Ovk());
 
   VkPresentInfoKHR presentInfo = { 0 };
   presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;

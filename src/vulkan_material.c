@@ -249,3 +249,17 @@ void OvkMaterialShutdown(OpalMaterial_T* _material)
   vkFreeDescriptorSets(oState.vk.device, oState.vk.descriptorPool, 1, &_material->vk.descriptorSet);
   vkDestroyDescriptorSetLayout(oState.vk.device, _material->vk.descriptorLayout, oState.vk.allocator);
 }
+
+OpalResult OvkMaterialReinit(OpalMaterial_T* _material)
+{
+  OpalMaterialInitInfo newInit = { 0 };
+  newInit.shaderCount = _material->shaderCount;
+  newInit.pShaders = _material->pShaders;
+  newInit.renderpass = _material->ownerRenderpass;
+  newInit.subpassIndex = _material->subpassIndex;
+
+  vkDestroyPipeline(oState.vk.device, _material->vk.pipeline, oState.vk.allocator);
+  OPAL_ATTEMPT(CreatePipeline_Ovk(_material, newInit))
+
+  return Opal_Success;
+}

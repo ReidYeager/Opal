@@ -33,6 +33,16 @@ OpalResult OvkWindowInit(OpalWindow_T* _window)
 
 OpalResult OvkWindowReinit(OpalWindow_T* _window)
 {
+  uint32_t newWidth = LapisWindowGetWidth(*_window->lWindow);
+  uint32_t newHeight = LapisWindowGetHeight(*_window->lWindow);
+
+  if (!newWidth || !newHeight) // Minimized
+    return Opal_Success;
+
+  _window->extents.width = newWidth;
+  _window->extents.height = newHeight;
+  _window->extents.depth = 1;
+
   for (uint32_t i = 0; i < _window->imageCount; i++)
   {
     vkDestroyImageView(oState.vk.device, _window->vk.swapchain.pViews[i], oState.vk.allocator);
@@ -42,9 +52,6 @@ OpalResult OvkWindowReinit(OpalWindow_T* _window)
 
   vkDestroySwapchainKHR(oState.vk.device, _window->vk.swapchain.swapchain, oState.vk.allocator);
   vkDestroySurfaceKHR(oState.vk.instance, _window->vk.surface, oState.vk.allocator);
-
-  _window->extents.width = LapisWindowGetWidth(*_window->lWindow);
-  _window->extents.height = LapisWindowGetHeight(*_window->lWindow);
 
   OPAL_ATTEMPT(CreateSurface_Ovk(_window));
   OPAL_ATTEMPT(CreateSwapchain_Ovk(_window));

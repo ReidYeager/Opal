@@ -6,7 +6,7 @@ OpalResult OvkRenderpassInit(OpalRenderpass_T* _renderpass, OpalRenderpassInitIn
 {
   VkAttachmentDescription attachment = { 0 };
   attachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-  attachment.finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;// VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+  attachment.finalLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
   attachment.format = oState.window.vk.format;
   attachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
   attachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
