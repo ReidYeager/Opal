@@ -13,6 +13,16 @@ OpalResult OvkWindowInit(OpalWindow_T* _window)
     vkDestroySurfaceKHR(oState.vk.instance, _window->vk.surface, oState.vk.allocator);
   }
 
+  uint32_t newWidth = LapisWindowGetWidth(*_window->lWindow);
+  uint32_t newHeight = LapisWindowGetHeight(*_window->lWindow);
+
+  if (!newWidth || !newHeight)
+    return Opal_Failure;
+
+  _window->extents.width = newWidth;
+  _window->extents.height = newHeight;
+  _window->extents.depth = 1;
+
   OPAL_ATTEMPT(CreateSurface_Ovk(_window));
   OPAL_ATTEMPT(CreateSwapchain_Ovk(_window));
   OPAL_ATTEMPT(CreateSwapchainImages_Ovk(_window));
@@ -33,14 +43,11 @@ OpalResult OvkWindowInit(OpalWindow_T* _window)
 
 OpalResult OvkWindowReinit(OpalWindow_T* _window)
 {
-  uint32_t newWidth = LapisWindowGetWidth(*_window->lWindow);
-  uint32_t newHeight = LapisWindowGetHeight(*_window->lWindow);
-
-  if (!newWidth || !newHeight) // Minimized
+  if (LapisWindowGetMinimized(*_window->lWindow))
     return Opal_Success;
 
-  _window->extents.width = newWidth;
-  _window->extents.height = newHeight;
+  _window->extents.width = LapisWindowGetWidth(*_window->lWindow);
+  _window->extents.height = LapisWindowGetHeight(*_window->lWindow);
   _window->extents.depth = 1;
 
   for (uint32_t i = 0; i < _window->imageCount; i++)
@@ -123,11 +130,6 @@ void ChooseSwapchainImageExtents_Ovk(const OpalWindow_T* const _window, VkExtent
   if (surfCapabilities.currentExtent.width != -1)
   {
     *_extents = surfCapabilities.currentExtent;
-  }
-  else
-  {
-    _extents->width = LapisWindowGetWidth(*_window->lWindow);
-    _extents->height = LapisWindowGetHeight(*_window->lWindow);
   }
 }
 
