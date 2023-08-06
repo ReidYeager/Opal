@@ -190,3 +190,30 @@ void OpalRenderVertices(uint32_t _count)
   OvkRenderVertices(_count);
 }
 
+OpalResult OpalBufferInit(OpalBuffer* _buffer, OpalBufferInitInfo _initInfo)
+{
+  OpalBuffer_T* newBuffer = LapisMemAllocSingle(OpalBuffer_T);
+
+  OPAL_ATTEMPT(OvkBufferInit(newBuffer, _initInfo), LapisMemFree(newBuffer));
+
+  newBuffer->size = _initInfo.size;
+
+  OpalLog("Buffer init complete : %llu (%llu) bytes\n", newBuffer->size, newBuffer->paddedSize);
+  *_buffer = newBuffer;
+  return Opal_Success;
+}
+
+void OpalBufferShutdown(OpalBuffer* _buffer)
+{
+  OvkBufferShutdown(*_buffer);
+  LapisMemFree(*_buffer);
+  *_buffer = NULL;
+  OpalLog("Buffer shutdown complete\n");
+}
+
+OpalResult OpalBufferPushData(OpalBuffer _buffer, void* _data)
+{
+  OPAL_ATTEMPT(OvkBufferPushData(_buffer, _data));
+  return Opal_Success;
+}
+

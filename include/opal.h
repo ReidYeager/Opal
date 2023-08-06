@@ -40,6 +40,10 @@ void OpalRenderEndRenderpass(OpalRenderpass _renderpass);
 void OpalRenderBindMaterial(OpalMaterial _material);
 void OpalRenderVertices(uint32_t _count); // Tmp. Replace with mesh render
 
+OpalResult OpalBufferInit(OpalBuffer* _buffer, OpalBufferInitInfo _initInfo);
+void OpalBufferShutdown(OpalBuffer* _buffer);
+OpalResult OpalBufferPushData(OpalBuffer _buffer, void* _data);
+
 //void OpalRenderBindShaderArguments(); // For descriptor set input
 
 #ifdef __cplusplus

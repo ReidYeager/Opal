@@ -18,10 +18,27 @@ typedef enum OpalResult
 #define DEFINE_OPAL_HANDLE(name) typedef struct name##_T* name
 
 DEFINE_OPAL_HANDLE(OpalWindow);
+DEFINE_OPAL_HANDLE(OpalBuffer);
 DEFINE_OPAL_HANDLE(OpalRenderpass);
 DEFINE_OPAL_HANDLE(OpalFramebuffer);
 DEFINE_OPAL_HANDLE(OpalShader);
 DEFINE_OPAL_HANDLE(OpalMaterial);
+
+typedef enum OpalBufferUsageBits
+{
+  Opal_Buffer_Usage_Transfer_Src = 0x01,
+  Opal_Buffer_Usage_Transfer_Dst = 0x02,
+  Opal_Buffer_Usage_Uniform = 0x04,
+  Opal_Buffer_Usage_Vertex = 0x08,
+  Opal_Buffer_Usage_Index = 0x10,
+  Opal_Buffer_Usage_Cpu_Read = 0x20
+} OpalBufferUsageBits;
+
+typedef struct OpalBufferInitInfo
+{
+  uint64_t size;
+  uint32_t usage;
+} OpalBufferInitInfo;
 
 typedef struct OpalRenderpassInitInfo
 {

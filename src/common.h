@@ -38,6 +38,10 @@
 OpalResult OvkInit();
 void OvkShutdown();
 
+OpalResult OvkBufferInit(OpalBuffer _buffer, OpalBufferInitInfo _initInfo);
+void OvkBufferShutdown(OpalBuffer _buffer);
+OpalResult OvkBufferPushData(OpalBuffer _buffer, void* _data);
+
 OpalResult OvkBeginSingleUseCommand(VkCommandPool _pool, VkCommandBuffer* _cmd);
 OpalResult OvkEndSingleUseCommand(VkCommandPool _pool, VkQueue _queue, VkCommandBuffer _cmd);
 

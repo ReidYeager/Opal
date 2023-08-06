@@ -4,6 +4,7 @@
 
 #include "include/opal.h"
 
+#include "src/define_buffer.h"
 #include "src/define_framebuffer.h"
 #include "src/define_image.h"
 #include "src/define_material.h"
