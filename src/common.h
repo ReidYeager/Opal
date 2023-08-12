@@ -11,28 +11,33 @@
   printf("Opal :: " message, __VA_ARGS__); \
 }
 
-#define OPAL_ATTEMPT(fn, ...)                                     \
-{                                                                 \
-  OpalResult oResult = (fn);                                      \
-  if (oResult)                                                    \
-  {                                                               \
-    OpalLog("Function \""#fn"\" failed. Result = %d\n", oResult); \
-    OpalLog("    %s:%d\n", __FILE__, __LINE__);                   \
-    { __VA_ARGS__; }                                              \
-    return Opal_Failure;                                          \
-  }                                                               \
+#define OpalLogErr(message, ...)                  \
+{                                                 \
+  printf("Opal :: Err :: " message, __VA_ARGS__); \
 }
 
-#define OVK_ATTEMPT(fn, ...)                                             \
-{                                                                        \
-  VkResult vResult = (fn);                                               \
-  if (vResult != VK_SUCCESS)                                             \
-  {                                                                      \
-    OpalLog("Vulkan function \""#fn"\" failed. Result = %d\n", vResult); \
-    OpalLog("    %s:%d\n", __FILE__, __LINE__);                          \
-    { __VA_ARGS__; }                                                     \
-    return Opal_Failure;                                                 \
-  }                                                                      \
+#define OPAL_ATTEMPT(fn, ...)                                        \
+{                                                                    \
+  OpalResult oResult = (fn);                                         \
+  if (oResult)                                                       \
+  {                                                                  \
+    OpalLogErr("Function \""#fn"\" failed. Result = %d\n", oResult); \
+    OpalLogErr("    %s:%d\n", __FILE__, __LINE__);                   \
+    { __VA_ARGS__; }                                                 \
+    return Opal_Failure;                                             \
+  }                                                                  \
+}
+
+#define OVK_ATTEMPT(fn, ...)                                                \
+{                                                                           \
+  VkResult vResult = (fn);                                                  \
+  if (vResult != VK_SUCCESS)                                                \
+  {                                                                         \
+    OpalLogErr("Vulkan function \""#fn"\" failed. Result = %d\n", vResult); \
+    OpalLogErr("    %s:%d\n", __FILE__, __LINE__);                          \
+    { __VA_ARGS__; }                                                        \
+    return Opal_Failure;                                                    \
+  }                                                                         \
 }
 
 OpalResult OvkInit();
@@ -49,7 +54,7 @@ OpalResult OvkWindowInit(OpalWindow_T* _window);
 OpalResult OvkWindowReinit(OpalWindow_T* _window);
 OpalResult OvkWindowShutdown(OpalWindow_T* _window);
 
-OpalResult OvkImageInit(OpalImage_T* _image, OpalImageInitInfo const* _initInfo);
+OpalResult OvkImageInit(OpalImage_T* _image, OpalImageInitInfo _initInfo);
 void OvkImageShutdown(OpalImage_T* _image);
 OpalResult OvkImageResize(OpalImage_T* _image, OpalExtent _extents);
 OpalResult OvkTransitionImageLayout(VkImage _image, VkImageLayout _layout, bool _toWritable);
@@ -57,14 +62,14 @@ OpalResult OvkTransitionImageLayout(VkImage _image, VkImageLayout _layout, bool 
 OpalResult OvkRenderpassInit(OpalRenderpass_T* _renderpass, OpalRenderpassInitInfo _initInfo);
 void OvkRenderpassShutdown(OpalRenderpass_T* _renderpass);
 
-OpalResult OvkFramebufferInit(OpalFramebuffer_T* _framebuffer, OpalFramebufferInitInfo const* _initInfo);
+OpalResult OvkFramebufferInit(OpalFramebuffer_T* _framebuffer, OpalFramebufferInitInfo _initInfo);
 OpalResult OvkFramebufferReinit(OpalFramebuffer_T* _framebuffer);
 void OvkFramebufferShutdown(OpalFramebuffer_T* _framebuffer);
 
-OpalResult OvkShaderInit(OpalShader_T* _shader, OpalShaderInitInfo const* _initInfo);
+OpalResult OvkShaderInit(OpalShader_T* _shader, OpalShaderInitInfo _initInfo);
 void OvkShaderShutdown(OpalShader_T* _shader);
 
-OpalResult OvkMaterialInit(OpalMaterial_T* _material, OpalMaterialInitInfo const* _initInfo);
+OpalResult OvkMaterialInit(OpalMaterial_T* _material, OpalMaterialInitInfo _initInfo);
 void OvkMaterialShutdown(OpalMaterial_T* _material);
 OpalResult OvkMaterialReinit(OpalMaterial_T* _material);
 

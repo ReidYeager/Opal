@@ -1,11 +1,16 @@
 
 #include "src/common.h"
 
-OpalResult OpalImageInit(OpalImage* _image, OpalImageInitInfo const* _initInfo)
+OpalResult OpalImageInit(OpalImage* _image, OpalImageInitInfo _initInfo)
 {
   OpalImage_T* newImage = LapisMemAllocZeroSingle(OpalImage_T);
 
   OPAL_ATTEMPT(OvkImageInit(newImage, _initInfo));
+
+  if (newImage->extents.depth == 0)
+  {
+    newImage->extents.depth = 1;
+  }
 
   *_image = newImage;
 

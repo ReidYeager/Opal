@@ -101,10 +101,11 @@ OpalResult CreateView_Ovk(OpalImage_T* _image)
 }
 
 OpalResult OvkImageInit(OpalImage_T* _image, OpalImageInitInfo const* _initInfo)
+OpalResult OvkImageInit(OpalImage_T* _image, OpalImageInitInfo _initInfo)
 {
-  _image->extents = _initInfo->extent;
-  _image->format = _initInfo->format;
-  _image->usage = _initInfo->usage;
+  _image->extents = _initInfo.extent;
+  _image->format = _initInfo.format;
+  _image->usage = _initInfo.usage;
 
   OPAL_ATTEMPT(CreateImage_Ovk(_image, _initInfo));
   OPAL_ATTEMPT(AllocAndBindMemory_Ovk(_image));
@@ -129,7 +130,7 @@ OpalResult OvkImageResize(OpalImage_T* _image, OpalExtent _extents)
   newInitInfo.format = _image->format;
   newInitInfo.usage = _image->usage;
 
-  OPAL_ATTEMPT(OvkImageInit(_image, &newInitInfo));
+  OPAL_ATTEMPT(OvkImageInit(_image, newInitInfo));
 
   return Opal_Success;
 }

@@ -49,7 +49,7 @@ OpalResult OpalWindowReinit(OpalWindow _window)
 {
   OPAL_ATTEMPT(OvkWindowReinit(_window));
 
-  OpalLog("Window resized to %u, %u\n", _window->extents.width, _window->extents.height);
+  OpalLog("Window resized to %04u, %04u\r", _window->extents.width, _window->extents.height);
   return Opal_Success;
 }
 
@@ -76,7 +76,7 @@ void OpalRenderpassShutdown(OpalRenderpass* _renderpass)
   OpalLog("Renderpass shutdown complete\n");
 }
 
-OpalResult OpalFramebufferInit(OpalFramebuffer* _framebuffer, OpalFramebufferInitInfo const* _initInfo)
+OpalResult OpalFramebufferInit(OpalFramebuffer* _framebuffer, OpalFramebufferInitInfo _initInfo)
 {
   OpalFramebuffer_T* newFramebuffer = LapisMemAllocZeroSingle(OpalFramebuffer_T);
 
@@ -84,7 +84,7 @@ OpalResult OpalFramebufferInit(OpalFramebuffer* _framebuffer, OpalFramebufferIni
 
   newFramebuffer->ppImages = NULL;
   newFramebuffer->extent = oState.window.extents;
-  newFramebuffer->ownerRenderpass = _initInfo->renderpass;
+  newFramebuffer->ownerRenderpass = _initInfo.renderpass;
 
   OpalLog("Framebuffer init complete\n");
   *_framebuffer = newFramebuffer;
@@ -112,7 +112,7 @@ OpalResult OpalShaderInit(OpalShader* _shader, OpalShaderInitInfo _initInfo)
 {
   OpalShader_T* newShader = LapisMemAllocZeroSingle(OpalShader_T);
 
-  OPAL_ATTEMPT(OvkShaderInit(newShader, &_initInfo), LapisMemFree(newShader));
+  OPAL_ATTEMPT(OvkShaderInit(newShader, _initInfo), LapisMemFree(newShader));
 
   OpalLog("Shader init complete\n");
   *_shader = newShader;
@@ -131,7 +131,7 @@ OpalResult OpalMaterialInit(OpalMaterial* _material, OpalMaterialInitInfo _initI
 {
   OpalMaterial_T* newMaterial = LapisMemAllocZeroSingle(OpalMaterial_T);
 
-  OPAL_ATTEMPT(OvkMaterialInit(newMaterial, &_initInfo), LapisMemFree(newMaterial));
+  OPAL_ATTEMPT(OvkMaterialInit(newMaterial, _initInfo), LapisMemFree(newMaterial));
 
   newMaterial->ownerRenderpass = _initInfo.renderpass;
   newMaterial->subpassIndex = _initInfo.subpassIndex;

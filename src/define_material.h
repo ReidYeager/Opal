@@ -31,8 +31,12 @@ typedef struct OpalMaterial_T
 {
   uint32_t shaderCount;
   OpalShader* pShaders;
+
   OpalRenderpass ownerRenderpass;
   uint32_t subpassIndex;
+
+  uint32_t inputCount;
+  OpalMaterialInputInfo* pInputs;
 
   OvkMaterial_T vk;
 } OpalMaterial_T;
