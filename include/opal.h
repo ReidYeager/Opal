@@ -18,6 +18,7 @@ OpalResult OpalWindowReinit(OpalWindow _window);
 OpalResult OpalImageInit(OpalImage* _image, OpalImageInitInfo _initInfo);
 void OpalImageShutdown(OpalImage* _image);
 OpalResult OpalImageResize(OpalImage _image, OpalExtent _extents);
+OpalResult OpalImageFill(OpalImage _image, void* _data);
 
 OpalResult OpalRenderpassInit(OpalRenderpass* _renderpass, OpalRenderpassInitInfo _initInfo);
 void OpalRenderpassShutdown(OpalRenderpass* _renderpass);

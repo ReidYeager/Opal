@@ -30,3 +30,9 @@ OpalResult OpalImageResize(OpalImage _image, OpalExtent _extents)
 
   return Opal_Success;
 }
+
+OpalResult OpalImageFill(OpalImage _image, void* _data)
+{
+  OPAL_ATTEMPT(OvkImageFill(_image, _data));
+  return Opal_Success;
+}

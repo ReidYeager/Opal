@@ -57,7 +57,8 @@ OpalResult OvkWindowShutdown(OpalWindow_T* _window);
 OpalResult OvkImageInit(OpalImage_T* _image, OpalImageInitInfo _initInfo);
 void OvkImageShutdown(OpalImage_T* _image);
 OpalResult OvkImageResize(OpalImage_T* _image, OpalExtent _extents);
-OpalResult OvkTransitionImageLayout(VkImage _image, VkImageLayout _layout, bool _toWritable);
+OpalResult OvkImageFill(OpalImage_T* _image, void* _data);
+OpalResult OvkTransitionImageLayout(VkImage _image, VkImageLayout _layout, VkImageLayout _newLayout);
 
 OpalResult OvkRenderpassInit(OpalRenderpass_T* _renderpass, OpalRenderpassInitInfo _initInfo);
 void OvkRenderpassShutdown(OpalRenderpass_T* _renderpass);

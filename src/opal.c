@@ -158,6 +158,12 @@ OpalResult OpalMaterialReinit(OpalMaterial _material)
   return Opal_Success;
 }
 
+OpalResult OpalMaterialDefineInputs(OpalMaterial _material, uint32_t _count, OpalMaterialInputInfo* _pInputs)
+{
+  
+  return Opal_Success;
+}
+
 OpalResult OpalRenderBegin()
 {
   OPAL_ATTEMPT(OvkRenderBegin());

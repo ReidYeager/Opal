@@ -33,14 +33,14 @@ typedef union OpalClearValue
   OpalDepthStencilValue depthStencil;
 } OpalClearValue;
 
-typedef enum OpalImageFormat
+typedef enum OpalFormat
 {
-  Opal_Image_Format_R8G8B8A8,
-  Opal_Image_Format_R8G8B8,
-  Opal_Image_Format_R32G32B32A32,
-  Opal_Image_Format_R32G32B32,
-  Opal_Image_Format_Depth
-} OpalImageFormat;
+  Opal_Format_RGBA8,
+  Opal_Format_RGB8,
+  Opal_Format_RGBA32,
+  Opal_Format_RGB32,
+  Opal_Format_Depth
+} OpalFormat;
 
 typedef enum OpalImageUsageBits
 {
@@ -48,14 +48,13 @@ typedef enum OpalImageUsageBits
   Opal_Image_Usage_Depth = 0x02,
   Opal_Image_Usage_Copy_Src = 0x04,
   Opal_Image_Usage_Copy_Dst = 0x08,
-
-  //Opal_Image_Usage_Presented = Opal_Image_Usage_Color | Opal_Image_Usage_Copy_Src,
+  Opal_Image_Usage_Uniform = 0x10,
 } OpalImageUsage;
 
 typedef struct OpalImageInitInfo
 {
   OpalExtent extent;
-  OpalImageFormat format;
+  OpalFormat format;
   OpalImageUsage usage;
 } OpalImageInitInfo;
 

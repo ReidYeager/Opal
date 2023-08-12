@@ -32,9 +32,9 @@ OpalResult OvkWindowInit(OpalWindow_T* _window)
   OpalImageInitInfo iInitInfo = { 0 };
   iInitInfo.extent = _window->extents;
   iInitInfo.extent.depth = 1;
-  iInitInfo.format = Opal_Image_Format_R8G8B8A8;
+  iInitInfo.format = Opal_Format_RGBA8;
   iInitInfo.usage = Opal_Image_Usage_Color | Opal_Image_Usage_Copy_Src;
-  OPAL_ATTEMPT(OpalImageInit(&_window->renderBufferImage, &iInitInfo));
+  OPAL_ATTEMPT(OpalImageInit(&_window->renderBufferImage, iInitInfo));
 
   OpalLog("Vk window init complete\n");
 
@@ -67,7 +67,7 @@ OpalResult OvkWindowReinit(OpalWindow_T* _window)
   // TODO : Replace with better framebuffer solution
   OPAL_ATTEMPT(OpalImageResize(_window->renderBufferImage, _window->extents))
 
-  OpalLog("Vk window re-init complete\n");
+  //OpalLog("Vk window re-init complete\n");
 
   return Opal_Success;
 }

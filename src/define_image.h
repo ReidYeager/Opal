@@ -19,7 +19,7 @@ typedef struct OvkImage_T
 typedef struct OpalImage_T
 {
   OpalExtent extents;
-  OpalImageFormat format;
+  OpalFormat format;
   OpalImageUsage usage;
 
   OvkImage_T vk;
