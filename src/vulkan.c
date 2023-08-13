@@ -1,6 +1,29 @@
 
 #include "src/common.h"
 
+VkFormat OpalFormatToVkFormat_Ovk(OpalFormat _format)
+{
+  switch (_format)
+  {
+  case Opal_Format_RGBA8: return VK_FORMAT_R8G8B8A8_SRGB;
+  case Opal_Format_RGB8: return VK_FORMAT_R8G8B8_SRGB;
+  case Opal_Format_RG8: return VK_FORMAT_R8G8_SRGB;
+  case Opal_Format_R8: return VK_FORMAT_R8_SRGB;
+
+  case Opal_Format_RGBA32: return VK_FORMAT_R32G32B32A32_SFLOAT;
+  case Opal_Format_RGB32: return VK_FORMAT_R32G32B32_SFLOAT;
+  case Opal_Format_RG32: return VK_FORMAT_R32G32_SFLOAT;
+  case Opal_Format_R32: return VK_FORMAT_R32_SFLOAT;
+
+  case Opal_Format_Depth: return VK_FORMAT_D24_UNORM_S8_UINT;
+
+    // Display formats
+  case Opal_Format_BGRA8: return VK_FORMAT_B8G8R8A8_SRGB;
+  case Opal_Format_BGR8: return VK_FORMAT_B8G8R8_SRGB;
+  default: OpalLog("Vulkan unkown opal format %d\n", _format); return VK_FORMAT_UNDEFINED;
+  }
+}
+
 OpalResult CreateInstance_Ovk(bool _debug)
 {
   VkApplicationInfo appInfo = { 0 };
@@ -290,6 +313,37 @@ OpalResult CreateDescriptorPool_Ovk()
   return Opal_Success;
 }
 
+OpalResult CreateVertexFormat_Ovk(uint32_t _count, OpalFormat* _pFormats)
+{
+  if (_count == 0 || _pFormats == NULL)
+  {
+    OpalLogErr("No vertex format input\n");
+    return Opal_Failure;
+  }
+
+  VkVertexInputAttributeDescription* pAttribs = LapisMemAllocZeroArray(VkVertexInputAttributeDescription, _count);
+  VkVertexInputBindingDescription binding = { 0 };
+
+  uint32_t offsetSum = 0;
+  for (uint32_t i = 0; i < _count; i++)
+  {
+    pAttribs[i].binding = 0;
+    pAttribs[i].location = i;
+    pAttribs[i].offset = offsetSum;
+    pAttribs[i].format = OpalFormatToVkFormat_Ovk(_pFormats[i]);
+    offsetSum += OpalFormatToSize(_pFormats[i]);
+  }
+
+  binding.binding = 0;
+  binding.stride = offsetSum;
+  binding.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+
+  oState.vertexFormat.vk.bindingDescription = binding;
+  oState.vertexFormat.vk.pAttribDescriptions = pAttribs;
+
+  return Opal_Success;
+}
+
 OpalResult OvkInit(OpalInitInfo _initInfo)
 {
   OPAL_ATTEMPT(CreateInstance_Ovk(_initInfo.debug));
@@ -305,6 +359,8 @@ OpalResult OvkInit(OpalInitInfo _initInfo)
   OPAL_ATTEMPT(CreateCommandPool_Ovk(true));
   OPAL_ATTEMPT(CreateDescriptorPool_Ovk());
 
+  OPAL_ATTEMPT(CreateVertexFormat_Ovk(_initInfo.vertexStruct.count, _initInfo.vertexStruct.pFormats));
+
   OpalLog("Vk init complete : %s\n", oState.vk.gpuInfo.properties.deviceName);
   return Opal_Success;
 }
@@ -314,6 +370,8 @@ void OvkShutdown()
   vkDestroyDescriptorPool(oState.vk.device, oState.vk.descriptorPool, oState.vk.allocator);
   vkDestroyCommandPool(oState.vk.device, oState.vk.graphicsCommandPool, oState.vk.allocator);
   vkDestroyCommandPool(oState.vk.device, oState.vk.transientCommandPool, oState.vk.allocator);
+
+  LapisMemFree(oState.vertexFormat.vk.pAttribDescriptions);
 
   vkDestroyDevice(oState.vk.device, oState.vk.allocator);
   vkDestroyInstance(oState.vk.instance, oState.vk.allocator);

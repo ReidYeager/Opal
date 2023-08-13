@@ -121,28 +121,14 @@ OpalResult CreatePipeline_Ovk(OpalMaterial_T* _material, OpalMaterialInitInfo _i
   pShaderStages[1].pName = "main";
 
   // Vertex input stage =====
-  uint32_t vertAttributeCount = 0;
-  VkVertexInputAttributeDescription vertAttribute = { 0 };
-  vertAttribute.binding = 0;
-  vertAttribute.location = 0;
-  vertAttribute.offset = 0;
-  vertAttribute.format = VK_FORMAT_R32G32B32_SFLOAT;
-
-  VkVertexInputAttributeDescription* pVertexAttributes = NULL; // vertAttribute;
-
-  VkVertexInputBindingDescription vertBinding;
-  vertBinding.binding = 0;
-  vertBinding.stride = 4 * 3;
-  vertBinding.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
-
   VkPipelineVertexInputStateCreateInfo vertexInputStateInfo = { 0 };
   vertexInputStateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
   vertexInputStateInfo.pNext = NULL;
   vertexInputStateInfo.flags = 0;
-  vertexInputStateInfo.vertexAttributeDescriptionCount = vertAttributeCount;
-  vertexInputStateInfo.pVertexAttributeDescriptions = pVertexAttributes;
-  vertexInputStateInfo.vertexBindingDescriptionCount = 0;
-  vertexInputStateInfo.pVertexBindingDescriptions = NULL;
+  vertexInputStateInfo.vertexAttributeDescriptionCount = oState.vertexFormat.attribCount;
+  vertexInputStateInfo.pVertexAttributeDescriptions = oState.vertexFormat.vk.pAttribDescriptions;
+  vertexInputStateInfo.vertexBindingDescriptionCount = 1;
+  vertexInputStateInfo.pVertexBindingDescriptions = &oState.vertexFormat.vk.bindingDescription;
 
   // Input assembly state =====
   VkPipelineInputAssemblyStateCreateInfo inputAssembyStateInfo = { 0 };

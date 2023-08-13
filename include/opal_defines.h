@@ -23,6 +23,7 @@ DEFINE_OPAL_HANDLE(OpalRenderpass);
 DEFINE_OPAL_HANDLE(OpalFramebuffer);
 DEFINE_OPAL_HANDLE(OpalShader);
 DEFINE_OPAL_HANDLE(OpalMaterial);
+DEFINE_OPAL_HANDLE(OpalMesh);
 
 typedef enum OpalBufferUsageBits
 {
@@ -103,10 +104,24 @@ typedef struct OpalMaterialInitInfo
 
 } OpalMaterialInitInfo;
 
+typedef struct OpalMeshInitInfo
+{
+  uint32_t vertexCount;
+  void* pVertices;
+  uint32_t indexCount;
+  uint32_t* pIndices;
+} OpalMeshInitInfo;
+
 typedef struct OpalInitInfo
 {
   LapisWindow* window;
   bool debug;
+
+  struct
+  {
+    uint32_t count;
+    OpalFormat* pFormats;
+  } vertexStruct;
 } OpalInitInfo;
 
 #ifdef __cplusplus

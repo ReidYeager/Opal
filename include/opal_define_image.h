@@ -37,8 +37,12 @@ typedef enum OpalFormat
 {
   Opal_Format_RGBA8, // r-g-b
   Opal_Format_RGB8,
+  Opal_Format_RG8,
+  Opal_Format_R8,
   Opal_Format_RGBA32,
   Opal_Format_RGB32,
+  Opal_Format_RG32,
+  Opal_Format_R32,
 
   Opal_Format_BGRA8, // b-g-r
   Opal_Format_BGR8,

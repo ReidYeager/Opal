@@ -137,7 +137,10 @@ void OvkRenderBindMaterial(OpalMaterial _material)
     NULL);
 }
 
-void OvkRenderVertices(uint32_t _count)
+void OvkRenderMesh(OpalMesh _mesh)
 {
-  vkCmdDraw(currentRenderCmd_Ovk, _count, 1, 0, 0);
+  VkDeviceSize offset = 0;
+  vkCmdBindIndexBuffer(currentRenderCmd_Ovk, _mesh->indexBuffer->vk.buffer, 0, VK_INDEX_TYPE_UINT32);
+  vkCmdBindVertexBuffers(currentRenderCmd_Ovk, 0, 1, &_mesh->vertBuffer->vk.buffer, &offset);
+  vkCmdDrawIndexed(currentRenderCmd_Ovk, _mesh->indexCount, 1, 0, 0, 0);
 }

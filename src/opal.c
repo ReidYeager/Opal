@@ -7,6 +7,27 @@
 
 OpalState_T oState = { 0 };
 
+// Size in bytes
+uint32_t OpalFormatToSize(OpalFormat _format)
+{
+  switch (_format)
+  {
+  case Opal_Format_RGBA8 : return 4;
+  case Opal_Format_RGB8 : return 3;
+  case Opal_Format_RG8 : return 2;
+  case Opal_Format_R8 : return 1;
+  case Opal_Format_RGBA32 : return 16;
+  case Opal_Format_RGB32 : return 12;
+  case Opal_Format_RG32 : return 8;
+  case Opal_Format_R32 : return 4;
+
+  case Opal_Format_Depth:  return 16;
+  case Opal_Format_BGRA8: return 4;
+  case Opal_Format_BGR8: return 3;
+  default: return 0;
+  }
+}
+
 OpalResult OpalInit(OpalInitInfo _initInfo)
 {
   if (oState.window.lWindow)
@@ -18,11 +39,18 @@ OpalResult OpalInit(OpalInitInfo _initInfo)
   oState.window.lWindow = _initInfo.window;
   oState.vk.allocator = NULL;
 
+  oState.vertexFormat.structSize = 0;
+  for (uint32_t i = 0; i < _initInfo.vertexStruct.count; i++)
+  {
+    oState.vertexFormat.structSize += OpalFormatToSize(_initInfo.vertexStruct.pFormats[i]);
+  }
+  oState.vertexFormat.attribCount = _initInfo.vertexStruct.count;
+  oState.vertexFormat.pFormats = LapisMemAllocZeroArray(OpalFormat, _initInfo.vertexStruct.count);
+  LapisMemCopy(_initInfo.vertexStruct.pFormats, oState.vertexFormat.pFormats, sizeof(OpalFormat) * _initInfo.vertexStruct.count);
+
   OPAL_ATTEMPT(OvkInit(_initInfo));
 
   OPAL_ATTEMPT(OvkWindowInit(&oState.window));
-
-  //OPAL_ATTEMPT(OvkWindowReinit(&oState.window));
 
   return Opal_Success;
 }
@@ -191,9 +219,9 @@ void OpalRenderBindMaterial(OpalMaterial _material)
   OvkRenderBindMaterial(_material);
 }
 
-void OpalRenderVertices(uint32_t _count)
+void OpalRenderMesh(OpalMesh _mesh)
 {
-  OvkRenderVertices(_count);
+  OvkRenderMesh(_mesh);
 }
 
 OpalResult OpalBufferInit(OpalBuffer* _buffer, OpalBufferInitInfo _initInfo)
@@ -223,3 +251,36 @@ OpalResult OpalBufferPushData(OpalBuffer _buffer, void* _data)
   return Opal_Success;
 }
 
+OpalResult OpalMeshInit(OpalMesh* _mesh, OpalMeshInitInfo _initInfo)
+{
+  OpalMesh_T* newMesh = LapisMemAllocZeroSingle(OpalMesh_T);
+
+  OpalBufferInitInfo info = { 0 };
+  info.size = _initInfo.vertexCount * oState.vertexFormat.structSize;
+  info.usage = Opal_Buffer_Usage_Vertex;
+
+  OPAL_ATTEMPT(OpalBufferInit(&newMesh->vertBuffer, info), LapisMemFree(newMesh));
+
+  info.size = _initInfo.indexCount * sizeof(_initInfo.pIndices[0]);
+  info.usage = Opal_Buffer_Usage_Index;
+
+  OPAL_ATTEMPT(OpalBufferInit(&newMesh->indexBuffer, info), LapisMemFree(newMesh));
+
+  OPAL_ATTEMPT(OpalBufferPushData(newMesh->vertBuffer, _initInfo.pVertices), LapisMemFree(newMesh));
+  OPAL_ATTEMPT(OpalBufferPushData(newMesh->indexBuffer, _initInfo.pIndices), LapisMemFree(newMesh));
+
+  newMesh->vertCount = _initInfo.vertexCount;
+  newMesh->indexCount = _initInfo.indexCount;
+
+  *_mesh = newMesh;
+  return Opal_Success;
+}
+
+void OpalMeshShutdown(OpalMesh* _mesh)
+{
+  OpalBufferShutdown(&(*_mesh)->vertBuffer);
+  OpalBufferShutdown(&(*_mesh)->indexBuffer);
+
+  LapisMemFree(*_mesh);
+  *_mesh = NULL;
+}

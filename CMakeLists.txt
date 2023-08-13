@@ -18,6 +18,7 @@ add_library (Opal STATIC
   "src/define_framebuffer.h"
   "src/define_image.h"
   "src/define_material.h"
+  "src/define_mesh.h"
   "src/define_renderpass.h"
   "src/define_window.h"
   "src/defines.h"

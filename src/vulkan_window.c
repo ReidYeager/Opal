@@ -1,104 +1,6 @@
 
 #include "src/common.h"
 
-OpalResult CreateSurface_Ovk(OpalWindow_T* _window);
-OpalResult CreateSwapchain_Ovk(OpalWindow_T* _window);
-OpalResult CreateSwapchainImages_Ovk(OpalWindow_T* _window);
-OpalResult CreateSync_Ovk(OpalWindow_T* _window);
-
-OpalResult OvkWindowInit(OpalWindow_T* _window)
-{
-  if (_window->vk.surface != VK_NULL_HANDLE)
-  {
-    vkDestroySurfaceKHR(oState.vk.instance, _window->vk.surface, oState.vk.allocator);
-  }
-
-  uint32_t newWidth = LapisWindowGetWidth(*_window->lWindow);
-  uint32_t newHeight = LapisWindowGetHeight(*_window->lWindow);
-
-  if (!newWidth || !newHeight)
-    return Opal_Failure;
-
-  _window->extents.width = newWidth;
-  _window->extents.height = newHeight;
-  _window->extents.depth = 1;
-
-  OPAL_ATTEMPT(CreateSurface_Ovk(_window));
-  OPAL_ATTEMPT(CreateSwapchain_Ovk(_window));
-  OPAL_ATTEMPT(CreateSwapchainImages_Ovk(_window));
-  OPAL_ATTEMPT(CreateSync_Ovk(_window));
-
-  // TODO : Replace with better framebuffer solution
-  OpalImageInitInfo iInitInfo = { 0 };
-  iInitInfo.extent = _window->extents;
-  iInitInfo.extent.depth = 1;
-  iInitInfo.format = Opal_Format_BGRA8;
-  iInitInfo.usage = Opal_Image_Usage_Color | Opal_Image_Usage_Copy_Src;
-  OPAL_ATTEMPT(OpalImageInit(&_window->renderBufferImage, iInitInfo));
-
-  OpalLog("Vk window init complete\n");
-
-  return Opal_Success;
-}
-
-OpalResult OvkWindowReinit(OpalWindow_T* _window)
-{
-  if (LapisWindowGetMinimized(*_window->lWindow))
-    return Opal_Success;
-
-  _window->extents.width = LapisWindowGetWidth(*_window->lWindow);
-  _window->extents.height = LapisWindowGetHeight(*_window->lWindow);
-  _window->extents.depth = 1;
-
-  for (uint32_t i = 0; i < _window->imageCount; i++)
-  {
-    vkDestroyImageView(oState.vk.device, _window->vk.swapchain.pViews[i], oState.vk.allocator);
-  }
-  //LapisMemFree(_window->vk.swapchain.pViews);
-  //LapisMemFree(_window->vk.swapchain.pImages);
-
-  vkDestroySwapchainKHR(oState.vk.device, _window->vk.swapchain.swapchain, oState.vk.allocator);
-  vkDestroySurfaceKHR(oState.vk.instance, _window->vk.surface, oState.vk.allocator);
-
-  OPAL_ATTEMPT(CreateSurface_Ovk(_window));
-  OPAL_ATTEMPT(CreateSwapchain_Ovk(_window));
-  OPAL_ATTEMPT(CreateSwapchainImages_Ovk(_window));
-
-  // TODO : Replace with better framebuffer solution
-  OPAL_ATTEMPT(OpalImageResize(_window->renderBufferImage, _window->extents))
-
-  //OpalLog("Vk window re-init complete\n");
-
-  return Opal_Success;
-}
-
-OpalResult OvkWindowShutdown(OpalWindow_T* _window)
-{
-  // TODO : Replace with better framebuffer solution
-  OpalImageShutdown(&_window->renderBufferImage);
-
-  for (uint32_t i = 0; i < _window->imageCount; i++)
-  {
-    vkDestroyFence(oState.vk.device, _window->vk.pSync[i].fenceFrameAvailable, oState.vk.allocator);
-    vkDestroySemaphore(oState.vk.device, _window->vk.pSync[i].semImageAvailable, oState.vk.allocator);
-    vkDestroySemaphore(oState.vk.device, _window->vk.pSync[i].semRenderComplete, oState.vk.allocator);
-
-    vkDestroyImageView(oState.vk.device, _window->vk.swapchain.pViews[i], oState.vk.allocator);
-    // Image destruction handled by vkDestroySwapchain
-  }
-  LapisMemFree(_window->vk.pSync);
-  LapisMemFree(_window->vk.swapchain.pViews);
-  LapisMemFree(_window->vk.swapchain.pImages);
-
-  vkDestroySwapchainKHR(oState.vk.device, _window->vk.swapchain.swapchain, oState.vk.allocator);
-
-  vkDestroySurfaceKHR(oState.vk.instance, _window->vk.surface, oState.vk.allocator);
-
-  OpalLog("Vk window shutdown complete\n");
-
-  return Opal_Success;
-}
-
 OpalResult CreateSurface_Ovk(OpalWindow_T* _window)
 {
   if (LapisWindowVulkanCreateSurface(*oState.window.lWindow, oState.vk.instance, &oState.window.vk.surface))
@@ -294,6 +196,97 @@ OpalResult CreateSync_Ovk(OpalWindow_T* _window)
     OVK_ATTEMPT(vkCreateSemaphore(oState.vk.device, &semCreateInfo, oState.vk.allocator, &sync->semRenderComplete));
     OVK_ATTEMPT(vkAllocateCommandBuffers(oState.vk.device, &cmdInfo, &sync->cmdBuffer));
   }
+
+  return Opal_Success;
+}
+
+OpalResult OvkWindowInit(OpalWindow_T* _window)
+{
+  if (_window->vk.surface != VK_NULL_HANDLE)
+  {
+    vkDestroySurfaceKHR(oState.vk.instance, _window->vk.surface, oState.vk.allocator);
+  }
+
+  uint32_t newWidth = LapisWindowGetWidth(*_window->lWindow);
+  uint32_t newHeight = LapisWindowGetHeight(*_window->lWindow);
+
+  if (!newWidth || !newHeight)
+    return Opal_Failure;
+
+  _window->extents.width = newWidth;
+  _window->extents.height = newHeight;
+  _window->extents.depth = 1;
+
+  OPAL_ATTEMPT(CreateSurface_Ovk(_window));
+  OPAL_ATTEMPT(CreateSwapchain_Ovk(_window));
+  OPAL_ATTEMPT(CreateSwapchainImages_Ovk(_window));
+  OPAL_ATTEMPT(CreateSync_Ovk(_window));
+
+  // TODO : Replace with better framebuffer solution
+  OpalImageInitInfo iInitInfo = { 0 };
+  iInitInfo.extent = _window->extents;
+  iInitInfo.extent.depth = 1;
+  iInitInfo.format = Opal_Format_BGRA8;
+  iInitInfo.usage = Opal_Image_Usage_Color | Opal_Image_Usage_Copy_Src;
+  OPAL_ATTEMPT(OpalImageInit(&_window->renderBufferImage, iInitInfo));
+
+  OpalLog("Vk window init complete\n");
+
+  return Opal_Success;
+}
+
+OpalResult OvkWindowReinit(OpalWindow_T* _window)
+{
+  if (LapisWindowGetMinimized(*_window->lWindow))
+    return Opal_Success;
+
+  _window->extents.width = LapisWindowGetWidth(*_window->lWindow);
+  _window->extents.height = LapisWindowGetHeight(*_window->lWindow);
+  _window->extents.depth = 1;
+
+  for (uint32_t i = 0; i < _window->imageCount; i++)
+  {
+    vkDestroyImageView(oState.vk.device, _window->vk.swapchain.pViews[i], oState.vk.allocator);
+  }
+  //LapisMemFree(_window->vk.swapchain.pViews);
+  //LapisMemFree(_window->vk.swapchain.pImages);
+
+  vkDestroySwapchainKHR(oState.vk.device, _window->vk.swapchain.swapchain, oState.vk.allocator);
+  vkDestroySurfaceKHR(oState.vk.instance, _window->vk.surface, oState.vk.allocator);
+
+  OPAL_ATTEMPT(CreateSurface_Ovk(_window));
+  OPAL_ATTEMPT(CreateSwapchain_Ovk(_window));
+  OPAL_ATTEMPT(CreateSwapchainImages_Ovk(_window));
+
+  // TODO : Replace with better framebuffer solution
+  OPAL_ATTEMPT(OpalImageResize(_window->renderBufferImage, _window->extents));
+
+  return Opal_Success;
+}
+
+OpalResult OvkWindowShutdown(OpalWindow_T* _window)
+{
+  // TODO : Replace with better framebuffer solution
+  OpalImageShutdown(&_window->renderBufferImage);
+
+  for (uint32_t i = 0; i < _window->imageCount; i++)
+  {
+    vkDestroyFence(oState.vk.device, _window->vk.pSync[i].fenceFrameAvailable, oState.vk.allocator);
+    vkDestroySemaphore(oState.vk.device, _window->vk.pSync[i].semImageAvailable, oState.vk.allocator);
+    vkDestroySemaphore(oState.vk.device, _window->vk.pSync[i].semRenderComplete, oState.vk.allocator);
+
+    vkDestroyImageView(oState.vk.device, _window->vk.swapchain.pViews[i], oState.vk.allocator);
+    // Image destruction handled by vkDestroySwapchain
+  }
+  LapisMemFree(_window->vk.pSync);
+  LapisMemFree(_window->vk.swapchain.pViews);
+  LapisMemFree(_window->vk.swapchain.pImages);
+
+  vkDestroySwapchainKHR(oState.vk.device, _window->vk.swapchain.swapchain, oState.vk.allocator);
+
+  vkDestroySurfaceKHR(oState.vk.instance, _window->vk.surface, oState.vk.allocator);
+
+  OpalLog("Vk window shutdown complete\n");
 
   return Opal_Success;
 }

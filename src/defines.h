@@ -8,6 +8,7 @@
 #include "src/define_framebuffer.h"
 #include "src/define_image.h"
 #include "src/define_material.h"
+#include "src/define_mesh.h"
 #include "src/define_renderpass.h"
 #include "src/define_window.h"
 
@@ -48,10 +49,25 @@ typedef struct OpalVkState_T
   VkDescriptorPool descriptorPool;
 } OpalVkState_T;
 
+typedef struct OpalVkVertexInfo_T
+{
+  VkVertexInputAttributeDescription* pAttribDescriptions;
+  VkVertexInputBindingDescription bindingDescription;
+} OpalVkVertexInfo_T;
+
 typedef struct OpalState_T
 {
   OpalWindow_T window;
   OpalVkState_T vk;
+
+  struct
+  {
+    uint32_t attribCount;
+    uint32_t structSize;
+    OpalFormat* pFormats;
+
+    OpalVkVertexInfo_T vk;
+  } vertexFormat;
 
 } OpalState_T;
 extern OpalState_T oState;

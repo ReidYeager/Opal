@@ -40,6 +40,9 @@
   }                                                                         \
 }
 
+VkFormat OpalFormatToVkFormat_Ovk(OpalFormat _format);
+uint32_t OpalFormatToSize(OpalFormat _format);
+
 OpalResult OvkInit(OpalInitInfo _initInfo);
 void OvkShutdown();
 
@@ -74,13 +77,14 @@ OpalResult OvkMaterialInit(OpalMaterial_T* _material, OpalMaterialInitInfo _init
 void OvkMaterialShutdown(OpalMaterial_T* _material);
 OpalResult OvkMaterialReinit(OpalMaterial_T* _material);
 
+OpalResult OvkMeshInit(OpalMesh _mesh, OpalMeshInitInfo _initInfo);
+void OvkMeshShutdown(OpalMesh _mesh);
+
 OpalResult OvkRenderBegin();
 OpalResult OvkRenderEnd();
 void OvkRenderBeginRenderpass(OpalRenderpass _renderpass, OpalFramebuffer _framebuffer);
 void OvkRenderEndRenderpass(OpalRenderpass _renderpass);
 void OvkRenderBindMaterial(OpalMaterial _material);
-void OvkRenderVertices(uint32_t _count); // Tmp. Replace with mesh render
-
-
+void OvkRenderMesh(OpalMesh _mesh);
 
 #endif // !GEM_OPAL_LOCAL_COMMON_H_

@@ -39,11 +39,14 @@ OpalResult OpalRenderEnd();
 void OpalRenderBeginRenderpass(OpalRenderpass _renderpass, OpalFramebuffer _framebuffer);
 void OpalRenderEndRenderpass(OpalRenderpass _renderpass);
 void OpalRenderBindMaterial(OpalMaterial _material);
-void OpalRenderVertices(uint32_t _count); // Tmp. Replace with mesh render
+void OpalRenderMesh(OpalMesh _mesh);
 
 OpalResult OpalBufferInit(OpalBuffer* _buffer, OpalBufferInitInfo _initInfo);
 void OpalBufferShutdown(OpalBuffer* _buffer);
 OpalResult OpalBufferPushData(OpalBuffer _buffer, void* _data);
+
+OpalResult OpalMeshInit(OpalMesh* _mesh, OpalMeshInitInfo _initInfo);
+void OpalMeshShutdown(OpalMesh* _mesh);
 
 //void OpalRenderBindShaderArguments(); // For descriptor set input
 
