@@ -35,10 +35,16 @@ typedef union OpalClearValue
 
 typedef enum OpalFormat
 {
-  Opal_Format_RGBA8,
+  Opal_Format_RGBA8, // r-g-b
   Opal_Format_RGB8,
   Opal_Format_RGBA32,
   Opal_Format_RGB32,
+
+  Opal_Format_BGRA8, // b-g-r
+  Opal_Format_BGR8,
+  Opal_Format_BGRA32,
+  Opal_Format_BGR32,
+
   Opal_Format_Depth
 } OpalFormat;
 

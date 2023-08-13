@@ -32,7 +32,7 @@ OpalResult OvkWindowInit(OpalWindow_T* _window)
   OpalImageInitInfo iInitInfo = { 0 };
   iInitInfo.extent = _window->extents;
   iInitInfo.extent.depth = 1;
-  iInitInfo.format = Opal_Format_RGBA8;
+  iInitInfo.format = Opal_Format_BGRA8;
   iInitInfo.usage = Opal_Image_Usage_Color | Opal_Image_Usage_Copy_Src;
   OPAL_ATTEMPT(OpalImageInit(&_window->renderBufferImage, iInitInfo));
 

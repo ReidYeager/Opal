@@ -1,48 +1,6 @@
 
 #include "src/common.h"
 
-OpalResult CreateInstance_Ovk(bool _debug);
-OpalResult ChoosePhysicalDevice_Ovk();
-uint32_t GetFamilyIndexForQueue_Ovk(const OpalVkGpu_T* const _gpu, VkQueueFlags _flags);
-uint32_t GetFamilyIndexForPresent_Ovk(const OpalVkGpu_T* const _gpu, VkSurfaceKHR _surface);
-OpalVkGpu_T CreateGpuInfo_Ovk(VkPhysicalDevice _device);
-void DestroyGpuInfo_Ovk(OpalVkGpu_T _gpu);
-bool DetermineDeviceSuitability_Ovk(VkPhysicalDevice _device);
-OpalResult CreateDevice_Ovk(bool _debug);
-OpalResult CreateCommandPool_Ovk(bool _isTransient);
-OpalResult CreateDescriptorPool_Ovk();
-
-OpalResult OvkInit(OpalInitInfo _initInfo)
-{
-  OPAL_ATTEMPT(CreateInstance_Ovk(_initInfo.debug));
-  if (LapisWindowVulkanCreateSurface(*oState.window.lWindow, oState.vk.instance, &oState.window.vk.surface))
-  {
-    OpalLog("Failed to create surface for lapis window\n");
-    return Opal_Failure;
-  }
-
-  OPAL_ATTEMPT(ChoosePhysicalDevice_Ovk());
-  OPAL_ATTEMPT(CreateDevice_Ovk(_initInfo.debug));
-  OPAL_ATTEMPT(CreateCommandPool_Ovk(false));
-  OPAL_ATTEMPT(CreateCommandPool_Ovk(true));
-  OPAL_ATTEMPT(CreateDescriptorPool_Ovk());
-
-  OpalLog("Vk init complete : %s\n", oState.vk.gpuInfo.properties.deviceName);
-  return Opal_Success;
-}
-
-void OvkShutdown()
-{
-  vkDestroyDescriptorPool(oState.vk.device, oState.vk.descriptorPool, oState.vk.allocator);
-  vkDestroyCommandPool(oState.vk.device, oState.vk.graphicsCommandPool, oState.vk.allocator);
-  vkDestroyCommandPool(oState.vk.device, oState.vk.transientCommandPool, oState.vk.allocator);
-
-  vkDestroyDevice(oState.vk.device, oState.vk.allocator);
-  vkDestroyInstance(oState.vk.instance, oState.vk.allocator);
-
-  OpalLog("Vk shutdown complete\n");
-}
-
 OpalResult CreateInstance_Ovk(bool _debug)
 {
   VkApplicationInfo appInfo = { 0 };
@@ -330,4 +288,35 @@ OpalResult CreateDescriptorPool_Ovk()
   OVK_ATTEMPT(vkCreateDescriptorPool(oState.vk.device, &createInfo, NULL, &oState.vk.descriptorPool));
 
   return Opal_Success;
+}
+
+OpalResult OvkInit(OpalInitInfo _initInfo)
+{
+  OPAL_ATTEMPT(CreateInstance_Ovk(_initInfo.debug));
+  if (LapisWindowVulkanCreateSurface(*oState.window.lWindow, oState.vk.instance, &oState.window.vk.surface))
+  {
+    OpalLog("Failed to create surface for lapis window\n");
+    return Opal_Failure;
+  }
+
+  OPAL_ATTEMPT(ChoosePhysicalDevice_Ovk());
+  OPAL_ATTEMPT(CreateDevice_Ovk(_initInfo.debug));
+  OPAL_ATTEMPT(CreateCommandPool_Ovk(false));
+  OPAL_ATTEMPT(CreateCommandPool_Ovk(true));
+  OPAL_ATTEMPT(CreateDescriptorPool_Ovk());
+
+  OpalLog("Vk init complete : %s\n", oState.vk.gpuInfo.properties.deviceName);
+  return Opal_Success;
+}
+
+void OvkShutdown()
+{
+  vkDestroyDescriptorPool(oState.vk.device, oState.vk.descriptorPool, oState.vk.allocator);
+  vkDestroyCommandPool(oState.vk.device, oState.vk.graphicsCommandPool, oState.vk.allocator);
+  vkDestroyCommandPool(oState.vk.device, oState.vk.transientCommandPool, oState.vk.allocator);
+
+  vkDestroyDevice(oState.vk.device, oState.vk.allocator);
+  vkDestroyInstance(oState.vk.instance, oState.vk.allocator);
+
+  OpalLog("Vk shutdown complete\n");
 }

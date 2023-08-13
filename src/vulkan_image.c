@@ -5,15 +5,22 @@ VkFormat OpalFormatToVkFormat_Ovk(OpalFormat _format)
 {
   switch (_format)
   {
-  case Opal_Format_RGBA8 : return VK_FORMAT_B8G8R8A8_SRGB;
-  case Opal_Format_RGB8 : return VK_FORMAT_B8G8R8_SRGB;
+  case Opal_Format_RGBA8 : return VK_FORMAT_R8G8B8A8_SRGB;
+  case Opal_Format_RGB8 : return VK_FORMAT_R8G8B8_SRGB;
+
   case Opal_Format_RGBA32 : return VK_FORMAT_R32G32B32A32_SFLOAT;
   case Opal_Format_RGB32 : return VK_FORMAT_R32G32B32_SFLOAT;
+
   case Opal_Format_Depth : return VK_FORMAT_D24_UNORM_S8_UINT;
+
+  // Display formats
+  case Opal_Format_BGRA8: return VK_FORMAT_B8G8R8A8_SRGB;
+  case Opal_Format_BGR8: return VK_FORMAT_B8G8R8_SRGB;
   default: OpalLog("Vulkan unkown opal format %d\n", _format); return VK_FORMAT_UNDEFINED;
   }
 }
 
+// Size in bytes
 uint32_t OpalFormatToSize(OpalFormat _format)
 {
   switch (_format)
@@ -23,6 +30,8 @@ uint32_t OpalFormatToSize(OpalFormat _format)
   case Opal_Format_RGBA32: return 16;
   case Opal_Format_RGB32:  return 12;
   case Opal_Format_Depth:  return 16;
+  case Opal_Format_BGRA8: return 4;
+  case Opal_Format_BGR8: return 3;
   default: return 0;
   }
 }
