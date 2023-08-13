@@ -40,7 +40,7 @@
   }                                                                         \
 }
 
-OpalResult OvkInit();
+OpalResult OvkInit(OpalInitInfo _initInfo);
 void OvkShutdown();
 
 OpalResult OvkBufferInit(OpalBuffer _buffer, OpalBufferInitInfo _initInfo);

@@ -18,7 +18,7 @@ OpalResult OpalInit(OpalInitInfo _initInfo)
   oState.window.lWindow = _initInfo.window;
   oState.vk.allocator = NULL;
 
-  OPAL_ATTEMPT(OvkInit());
+  OPAL_ATTEMPT(OvkInit(_initInfo));
 
   OPAL_ATTEMPT(OvkWindowInit(&oState.window));
 

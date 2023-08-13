@@ -106,6 +106,7 @@ typedef struct OpalMaterialInitInfo
 typedef struct OpalInitInfo
 {
   LapisWindow* window;
+  bool debug;
 } OpalInitInfo;
 
 #ifdef __cplusplus

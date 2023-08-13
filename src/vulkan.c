@@ -1,20 +1,20 @@
 
 #include "src/common.h"
 
-OpalResult CreateInstance_Ovk();
+OpalResult CreateInstance_Ovk(bool _debug);
 OpalResult ChoosePhysicalDevice_Ovk();
 uint32_t GetFamilyIndexForQueue_Ovk(const OpalVkGpu_T* const _gpu, VkQueueFlags _flags);
 uint32_t GetFamilyIndexForPresent_Ovk(const OpalVkGpu_T* const _gpu, VkSurfaceKHR _surface);
 OpalVkGpu_T CreateGpuInfo_Ovk(VkPhysicalDevice _device);
 void DestroyGpuInfo_Ovk(OpalVkGpu_T _gpu);
 bool DetermineDeviceSuitability_Ovk(VkPhysicalDevice _device);
-OpalResult CreateDevice_Ovk();
+OpalResult CreateDevice_Ovk(bool _debug);
 OpalResult CreateCommandPool_Ovk(bool _isTransient);
 OpalResult CreateDescriptorPool_Ovk();
 
-OpalResult OvkInit()
+OpalResult OvkInit(OpalInitInfo _initInfo)
 {
-  OPAL_ATTEMPT(CreateInstance_Ovk());
+  OPAL_ATTEMPT(CreateInstance_Ovk(_initInfo.debug));
   if (LapisWindowVulkanCreateSurface(*oState.window.lWindow, oState.vk.instance, &oState.window.vk.surface))
   {
     OpalLog("Failed to create surface for lapis window\n");
@@ -22,7 +22,7 @@ OpalResult OvkInit()
   }
 
   OPAL_ATTEMPT(ChoosePhysicalDevice_Ovk());
-  OPAL_ATTEMPT(CreateDevice_Ovk());
+  OPAL_ATTEMPT(CreateDevice_Ovk(_initInfo.debug));
   OPAL_ATTEMPT(CreateCommandPool_Ovk(false));
   OPAL_ATTEMPT(CreateCommandPool_Ovk(true));
   OPAL_ATTEMPT(CreateDescriptorPool_Ovk());
@@ -43,7 +43,7 @@ void OvkShutdown()
   OpalLog("Vk shutdown complete\n");
 }
 
-OpalResult CreateInstance_Ovk()
+OpalResult CreateInstance_Ovk(bool _debug)
 {
   VkApplicationInfo appInfo = { 0 };
   appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
@@ -55,14 +55,25 @@ OpalResult CreateInstance_Ovk()
 
   uint32_t extensionCount = 0;
   LapisWindowVulkanGetRequiredExtensions(&extensionCount, NULL);
-  extensionCount++;
-  const char** aExtensions = LapisMemAllocZeroArray(const char*, extensionCount);
-  aExtensions[0] = VK_EXT_DEBUG_UTILS_EXTENSION_NAME;
-  LapisWindowVulkanGetRequiredExtensions(NULL, &aExtensions[1]);
 
-  uint32_t layerCount = 1;
-  const char** aLayers = LapisMemAllocZeroArray(const char*, layerCount);
-  aLayers[0] = "VK_LAYER_KHRONOS_validation";
+  if (_debug)
+    extensionCount++;
+  const char** aExtensions = LapisMemAllocZeroArray(const char*, extensionCount);
+
+  if (_debug)
+    aExtensions[0] = VK_EXT_DEBUG_UTILS_EXTENSION_NAME;
+
+  LapisWindowVulkanGetRequiredExtensions(NULL, &aExtensions[_debug]);
+
+  uint32_t layerCount = 0;
+  const char** aLayers = NULL;
+
+  if (_debug)
+  {
+    layerCount = 1;
+    aLayers = LapisMemAllocZeroArray(const char*, layerCount);
+    aLayers[0] = "VK_LAYER_KHRONOS_validation";
+  }
 
   VkInstanceCreateInfo createInfo = { 0 };
   createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
@@ -75,7 +86,11 @@ OpalResult CreateInstance_Ovk()
   OVK_ATTEMPT(vkCreateInstance(&createInfo, oState.vk.allocator, &oState.vk.instance));
 
   LapisMemFree(aExtensions);
-  LapisMemFree(aLayers);
+
+  if (_debug)
+  {
+    LapisMemFree(aLayers);
+  }
 
   return Opal_Success;
 }
@@ -200,7 +215,7 @@ OpalResult ChoosePhysicalDevice_Ovk()
   return Opal_Failure;
 }
 
-OpalResult CreateDevice_Ovk()
+OpalResult CreateDevice_Ovk(bool _debug)
 {
   VkPhysicalDeviceFeatures enabledFeatures = { 0 };
 
@@ -229,9 +244,15 @@ OpalResult CreateDevice_Ovk()
   aExtensions[0] = VK_KHR_SWAPCHAIN_EXTENSION_NAME;
 
   // Layers =====
-  uint32_t layerCount = 1;
-  const char** aLayers = LapisMemAllocZeroArray(const char*, layerCount);
-  aLayers[0] = "VK_LAYER_KHRONOS_validation";
+  uint32_t layerCount = 0;
+  const char** aLayers = NULL;
+
+  if (_debug)
+  {
+    layerCount = 1;
+    aLayers = LapisMemAllocZeroArray(const char*, layerCount);
+    aLayers[0] = "VK_LAYER_KHRONOS_validation";
+  }
 
   // Creation =====
   VkDeviceCreateInfo createInfo = { 0 };
@@ -255,7 +276,11 @@ OpalResult CreateDevice_Ovk()
   LapisMemFree(queueIndices);
   LapisMemFree(queueCreateInfos);
   LapisMemFree(aExtensions);
-  LapisMemFree(aLayers);
+
+  if (_debug)
+  {
+    LapisMemFree(aLayers);
+  }
 
   return Opal_Success;
 }
