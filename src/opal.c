@@ -172,6 +172,12 @@ void OpalInputSetShutdown(OpalInputSet* _set)
   *_set = OPAL_NULL_HANDLE;
 }
 
+OpalResult OpalInputSetUpdate(OpalInputSet _set, uint32_t _count, OpalInputInfo* _pInputs)
+{
+  OPAL_ATTEMPT(OvkInputSetUpdate(_set, _count, _pInputs));
+  return Opal_Success;
+}
+
 OpalResult OpalMaterialInit(OpalMaterial* _material, OpalMaterialInitInfo _initInfo)
 {
   OpalMaterial_T* newMaterial = LapisMemAllocZeroSingle(OpalMaterial_T);

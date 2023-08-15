@@ -39,17 +39,17 @@ OpalResult CreateDescriptorSetLayout_Ovk(OpalInputSet_T* _set, OpalInputSetInitI
 
     switch (_initInfo.pInputs[i].type)
     {
-    case Opal_Material_Input_Uniform_Buffer:
+    case Opal_Input_Type_Uniform_Buffer:
     {
       pBindings[i].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
       pBindings[i].stageFlags = VK_SHADER_STAGE_ALL_GRAPHICS;
     } break;
-    case Opal_Material_Input_Samped_Image:
+    case Opal_Input_Type_Samped_Image:
     {
       pBindings[i].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
       pBindings[i].stageFlags = VK_SHADER_STAGE_ALL_GRAPHICS;
     } break;
-    case Opal_Material_Input_Subpass_Input:
+    case Opal_Input_Type_Subpass_Input:
     {
       pBindings[i].descriptorType = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT;
       pBindings[i].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
@@ -89,27 +89,27 @@ OpalResult CreateDescriptorSet_Ovk(OpalInputSet_T* _set)
   return Opal_Success;
 }
 
-OpalResult UpdateDescriptorSet_Ovk(OpalInputSet_T* _set, OpalInputSetInitInfo _initInfo)
+OpalResult UpdateDescriptorSet_Ovk(OpalInputSet_T* _set, uint32_t _count, OpalInputInfo* _pInputs)
 {
   uint32_t bufferInfoCount = 0;
   uint32_t imageInfoCount = 0;
-  VkDescriptorBufferInfo* pBufferInfos = LapisMemAllocZeroArray(VkDescriptorBufferInfo, _initInfo.count);
-  VkDescriptorImageInfo* pImageInfos = LapisMemAllocZeroArray(VkDescriptorImageInfo, _initInfo.count);
-  VkWriteDescriptorSet* pWrites = LapisMemAllocZeroArray(VkWriteDescriptorSet, _initInfo.count);
+  VkDescriptorBufferInfo* pBufferInfos = LapisMemAllocZeroArray(VkDescriptorBufferInfo, _count);
+  VkDescriptorImageInfo* pImageInfos = LapisMemAllocZeroArray(VkDescriptorImageInfo, _count);
+  VkWriteDescriptorSet* pWrites = LapisMemAllocZeroArray(VkWriteDescriptorSet, _count);
 
-  for (uint32_t i = 0; i < _initInfo.count; i++)
+  for (uint32_t i = 0; i < _count; i++)
   {
     pWrites[i].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
     pWrites[i].descriptorCount = 1;
     pWrites[i].dstArrayElement = 0;
     pWrites[i].dstSet = _set->vk.descriptorSet;
-    pWrites[i].dstBinding = _initInfo.pInputs[i].index;
+    pWrites[i].dstBinding = _pInputs[i].index;
 
-    switch (_initInfo.pInputs[i].type)
+    switch (_pInputs[i].type)
     {
-    case Opal_Material_Input_Uniform_Buffer:
+    case Opal_Input_Type_Uniform_Buffer:
     {
-      pBufferInfos[bufferInfoCount].buffer = _initInfo.pInputs[i].inputValue.buffer->vk.buffer;
+      pBufferInfos[bufferInfoCount].buffer = _pInputs[i].inputValue.buffer->vk.buffer;
       pBufferInfos[bufferInfoCount].offset = 0;
       pBufferInfos[bufferInfoCount].range = VK_WHOLE_SIZE;
 
@@ -119,11 +119,11 @@ OpalResult UpdateDescriptorSet_Ovk(OpalInputSet_T* _set, OpalInputSetInitInfo _i
 
       bufferInfoCount++;
     } break;
-    case Opal_Material_Input_Samped_Image:
+    case Opal_Input_Type_Samped_Image:
     {
-      pImageInfos[imageInfoCount].imageLayout = _initInfo.pInputs[i].inputValue.image->vk.layout;
-      pImageInfos[imageInfoCount].imageView = _initInfo.pInputs[i].inputValue.image->vk.view;
-      pImageInfos[imageInfoCount].sampler = _initInfo.pInputs[i].inputValue.image->vk.sampler;
+      pImageInfos[imageInfoCount].imageLayout = _pInputs[i].inputValue.image->vk.layout;
+      pImageInfos[imageInfoCount].imageView = _pInputs[i].inputValue.image->vk.view;
+      pImageInfos[imageInfoCount].sampler = _pInputs[i].inputValue.image->vk.sampler;
 
       pWrites[i].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
       pWrites[i].pBufferInfo = NULL;
@@ -131,10 +131,10 @@ OpalResult UpdateDescriptorSet_Ovk(OpalInputSet_T* _set, OpalInputSetInitInfo _i
 
       imageInfoCount++;
     } break;
-    case Opal_Material_Input_Subpass_Input:
+    case Opal_Input_Type_Subpass_Input:
     {
-      pImageInfos[imageInfoCount].imageLayout = _initInfo.pInputs[i].inputValue.image->vk.layout;
-      pImageInfos[imageInfoCount].imageView = _initInfo.pInputs[i].inputValue.image->vk.view;
+      pImageInfos[imageInfoCount].imageLayout = _pInputs[i].inputValue.image->vk.layout;
+      pImageInfos[imageInfoCount].imageView = _pInputs[i].inputValue.image->vk.view;
       pImageInfos[imageInfoCount].sampler = VK_NULL_HANDLE;
 
       pWrites[i].descriptorType = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT;
@@ -148,13 +148,13 @@ OpalResult UpdateDescriptorSet_Ovk(OpalInputSet_T* _set, OpalInputSetInitInfo _i
       LapisMemFree(pBufferInfos);
       LapisMemFree(pImageInfos);
       LapisMemFree(pWrites);
-      OpalLogErr("Unknown material input type %d", _initInfo.pInputs[i].type);
+      OpalLogErr("Unknown material input type %d", _pInputs[i].type);
       return Opal_Failure;
     } break;
     }
   }
 
-  vkUpdateDescriptorSets(oState.vk.device, _initInfo.count, pWrites, 0, NULL);
+  vkUpdateDescriptorSets(oState.vk.device, _count, pWrites, 0, NULL);
 
   LapisMemFree(pBufferInfos);
   LapisMemFree(pImageInfos);
@@ -167,7 +167,7 @@ OpalResult OvkInputSetInit(OpalInputSet_T* _set, OpalInputSetInitInfo _initInfo)
 {
   OPAL_ATTEMPT(CreateDescriptorSetLayout_Ovk(_set, _initInfo));
   OPAL_ATTEMPT(CreateDescriptorSet_Ovk(_set));
-  OPAL_ATTEMPT(UpdateDescriptorSet_Ovk(_set, _initInfo));
+  OPAL_ATTEMPT(UpdateDescriptorSet_Ovk(_set, _initInfo.count, _initInfo.pInputs));
   return Opal_Success;
 }
 
@@ -175,6 +175,12 @@ void OvkInputSetShutdown(OpalInputSet_T* _set)
 {
   vkFreeDescriptorSets(oState.vk.device, oState.vk.descriptorPool, 1, &_set->vk.descriptorSet);
   vkDestroyDescriptorSetLayout(oState.vk.device, _set->vk.descriptorLayout, oState.vk.allocator);
+}
+
+OpalResult OvkInputSetUpdate(OpalInputSet _set, uint32_t _count, OpalInputInfo* _pInputs)
+{
+  OPAL_ATTEMPT(UpdateDescriptorSet_Ovk(_set, _count, _pInputs));
+  return Opal_Success;
 }
 
 OpalResult CreatePipelineLayout_Ovk(OpalMaterial_T* _material, OpalMaterialInitInfo _initInfo)

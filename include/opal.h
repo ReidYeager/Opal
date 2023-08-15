@@ -32,6 +32,7 @@ void OpalShaderShutdown(OpalShader* _shader);
 
 OpalResult OpalInputSetInit(OpalInputSet* _set, OpalInputSetInitInfo _initInfo);
 void OpalInputSetShutdown(OpalInputSet* _set);
+OpalResult OpalInputSetUpdate(OpalInputSet _set, uint32_t _count, OpalInputInfo* _pInputs);
 
 OpalResult OpalMaterialInit(OpalMaterial* _material, OpalMaterialInitInfo _initInfo);
 void OpalMaterialShutdown(OpalMaterial* _material);

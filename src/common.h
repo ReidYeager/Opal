@@ -75,6 +75,7 @@ void OvkShaderShutdown(OpalShader_T* _shader);
 
 OpalResult OvkInputSetInit(OpalInputSet_T* _set, OpalInputSetInitInfo _initInfo);
 void OvkInputSetShutdown(OpalInputSet_T* _set);
+OpalResult OvkInputSetUpdate(OpalInputSet _set, uint32_t _count, OpalInputInfo* _pInputs);
 
 OpalResult OvkMaterialInit(OpalMaterial_T* _material, OpalMaterialInitInfo _initInfo);
 void OvkMaterialShutdown(OpalMaterial_T* _material);

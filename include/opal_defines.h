@@ -69,12 +69,12 @@ typedef struct OpalShaderInitInfo
   OpalShaderType type;
 } OpalShaderInitInfo;
 
-typedef enum OpalMaterialInputType
+typedef enum OpalInputType
 {
-  Opal_Material_Input_Uniform_Buffer,
-  Opal_Material_Input_Samped_Image,
-  Opal_Material_Input_Subpass_Input
-} OpalMaterialInputType;
+  Opal_Input_Type_Uniform_Buffer,
+  Opal_Input_Type_Samped_Image,
+  Opal_Input_Type_Subpass_Input
+} OpalInputType;
 
 typedef union OpalMaterialInputValue
 {
@@ -89,7 +89,7 @@ typedef union OpalMaterialInputValue
 typedef struct OpalInputInfo
 {
   uint32_t index;
-  OpalMaterialInputType type;
+  OpalInputType type;
   OpalMaterialInputValue inputValue;
 } OpalInputInfo;
 
