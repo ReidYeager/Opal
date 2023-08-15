@@ -100,7 +100,7 @@ void OpalRenderpassShutdown(OpalRenderpass* _renderpass)
 {
   OvkRenderpassShutdown(*_renderpass);
   LapisMemFree(*_renderpass);
-  *_renderpass = NULL;
+  *_renderpass = OPAL_NULL_HANDLE;
   OpalLog("Renderpass shutdown complete\n");
 }
 
@@ -123,7 +123,7 @@ void OpalFramebufferShutdown(OpalFramebuffer* _framebuffer)
 {
   OvkFramebufferShutdown(*_framebuffer);
   LapisMemFree(*_framebuffer);
-  *_framebuffer = NULL;
+  *_framebuffer = OPAL_NULL_HANDLE;
   OpalLog("Framebuffer shutdown complete\n");
 }
 
@@ -151,8 +151,25 @@ void OpalShaderShutdown(OpalShader* _shader)
 {
   OvkShaderShutdown(*_shader);
   LapisMemFree(*_shader);
-  *_shader = NULL;
+  *_shader = OPAL_NULL_HANDLE;
   OpalLog("Shader shutdown complete\n");
+}
+
+OpalResult OpalInputSetInit(OpalInputSet* _set, OpalInputSetInitInfo _initInfo)
+{
+  OpalInputSet_T* newSet = LapisMemAllocZeroSingle(OpalInputSet_T);
+
+  OPAL_ATTEMPT(OvkInputSetInit(newSet, _initInfo));
+
+  *_set = newSet;
+  return Opal_Success;
+}
+
+void OpalInputSetShutdown(OpalInputSet* _set)
+{
+  OvkInputSetShutdown(*_set);
+  LapisMemFree(*_set);
+  *_set = OPAL_NULL_HANDLE;
 }
 
 OpalResult OpalMaterialInit(OpalMaterial* _material, OpalMaterialInitInfo _initInfo)
@@ -176,19 +193,13 @@ void OpalMaterialShutdown(OpalMaterial* _material)
 {
   OvkMaterialShutdown(*_material);
   LapisMemFree(*_material);
-  *_material = NULL;
+  *_material = OPAL_NULL_HANDLE;
   OpalLog("Material shutdown complete\n");
 }
 
 OpalResult OpalMaterialReinit(OpalMaterial _material)
 {
   OPAL_ATTEMPT(OvkMaterialReinit(_material));
-  return Opal_Success;
-}
-
-OpalResult OpalMaterialDefineInputs(OpalMaterial _material, uint32_t _count, OpalMaterialInputInfo* _pInputs)
-{
-  
   return Opal_Success;
 }
 
@@ -212,6 +223,11 @@ void OpalRenderBeginRenderpass(OpalRenderpass _renderpass, OpalFramebuffer _fram
 void OpalRenderEndRenderpass(OpalRenderpass _renderpass)
 {
   OvkRenderEndRenderpass(_renderpass);
+}
+
+void OpalRenderBindInputSet(OpalInputSet _set, uint32_t _setIndex)
+{
+  OvkRenderBindInputSet(_set, _setIndex);
 }
 
 void OpalRenderBindMaterial(OpalMaterial _material)
@@ -241,7 +257,7 @@ void OpalBufferShutdown(OpalBuffer* _buffer)
 {
   OvkBufferShutdown(*_buffer);
   LapisMemFree(*_buffer);
-  *_buffer = NULL;
+  *_buffer = OPAL_NULL_HANDLE;
   OpalLog("Buffer shutdown complete\n");
 }
 
@@ -282,5 +298,5 @@ void OpalMeshShutdown(OpalMesh* _mesh)
   OpalBufferShutdown(&(*_mesh)->indexBuffer);
 
   LapisMemFree(*_mesh);
-  *_mesh = NULL;
+  *_mesh = OPAL_NULL_HANDLE;
 }

@@ -120,21 +120,24 @@ void OvkRenderEndRenderpass(OpalRenderpass _renderpass)
   vkCmdEndRenderPass(currentRenderCmd_Ovk);
 }
 
+void OvkRenderBindInputSet(OpalInputSet _set, uint32_t _setIndex)
+{
+  vkCmdBindDescriptorSets(
+    currentRenderCmd_Ovk,
+    VK_PIPELINE_BIND_POINT_GRAPHICS,
+    currentPipelineLayout_Ovk,
+    _setIndex,
+    1,
+    &_set->vk.descriptorSet,
+    0,
+    NULL);
+}
+
 void OvkRenderBindMaterial(OpalMaterial _material)
 {
   vkCmdBindPipeline(currentRenderCmd_Ovk, VK_PIPELINE_BIND_POINT_GRAPHICS, _material->vk.pipeline);
 
   currentPipelineLayout_Ovk = _material->vk.pipelineLayout;
-
-  vkCmdBindDescriptorSets(
-    currentRenderCmd_Ovk,
-    VK_PIPELINE_BIND_POINT_GRAPHICS,
-    currentPipelineLayout_Ovk,
-    0,
-    1,
-    &_material->vk.descriptorSet,
-    0,
-    NULL);
 }
 
 void OvkRenderMesh(OpalMesh _mesh)

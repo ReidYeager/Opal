@@ -15,6 +15,7 @@ typedef enum OpalResult
   Opal_Failure
 } OpalResult;
 
+#define OPAL_NULL_HANDLE NULL
 #define DEFINE_OPAL_HANDLE(name) typedef struct name##_T* name
 
 DEFINE_OPAL_HANDLE(OpalWindow);
@@ -22,6 +23,7 @@ DEFINE_OPAL_HANDLE(OpalBuffer);
 DEFINE_OPAL_HANDLE(OpalRenderpass);
 DEFINE_OPAL_HANDLE(OpalFramebuffer);
 DEFINE_OPAL_HANDLE(OpalShader);
+DEFINE_OPAL_HANDLE(OpalInputSet);
 DEFINE_OPAL_HANDLE(OpalMaterial);
 DEFINE_OPAL_HANDLE(OpalMesh);
 
@@ -84,12 +86,18 @@ typedef union OpalMaterialInputValue
   } inputAttachment;
 } OpalMaterialInputValue;
 
-typedef struct OpalMaterialInputInfo
+typedef struct OpalInputInfo
 {
   uint32_t index;
   OpalMaterialInputType type;
   OpalMaterialInputValue inputValue;
-} OpalMaterialInputInfo;
+} OpalInputInfo;
+
+typedef struct OpalInputSetInitInfo
+{
+  uint32_t count;
+  OpalInputInfo* pInputs;
+} OpalInputSetInitInfo;
 
 typedef struct OpalMaterialInitInfo
 {
@@ -99,8 +107,8 @@ typedef struct OpalMaterialInitInfo
   uint32_t shaderCount;
   OpalShader* pShaders;
 
-  uint32_t inputCount;
-  OpalMaterialInputInfo* pInputs;
+  uint32_t inputSetCount;
+  OpalInputSet* pInputSets;
 
 } OpalMaterialInitInfo;
 

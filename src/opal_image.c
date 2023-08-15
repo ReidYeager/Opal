@@ -21,7 +21,7 @@ void OpalImageShutdown(OpalImage* _image)
 {
   OvkImageShutdown(*_image);
   LapisMemFree(*_image);
-  *_image = NULL;
+  *_image = OPAL_NULL_HANDLE;
 }
 
 OpalResult OpalImageResize(OpalImage _image, OpalExtent _extents)

@@ -73,17 +73,18 @@ void OvkFramebufferShutdown(OpalFramebuffer_T* _framebuffer);
 OpalResult OvkShaderInit(OpalShader_T* _shader, OpalShaderInitInfo _initInfo);
 void OvkShaderShutdown(OpalShader_T* _shader);
 
+OpalResult OvkInputSetInit(OpalInputSet_T* _set, OpalInputSetInitInfo _initInfo);
+void OvkInputSetShutdown(OpalInputSet_T* _set);
+
 OpalResult OvkMaterialInit(OpalMaterial_T* _material, OpalMaterialInitInfo _initInfo);
 void OvkMaterialShutdown(OpalMaterial_T* _material);
 OpalResult OvkMaterialReinit(OpalMaterial_T* _material);
-
-OpalResult OvkMeshInit(OpalMesh _mesh, OpalMeshInitInfo _initInfo);
-void OvkMeshShutdown(OpalMesh _mesh);
 
 OpalResult OvkRenderBegin();
 OpalResult OvkRenderEnd();
 void OvkRenderBeginRenderpass(OpalRenderpass _renderpass, OpalFramebuffer _framebuffer);
 void OvkRenderEndRenderpass(OpalRenderpass _renderpass);
+void OvkRenderBindInputSet(OpalInputSet _set, uint32_t _setIndex);
 void OvkRenderBindMaterial(OpalMaterial _material);
 void OvkRenderMesh(OpalMesh _mesh);
 
