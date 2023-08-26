@@ -269,7 +269,7 @@ OpalResult OvkTransitionImageLayout(VkImage _image, VkImageLayout _layout, VkIma
   } break;
   default:
   {
-    OpalLogErr("Unknown new image layout %d\n", _newLayout)
+    OpalLogError("Unknown new image layout %d\n", _newLayout)
     return Opal_Failure;
   }
   }

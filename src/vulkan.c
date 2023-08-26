@@ -317,7 +317,7 @@ OpalResult CreateVertexFormat_Ovk(uint32_t _count, OpalFormat* _pFormats)
 {
   if (_count == 0 || _pFormats == NULL)
   {
-    OpalLogErr("No vertex format input\n");
+    OpalLogError("No vertex format input\n");
     return Opal_Failure;
   }
 

@@ -11,7 +11,7 @@
   printf("Opal :: " message, __VA_ARGS__); \
 }
 
-#define OpalLogErr(message, ...)                  \
+#define OpalLogError(message, ...)                \
 {                                                 \
   printf("Opal :: Err :: " message, __VA_ARGS__); \
 }
@@ -21,8 +21,8 @@
   OpalResult oResult = (fn);                                         \
   if (oResult)                                                       \
   {                                                                  \
-    OpalLogErr("Function \""#fn"\" failed. Result = %d\n", oResult); \
-    OpalLogErr("    %s:%d\n", __FILE__, __LINE__);                   \
+    OpalLogError("Function \""#fn"\" failed. Result = %d\n", oResult); \
+    OpalLogError("    %s:%d\n", __FILE__, __LINE__);                   \
     { __VA_ARGS__; }                                                 \
     return Opal_Failure;                                             \
   }                                                                  \
@@ -33,8 +33,8 @@
   VkResult vResult = (fn);                                                  \
   if (vResult != VK_SUCCESS)                                                \
   {                                                                         \
-    OpalLogErr("Vulkan function \""#fn"\" failed. Result = %d\n", vResult); \
-    OpalLogErr("    %s:%d\n", __FILE__, __LINE__);                          \
+    OpalLogError("Vulkan function \""#fn"\" failed. Result = %d\n", vResult); \
+    OpalLogError("    %s:%d\n", __FILE__, __LINE__);                          \
     { __VA_ARGS__; }                                                        \
     return Opal_Failure;                                                    \
   }                                                                         \
