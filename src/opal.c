@@ -68,7 +68,7 @@ void OpalGetDefaultWindow(OpalWindow* _window)
   *_window = &oState.window;
 }
 
-void OpalWindowGetImage(OpalWindow _window, OpalImage* _outImage)
+void OpalWindowGetBufferImage(OpalWindow _window, OpalImage* _outImage)
 {
   *_outImage = _window->renderBufferImage;
 }
@@ -88,8 +88,10 @@ OpalResult OpalRenderpassInit(OpalRenderpass* _renderpass, OpalRenderpassInitInf
   OPAL_ATTEMPT(OvkRenderpassInit(newRenderpass, _initInfo), LapisMemFree(newRenderpass););
 
   newRenderpass->imageCount = _initInfo.imageCount;
-  newRenderpass->pClearValues = LapisMemAllocZeroArray(OpalClearValue, _initInfo.imageCount);
-  LapisMemCopy(_initInfo.pClearValues, newRenderpass->pClearValues, sizeof(OpalClearValue) * _initInfo.imageCount);
+  newRenderpass->pAttachments = LapisMemAllocZeroArray(OpalAttachmentInfo, _initInfo.imageCount);
+  LapisMemCopy(_initInfo.pAttachments, newRenderpass->pAttachments, sizeof(OpalAttachmentInfo) * _initInfo.imageCount);
+  newRenderpass->pSubpasses = LapisMemAllocZeroArray(OpalSubpassInfo, _initInfo.imageCount);
+  LapisMemCopy(_initInfo.pSubpasses, newRenderpass->pSubpasses, sizeof(OpalSubpassInfo) * _initInfo.imageCount);
 
   OpalLog("Renderpass init complete\n");
   *_renderpass = newRenderpass;
@@ -104,15 +106,37 @@ void OpalRenderpassShutdown(OpalRenderpass* _renderpass)
   OpalLog("Renderpass shutdown complete\n");
 }
 
+bool CompareExtents_Opal(OpalExtent _a, OpalExtent _b)
+{
+  return _a.width == _b.width
+    && _a.height == _b.height
+    && ((_a.depth <= 1 && _b.depth <= 1) || _a.depth == _b.depth);
+}
+
 OpalResult OpalFramebufferInit(OpalFramebuffer* _framebuffer, OpalFramebufferInitInfo _initInfo)
 {
   OpalFramebuffer_T* newFramebuffer = LapisMemAllocZeroSingle(OpalFramebuffer_T);
 
   OPAL_ATTEMPT(OvkFramebufferInit(newFramebuffer, _initInfo));
 
-  newFramebuffer->ppImages = NULL;
-  newFramebuffer->extent = oState.window.extents;
   newFramebuffer->ownerRenderpass = _initInfo.renderpass;
+  newFramebuffer->extent = _initInfo.pImages[0]->extents;
+  newFramebuffer->imageCount = _initInfo.imageCount;
+  newFramebuffer->ppImages = LapisMemAllocArray(OpalImage_T*, _initInfo.imageCount);
+  for (uint32_t i = 0; i < _initInfo.imageCount; i++)
+  {
+    if (!CompareExtents_Opal(newFramebuffer->extent, _initInfo.pImages[i]->extents))
+    {
+      OpalLogError(
+        "All framebuffer input images must have matching extents : (%u, %u, %u)\n",
+        newFramebuffer->extent.width,
+        newFramebuffer->extent.height,
+        newFramebuffer->extent.depth);
+      return Opal_Failure;
+    }
+
+    newFramebuffer->ppImages[i] = _initInfo.pImages[i];
+  }
 
   OpalLog("Framebuffer init complete\n");
   *_framebuffer = newFramebuffer;
@@ -122,6 +146,7 @@ OpalResult OpalFramebufferInit(OpalFramebuffer* _framebuffer, OpalFramebufferIni
 void OpalFramebufferShutdown(OpalFramebuffer* _framebuffer)
 {
   OvkFramebufferShutdown(*_framebuffer);
+  LapisMemFree((*_framebuffer)->ppImages);
   LapisMemFree(*_framebuffer);
   *_framebuffer = OPAL_NULL_HANDLE;
   OpalLog("Framebuffer shutdown complete\n");

@@ -12,13 +12,15 @@ OpalResult OpalInit(OpalInitInfo _createInfo);
 void OpalShutdown();
 
 void OpalGetDefaultWindow(OpalWindow* _window);
-void OpalWindowGetImage(OpalWindow _window, OpalImage* _outImage);
+void OpalWindowGetBufferImage(OpalWindow _window, OpalImage* _outImage);
 OpalResult OpalWindowReinit(OpalWindow _window);
 
 OpalResult OpalImageInit(OpalImage* _image, OpalImageInitInfo _initInfo);
 void OpalImageShutdown(OpalImage* _image);
 OpalResult OpalImageResize(OpalImage _image, OpalExtent _extents);
 OpalResult OpalImageFill(OpalImage _image, void* _data);
+OpalFormat OpalImageGetFormat(OpalImage _image);
+OpalExtent OpalImageGetExtents(OpalImage _image);
 
 OpalResult OpalRenderpassInit(OpalRenderpass* _renderpass, OpalRenderpassInitInfo _initInfo);
 void OpalRenderpassShutdown(OpalRenderpass* _renderpass);

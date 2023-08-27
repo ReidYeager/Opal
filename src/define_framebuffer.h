@@ -18,6 +18,7 @@ typedef struct OvkFramebuffer_T
 typedef struct OpalFramebuffer_T
 {
   OpalExtent extent;
+  uint32_t imageCount;
   OpalImage_T** ppImages;
 
   OpalRenderpass ownerRenderpass;

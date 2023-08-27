@@ -43,15 +43,62 @@ typedef struct OpalBufferInitInfo
   uint32_t usage;
 } OpalBufferInitInfo;
 
+typedef enum OpalAttachmentUsage
+{
+  Opal_Attachment_Usage_Color,
+  Opal_Attachment_Usage_Depth,
+  Opal_Attachment_Usage_Presented,
+} OpalAttachmentUsage;
+
+typedef enum OpalAttachmentLoadOp
+{
+  Opal_Attachment_Op_Clear,
+  Opal_Attachment_Op_Load,
+  Opal_Attachment_Op_Dont_Care,
+} OpalAttachmentLoadOp;
+
+typedef struct OpalAttachmentInfo
+{
+  OpalClearValue clearValue;
+  OpalFormat format;
+  OpalAttachmentUsage usage;
+  OpalAttachmentLoadOp loadOp;
+  bool shouldStore;
+} OpalAttachmentInfo;
+
+typedef struct OpalSubpassInfo
+{
+  uint32_t depthAttachmentIndex;
+  uint32_t colorAttachmentCount;
+  uint32_t* pColorAttachmentIndices;
+  uint32_t inputAttachmentCount;
+  uint32_t* pInputColorAttachmentIndices;
+} OpalSubpassInfo;
+
+typedef struct OpalDependencyInfo
+{
+  uint32_t srcIndex;
+  uint32_t dstIndex;
+} OpalDependencyInfo;
+
 typedef struct OpalRenderpassInitInfo
 {
   uint32_t imageCount;
-  OpalClearValue* pClearValues;
+  OpalAttachmentInfo* pAttachments;
+
+  uint32_t subpassCount;
+  OpalSubpassInfo* pSubpasses;
+
+  uint32_t dependencyCount;
+  OpalDependencyInfo* pDependencies;
 } OpalRenderpassInitInfo;
 
 typedef struct OpalFramebufferInitInfo
 {
   OpalRenderpass renderpass;
+
+  uint32_t imageCount;
+  OpalImage* pImages;
 } OpalFramebufferInitInfo;
 
 typedef enum OpalShaderType

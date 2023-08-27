@@ -106,7 +106,7 @@ void OvkRenderBeginRenderpass(OpalRenderpass _renderpass, OpalFramebuffer _frame
 
   beginInfo.renderPass = _renderpass->vk.renderpass;
   beginInfo.clearValueCount = _renderpass->imageCount;
-  beginInfo.pClearValues = (VkClearValue*)_renderpass->pClearValues;
+  beginInfo.pClearValues = _renderpass->vk.pClearValues;
 
   beginInfo.framebuffer = _framebuffer->vk.framebuffer;
   beginInfo.renderArea.extent = (VkExtent2D){ _framebuffer->extent.width, _framebuffer->extent.height };

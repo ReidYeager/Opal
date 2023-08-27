@@ -36,3 +36,13 @@ OpalResult OpalImageFill(OpalImage _image, void* _data)
   OPAL_ATTEMPT(OvkImageFill(_image, _data));
   return Opal_Success;
 }
+
+OpalFormat OpalImageGetFormat(OpalImage _image)
+{
+  return _image->format;
+}
+
+OpalExtent OpalImageGetExtents(OpalImage _image)
+{
+  return _image->extents;
+}
