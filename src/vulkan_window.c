@@ -3,7 +3,7 @@
 
 OpalResult CreateSurface_Ovk(OpalWindow_T* _window)
 {
-  if (LapisWindowVulkanCreateSurface(*oState.window.lWindow, oState.vk.instance, &oState.window.vk.surface))
+  if (LapisWindowVulkanCreateSurface(_window->lapisWindow, oState.vk.instance, &_window->vk.surface))
   {
     OpalLog("Failed to create Vk surface for Lapis window\n");
     return Opal_Failure;
@@ -200,15 +200,15 @@ OpalResult CreateSync_Ovk(OpalWindow_T* _window)
   return Opal_Success;
 }
 
-OpalResult OvkWindowInit(OpalWindow_T* _window)
+OpalResult OvkWindowInit(OpalWindow_T* _window, OpalWindowInitInfo _initInfo)
 {
   if (_window->vk.surface != VK_NULL_HANDLE)
   {
     vkDestroySurfaceKHR(oState.vk.instance, _window->vk.surface, oState.vk.allocator);
   }
 
-  uint32_t newWidth = LapisWindowGetWidth(*_window->lWindow);
-  uint32_t newHeight = LapisWindowGetHeight(*_window->lWindow);
+  uint32_t newWidth = LapisWindowGetWidth(_initInfo.lapisWindow);
+  uint32_t newHeight = LapisWindowGetHeight(_initInfo.lapisWindow);
 
   if (!newWidth || !newHeight)
     return Opal_Failure;
@@ -237,11 +237,14 @@ OpalResult OvkWindowInit(OpalWindow_T* _window)
 
 OpalResult OvkWindowReinit(OpalWindow_T* _window)
 {
-  if (LapisWindowGetMinimized(*_window->lWindow))
+  uint32_t newWidth, newHeight;
+  LapisWindowGetExtents(_window->lapisWindow, &newWidth, &newHeight);
+
+  if (!newWidth || !newHeight)
     return Opal_Success;
 
-  _window->extents.width = LapisWindowGetWidth(*_window->lWindow);
-  _window->extents.height = LapisWindowGetHeight(*_window->lWindow);
+  _window->extents.width = newWidth;
+  _window->extents.height = newHeight;
   _window->extents.depth = 1;
 
   for (uint32_t i = 0; i < _window->imageCount; i++)
@@ -266,6 +269,7 @@ OpalResult OvkWindowReinit(OpalWindow_T* _window)
 
 OpalResult OvkWindowShutdown(OpalWindow_T* _window)
 {
+  vkDeviceWaitIdle(oState.vk.device);
   // TODO : Replace with better framebuffer solution
   OpalImageShutdown(&_window->renderBufferImage);
 

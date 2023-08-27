@@ -11,9 +11,10 @@ extern "C" {
 OpalResult OpalInit(OpalInitInfo _createInfo);
 void OpalShutdown();
 
-void OpalGetDefaultWindow(OpalWindow* _window);
-void OpalWindowGetBufferImage(OpalWindow _window, OpalImage* _outImage);
+OpalResult OpalWindowInit(OpalWindow* _outWindow, OpalWindowInitInfo _initInfo);
+void OpalWindowShutdown(OpalWindow* _window);
 OpalResult OpalWindowReinit(OpalWindow _window);
+void OpalWindowGetBufferImage(OpalWindow _window, OpalImage* _outImage);
 
 OpalResult OpalImageInit(OpalImage* _image, OpalImageInitInfo _initInfo);
 void OpalImageShutdown(OpalImage* _image);
@@ -40,7 +41,7 @@ OpalResult OpalMaterialInit(OpalMaterial* _material, OpalMaterialInitInfo _initI
 void OpalMaterialShutdown(OpalMaterial* _material);
 OpalResult OpalMaterialReinit(OpalMaterial _material);
 
-OpalResult OpalRenderBegin();
+OpalResult OpalRenderBegin(OpalWindow _window);
 OpalResult OpalRenderEnd();
 void OpalRenderBeginRenderpass(OpalRenderpass _renderpass, OpalFramebuffer _framebuffer);
 void OpalRenderEndRenderpass(OpalRenderpass _renderpass);

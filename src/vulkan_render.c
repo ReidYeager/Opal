@@ -2,23 +2,25 @@
 #include "src/common.h"
 
 VkCommandBuffer currentRenderCmd_Ovk;
+OpalWindow currentRenderWindow_Ovk;
 VkPipelineLayout currentPipelineLayout_Ovk;
 uint32_t syncIndex = 0;
 uint32_t swapchainImageIndex = 0;
 OvkSync_T* curSync = NULL;
 
-OpalResult OvkRenderBegin()
+OpalResult OvkRenderBegin(OpalWindow _window)
 {
-  curSync = &oState.window.vk.pSync[syncIndex];
+  curSync = &_window->vk.pSync[syncIndex];
 
   OVK_ATTEMPT(vkWaitForFences(oState.vk.device, 1, &curSync->fenceFrameAvailable, VK_TRUE, UINT64_MAX));
 
-  OVK_ATTEMPT(vkAcquireNextImageKHR(oState.vk.device, oState.window.vk.swapchain.swapchain, UINT64_MAX, curSync->semImageAvailable, VK_NULL_HANDLE, &swapchainImageIndex));
+  OVK_ATTEMPT(vkAcquireNextImageKHR(oState.vk.device, _window->vk.swapchain.swapchain, UINT64_MAX, curSync->semImageAvailable, VK_NULL_HANDLE, &swapchainImageIndex));
 
   VkCommandBufferBeginInfo beginInfo = { 0 };
   beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 
   currentRenderCmd_Ovk = curSync->cmdBuffer;
+  currentRenderWindow_Ovk = _window;
 
   OVK_ATTEMPT(vkBeginCommandBuffer(currentRenderCmd_Ovk, &beginInfo));
 
@@ -34,27 +36,27 @@ OpalResult CopyRenderBufferToSwapchain_Ovk()
   subres.mipLevel = 0;
 
   VkImageCopy imageCopy = { 0 };
-  imageCopy.extent = (VkExtent3D){ oState.window.extents.width, oState.window.extents.height, oState.window.extents.depth };
+  imageCopy.extent = (VkExtent3D){ currentRenderWindow_Ovk->extents.width, currentRenderWindow_Ovk->extents.height, currentRenderWindow_Ovk->extents.depth };
   imageCopy.srcOffset = (VkOffset3D){ 0, 0, 0 };
   imageCopy.srcSubresource = subres;
   imageCopy.dstOffset = (VkOffset3D){ 0, 0, 0 };
   imageCopy.dstSubresource = subres;
 
-  OPAL_ATTEMPT(OvkTransitionImageLayout(oState.window.vk.swapchain.pImages[swapchainImageIndex], VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL));
+  OPAL_ATTEMPT(OvkTransitionImageLayout(currentRenderWindow_Ovk->vk.swapchain.pImages[swapchainImageIndex], VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL));
 
   VkCommandBuffer tmpcmd;
   OPAL_ATTEMPT(OvkBeginSingleUseCommand(oState.vk.transientCommandPool, &tmpcmd));
   vkCmdCopyImage(
     tmpcmd,
-    oState.window.renderBufferImage->vk.image,
+    currentRenderWindow_Ovk->renderBufferImage->vk.image,
     VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-    oState.window.vk.swapchain.pImages[swapchainImageIndex],
+    currentRenderWindow_Ovk->vk.swapchain.pImages[swapchainImageIndex],
     VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
     1,
     &imageCopy);
   OPAL_ATTEMPT(OvkEndSingleUseCommand(oState.vk.transientCommandPool, oState.vk.queueTransfer, tmpcmd));
 
-  OPAL_ATTEMPT(OvkTransitionImageLayout(oState.window.vk.swapchain.pImages[swapchainImageIndex], VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR));
+  OPAL_ATTEMPT(OvkTransitionImageLayout(currentRenderWindow_Ovk->vk.swapchain.pImages[swapchainImageIndex], VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR));
 
   return Opal_Success;
 }
@@ -89,12 +91,12 @@ OpalResult OvkRenderEnd()
   presentInfo.waitSemaphoreCount = 1;
   presentInfo.pWaitSemaphores = &curSync->semRenderComplete;
   presentInfo.swapchainCount = 1;
-  presentInfo.pSwapchains = &oState.window.vk.swapchain.swapchain;
+  presentInfo.pSwapchains = &currentRenderWindow_Ovk->vk.swapchain.swapchain;
   presentInfo.pImageIndices = &swapchainImageIndex;
 
   OVK_ATTEMPT(vkQueuePresentKHR(oState.vk.queuePresent, &presentInfo));
 
-  syncIndex = (syncIndex + 1) % oState.window.imageCount;
+  syncIndex = (syncIndex + 1) % currentRenderWindow_Ovk->imageCount;
 
   return Opal_Success;
 }
@@ -136,6 +138,21 @@ void OvkRenderBindInputSet(OpalInputSet _set, uint32_t _setIndex)
 void OvkRenderBindMaterial(OpalMaterial _material)
 {
   vkCmdBindPipeline(currentRenderCmd_Ovk, VK_PIPELINE_BIND_POINT_GRAPHICS, _material->vk.pipeline);
+
+  VkViewport viewport = { 0, 0, 1, 1, 0, 1 };
+  viewport.x = 0;
+  viewport.y = 0;
+  viewport.width = currentRenderWindow_Ovk->extents.width;
+  viewport.height = currentRenderWindow_Ovk->extents.height;
+  viewport.minDepth = 0;
+  viewport.maxDepth = 1;
+
+  VkRect2D scissor = { 0 };
+  scissor.extent = (VkExtent2D){ currentRenderWindow_Ovk->extents.width, currentRenderWindow_Ovk->extents.height };
+  scissor.offset = (VkOffset2D){ 0, 0 };
+
+  vkCmdSetViewport(currentRenderCmd_Ovk, 0, 1, &viewport);
+  vkCmdSetScissor(currentRenderCmd_Ovk, 0, 1, &scissor);
 
   currentPipelineLayout_Ovk = _material->vk.pipelineLayout;
 }

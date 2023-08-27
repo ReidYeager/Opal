@@ -242,31 +242,14 @@ OpalResult CreatePipeline_Ovk(OpalMaterial_T* _material, OpalMaterialInitInfo _i
   inputAssembyStateInfo.primitiveRestartEnable = VK_FALSE;
 
   // Viewport state =====
-  // TODO : Make viewport/scissor dynamic?
-  // So materials don't have to be recreated whenever the window resizes
-  // And so materials won't have to store all the information they'd need to do so at all.
-  VkViewport viewport = { 0 };
-  viewport.x = 0;
-  viewport.y = 0;
-  viewport.width = (float)oState.window.extents.width;
-  viewport.height = (float)oState.window.extents.height;
-  viewport.minDepth = 0;
-  viewport.maxDepth = 1;
-
-  VkRect2D scissor = { 0 };
-  scissor.extent = (VkExtent2D){
-    oState.window.extents.width,
-    oState.window.extents.height };
-  scissor.offset = (VkOffset2D){ 0, 0 };
-
   VkPipelineViewportStateCreateInfo viewportStateInfo = { 0 };
   viewportStateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
   viewportStateInfo.pNext = NULL;
   viewportStateInfo.flags = 0;
   viewportStateInfo.viewportCount = 1;
-  viewportStateInfo.pViewports = &viewport;
+  viewportStateInfo.pViewports = NULL;
   viewportStateInfo.scissorCount = 1;
-  viewportStateInfo.pScissors = &scissor;
+  viewportStateInfo.pScissors = NULL;
 
   // Rasterization state =====
   VkPipelineRasterizationStateCreateInfo rasterStateInfo = { 0 };
@@ -325,12 +308,15 @@ OpalResult CreatePipeline_Ovk(OpalMaterial_T* _material, OpalMaterialInitInfo _i
   blendStateInfo.pAttachments = blendAttachmentState;
 
   // Dynamic states =====
+  uint32_t dynStateCount = 2;
+  VkDynamicState dynStates[2] = { VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR };
+
   VkPipelineDynamicStateCreateInfo dynamicStateInfo = { 0 };
   dynamicStateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
   dynamicStateInfo.pNext = NULL;
   dynamicStateInfo.flags = 0;
-  dynamicStateInfo.dynamicStateCount = 0;
-  dynamicStateInfo.pDynamicStates = NULL;
+  dynamicStateInfo.dynamicStateCount = dynStateCount;
+  dynamicStateInfo.pDynamicStates = dynStates;
 
   // Creation =====
   VkGraphicsPipelineCreateInfo createInfo = { 0 };

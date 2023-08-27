@@ -202,7 +202,7 @@ OpalResult CopyBufferToImage_Ovk(OpalImage_T* _image, OpalBuffer _buffer)
 OpalResult OvkImageFill(OpalImage_T* _image, void* _data)
 {
   OpalBufferInitInfo bufferInfo = { 0 };
-  bufferInfo.size = OpalFormatToSize(_image->format) * _image->extents.width * _image->extents.height * _image->extents.depth;
+  bufferInfo.size = OpalFormatToSize_Ovk(_image->format) * _image->extents.width * _image->extents.height * _image->extents.depth;
   bufferInfo.usage = Opal_Buffer_Usage_Cpu_Read | Opal_Buffer_Usage_Transfer_Src;
   OpalBuffer buffer;
   OPAL_ATTEMPT(OpalBufferInit(&buffer, bufferInfo));
@@ -277,7 +277,7 @@ OpalResult OvkTransitionImageLayout(VkImage _image, VkImageLayout _layout, VkIma
     }
     default:
     {
-      OpalLogError("Unknown new image layout %d\n", _newLayout)
+      OpalLogError("Unknown new image layout %d\n", _newLayout);
       return Opal_Failure;
     }
   }

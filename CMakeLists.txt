@@ -36,6 +36,7 @@ add_library (Opal STATIC
 )
 
 set_target_properties(Opal PROPERTIES LINKER_LANGUAGE C)
+target_compile_definitions(Opal PUBLIC OPAL_MODE=1)
 
 target_include_directories (Opal PUBLIC
   ./

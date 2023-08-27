@@ -8,7 +8,7 @@
 OpalState_T oState = { 0 };
 
 // Size in bytes
-uint32_t OpalFormatToSize(OpalFormat _format)
+uint32_t OpalFormatToSize_Ovk(OpalFormat _format)
 {
   switch (_format)
   {
@@ -30,19 +30,16 @@ uint32_t OpalFormatToSize(OpalFormat _format)
 
 OpalResult OpalInit(OpalInitInfo _initInfo)
 {
-  if (oState.window.lWindow)
+  if (oState.vertexFormat.pFormats)
   {
     OpalLog("Failed to init Opal. Already in use.\n");
     return Opal_Failure;
   }
 
-  oState.window.lWindow = _initInfo.window;
-  oState.vk.allocator = NULL;
-
   oState.vertexFormat.structSize = 0;
   for (uint32_t i = 0; i < _initInfo.vertexStruct.count; i++)
   {
-    oState.vertexFormat.structSize += OpalFormatToSize(_initInfo.vertexStruct.pFormats[i]);
+    oState.vertexFormat.structSize += OpalFormatToSize_Ovk(_initInfo.vertexStruct.pFormats[i]);
   }
   oState.vertexFormat.attribCount = _initInfo.vertexStruct.count;
   oState.vertexFormat.pFormats = LapisMemAllocZeroArray(OpalFormat, _initInfo.vertexStruct.count);
@@ -50,22 +47,32 @@ OpalResult OpalInit(OpalInitInfo _initInfo)
 
   OPAL_ATTEMPT(OvkInit(_initInfo));
 
-  OPAL_ATTEMPT(OvkWindowInit(&oState.window));
-
   return Opal_Success;
 }
 
 void OpalShutdown()
 {
-  vkDeviceWaitIdle(oState.vk.device);
-
-  OvkWindowShutdown(&oState.window);
   OvkShutdown();
 }
 
-void OpalGetDefaultWindow(OpalWindow* _window)
+OpalResult OpalWindowInit(OpalWindow* _outWindow, OpalWindowInitInfo _initInfo)
 {
-  *_window = &oState.window;
+  OpalLog("Creating new window\n");
+  OpalWindow_T* newWindow = LapisMemAllocZeroSingle(OpalWindow_T);
+
+  newWindow->lapisWindow = _initInfo.lapisWindow;
+
+  OPAL_ATTEMPT(OvkWindowInit(newWindow, _initInfo), LapisMemFree(newWindow));
+
+  *_outWindow = newWindow;
+  return Opal_Success;
+}
+
+void OpalWindowShutdown(OpalWindow* _window)
+{
+  OvkWindowShutdown(*_window);
+  LapisMemFree(*_window);
+  *_window = NULL;
 }
 
 void OpalWindowGetBufferImage(OpalWindow _window, OpalImage* _outImage)
@@ -156,7 +163,7 @@ OpalResult OpalFramebufferReinit(OpalFramebuffer _framebuffer)
 {
   OPAL_ATTEMPT(OvkFramebufferReinit(_framebuffer));
 
-  _framebuffer->extent = oState.window.extents;
+  _framebuffer->extent = _framebuffer->ppImages[0]->extents;
 
   return Opal_Success;
 }
@@ -234,9 +241,9 @@ OpalResult OpalMaterialReinit(OpalMaterial _material)
   return Opal_Success;
 }
 
-OpalResult OpalRenderBegin()
+OpalResult OpalRenderBegin(OpalWindow _window)
 {
-  OPAL_ATTEMPT(OvkRenderBegin());
+  OPAL_ATTEMPT(OvkRenderBegin(_window));
   return Opal_Success;
 }
 

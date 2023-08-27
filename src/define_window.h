@@ -32,7 +32,7 @@ typedef struct OvkWindow_T
 
 typedef struct OpalWindow_T
 {
-  LapisWindow* lWindow;
+  LapisWindow lapisWindow;
 
   uint32_t imageCount;
   OpalExtent extents;

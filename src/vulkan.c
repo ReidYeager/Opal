@@ -135,7 +135,7 @@ uint32_t GetFamilyIndexForPresent_Ovk(const OpalVkGpu_T* const _gpu, VkSurfaceKH
   return bestFit;
 }
 
-OpalVkGpu_T CreateGpuInfo_Ovk(VkPhysicalDevice _device)
+OpalVkGpu_T CreateGpuInfo_Ovk(VkPhysicalDevice _device, VkSurfaceKHR _surface)
 {
   OpalVkGpu_T gpu = { 0 };
 
@@ -151,7 +151,7 @@ OpalVkGpu_T CreateGpuInfo_Ovk(VkPhysicalDevice _device)
 
   gpu.queueIndexGraphics = GetFamilyIndexForQueue_Ovk(&gpu, VK_QUEUE_GRAPHICS_BIT);
   gpu.queueIndexTransfer = GetFamilyIndexForQueue_Ovk(&gpu, VK_QUEUE_TRANSFER_BIT);
-  gpu.queueIndexPresent = GetFamilyIndexForPresent_Ovk(&gpu, oState.window.vk.surface);
+  gpu.queueIndexPresent = GetFamilyIndexForPresent_Ovk(&gpu, _surface);
 
   return gpu;
 }
@@ -161,9 +161,9 @@ void DestroyGpuInfo_Ovk(OpalVkGpu_T _gpu)
   LapisMemFree(_gpu.queueFamilyProperties);
 }
 
-bool DetermineDeviceSuitability_Ovk(VkPhysicalDevice _device)
+bool DetermineDeviceSuitability_Ovk(VkPhysicalDevice _device, VkSurfaceKHR _surface)
 {
-  OpalVkGpu_T gpuInfo = CreateGpuInfo_Ovk(_device);
+  OpalVkGpu_T gpuInfo = CreateGpuInfo_Ovk(_device, _surface);
 
   bool isValid = true;
 
@@ -175,7 +175,7 @@ bool DetermineDeviceSuitability_Ovk(VkPhysicalDevice _device)
   return isValid;
 }
 
-OpalResult ChoosePhysicalDevice_Ovk()
+OpalResult ChoosePhysicalDevice_Ovk(VkSurfaceKHR _surface)
 {
   uint32_t deviceCount = 0;
   vkEnumeratePhysicalDevices(oState.vk.instance, &deviceCount, NULL);
@@ -184,10 +184,10 @@ OpalResult ChoosePhysicalDevice_Ovk()
 
   for (uint32_t i = 0; i < deviceCount; i++)
   {
-    if (DetermineDeviceSuitability_Ovk(aDevices[i]))
+    if (DetermineDeviceSuitability_Ovk(aDevices[i], _surface))
     {
       oState.vk.gpu = aDevices[i];
-      oState.vk.gpuInfo = CreateGpuInfo_Ovk(aDevices[i]);
+      oState.vk.gpuInfo = CreateGpuInfo_Ovk(aDevices[i], _surface);
       return Opal_Success;
     }
   }
@@ -331,7 +331,7 @@ OpalResult CreateVertexFormat_Ovk(uint32_t _count, OpalFormat* _pFormats)
     pAttribs[i].location = i;
     pAttribs[i].offset = offsetSum;
     pAttribs[i].format = OpalFormatToVkFormat_Ovk(_pFormats[i]);
-    offsetSum += OpalFormatToSize(_pFormats[i]);
+    offsetSum += OpalFormatToSize_Ovk(_pFormats[i]);
   }
 
   binding.binding = 0;
@@ -346,14 +346,17 @@ OpalResult CreateVertexFormat_Ovk(uint32_t _count, OpalFormat* _pFormats)
 
 OpalResult OvkInit(OpalInitInfo _initInfo)
 {
+  oState.vk.allocator = NULL;
+
   OPAL_ATTEMPT(CreateInstance_Ovk(_initInfo.debug));
-  if (LapisWindowVulkanCreateSurface(*oState.window.lWindow, oState.vk.instance, &oState.window.vk.surface))
+  VkSurfaceKHR tmpInitSurface;
+  if (LapisWindowVulkanCreateSurface(_initInfo.lapisWindow, oState.vk.instance, &tmpInitSurface))
   {
     OpalLog("Failed to create surface for lapis window\n");
     return Opal_Failure;
   }
 
-  OPAL_ATTEMPT(ChoosePhysicalDevice_Ovk());
+  OPAL_ATTEMPT(ChoosePhysicalDevice_Ovk(tmpInitSurface));
   OPAL_ATTEMPT(CreateDevice_Ovk(_initInfo.debug));
   OPAL_ATTEMPT(CreateCommandPool_Ovk(false));
   OPAL_ATTEMPT(CreateCommandPool_Ovk(true));
@@ -361,12 +364,15 @@ OpalResult OvkInit(OpalInitInfo _initInfo)
 
   OPAL_ATTEMPT(CreateVertexFormat_Ovk(_initInfo.vertexStruct.count, _initInfo.vertexStruct.pFormats));
 
+  vkDestroySurfaceKHR(oState.vk.instance, tmpInitSurface, oState.vk.allocator);
+
   OpalLog("Vk init complete : %s\n", oState.vk.gpuInfo.properties.deviceName);
   return Opal_Success;
 }
 
 void OvkShutdown()
 {
+  vkDeviceWaitIdle(oState.vk.device);
   vkDestroyDescriptorPool(oState.vk.device, oState.vk.descriptorPool, oState.vk.allocator);
   vkDestroyCommandPool(oState.vk.device, oState.vk.graphicsCommandPool, oState.vk.allocator);
   vkDestroyCommandPool(oState.vk.device, oState.vk.transientCommandPool, oState.vk.allocator);

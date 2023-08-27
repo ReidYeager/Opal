@@ -57,7 +57,7 @@ typedef struct OpalVkVertexInfo_T
 
 typedef struct OpalState_T
 {
-  OpalWindow_T window;
+  //OpalWindow_T window;
   OpalVkState_T vk;
 
   struct

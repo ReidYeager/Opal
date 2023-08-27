@@ -3,6 +3,8 @@
 
 OpalResult OvkFramebufferInit(OpalFramebuffer_T* _framebuffer, OpalFramebufferInitInfo _initInfo)
 {
+  OpalExtent extent = _initInfo.pImages[0]->extents;
+
   VkImageView* pViews = LapisMemAllocArray(VkImageView, _initInfo.imageCount);
   for (uint32_t i = 0; i < _initInfo.imageCount; i++)
   {
@@ -14,8 +16,8 @@ OpalResult OvkFramebufferInit(OpalFramebuffer_T* _framebuffer, OpalFramebufferIn
   createInfo.renderPass = _initInfo.renderpass->vk.renderpass;
   createInfo.attachmentCount = _initInfo.imageCount;
   createInfo.pAttachments = pViews;
-  createInfo.width = oState.window.extents.width;
-  createInfo.height = oState.window.extents.height;
+  createInfo.width = extent.width;
+  createInfo.height = extent.height;
   createInfo.layers = 1;
 
   OVK_ATTEMPT(

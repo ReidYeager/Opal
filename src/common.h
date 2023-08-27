@@ -6,15 +6,17 @@
 #include <vulkan/vulkan.h>
 #include <stdio.h>
 
-#define OpalLog(message, ...)              \
-{                                          \
-  printf("Opal :: " message, __VA_ARGS__); \
-}
+#ifdef LAPIS_MODE
+#define OpalLog(message, ...) LapisConsolePrintMessage(Lapis_Console_Info, "Opal :: " message, __VA_ARGS__)
+#else
+#define OpalLog(message, ...) printf("Opal :: " message, __VA_ARGS__)
+#endif // LAPIS_MODE
 
-#define OpalLogError(message, ...)                \
-{                                                 \
-  printf("Opal :: Err :: " message, __VA_ARGS__); \
-}
+#ifdef LAPIS_MODE
+#define OpalLogError(message, ...) LapisConsolePrintMessage(Lapis_Console_Error, "Opal :: Err :: " message, __VA_ARGS__)
+#else
+#define OpalLogError(message, ...) printf("Opal :: Err :: " message, __VA_ARGS__)
+#endif // LAPIS_MODE
 
 #define OPAL_ATTEMPT(fn, ...)                                        \
 {                                                                    \
@@ -41,7 +43,7 @@
 }
 
 VkFormat OpalFormatToVkFormat_Ovk(OpalFormat _format);
-uint32_t OpalFormatToSize(OpalFormat _format);
+uint32_t OpalFormatToSize_Ovk(OpalFormat _format);
 
 OpalResult OvkInit(OpalInitInfo _initInfo);
 void OvkShutdown();
@@ -53,7 +55,7 @@ OpalResult OvkBufferPushData(OpalBuffer _buffer, void* _data);
 OpalResult OvkBeginSingleUseCommand(VkCommandPool _pool, VkCommandBuffer* _cmd);
 OpalResult OvkEndSingleUseCommand(VkCommandPool _pool, VkQueue _queue, VkCommandBuffer _cmd);
 
-OpalResult OvkWindowInit(OpalWindow_T* _window);
+OpalResult OvkWindowInit(OpalWindow_T* _window, OpalWindowInitInfo _initInfo);
 OpalResult OvkWindowReinit(OpalWindow_T* _window);
 OpalResult OvkWindowShutdown(OpalWindow_T* _window);
 
@@ -81,7 +83,7 @@ OpalResult OvkMaterialInit(OpalMaterial_T* _material, OpalMaterialInitInfo _init
 void OvkMaterialShutdown(OpalMaterial_T* _material);
 OpalResult OvkMaterialReinit(OpalMaterial_T* _material);
 
-OpalResult OvkRenderBegin();
+OpalResult OvkRenderBegin(OpalWindow _window);
 OpalResult OvkRenderEnd();
 void OvkRenderBeginRenderpass(OpalRenderpass _renderpass, OpalFramebuffer _framebuffer);
 void OvkRenderEndRenderpass(OpalRenderpass _renderpass);

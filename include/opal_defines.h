@@ -66,6 +66,8 @@ typedef struct OpalAttachmentInfo
   bool shouldStore;
 } OpalAttachmentInfo;
 
+#define OPAL_DEPTH_ATTACHMENT_NONE -1
+
 typedef struct OpalSubpassInfo
 {
   uint32_t depthAttachmentIndex;
@@ -167,9 +169,14 @@ typedef struct OpalMeshInitInfo
   uint32_t* pIndices;
 } OpalMeshInitInfo;
 
+typedef struct OpalWindowInitInfo
+{
+  LapisWindow lapisWindow;
+} OpalWindowInitInfo;
+
 typedef struct OpalInitInfo
 {
-  LapisWindow* window;
+  LapisWindow lapisWindow;
   bool debug;
 
   struct
