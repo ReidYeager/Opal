@@ -33,6 +33,8 @@ OpalResult OpalFramebufferReinit(OpalFramebuffer _framebuffer);
 OpalResult OpalShaderInit(OpalShader* _shader, OpalShaderInitInfo _initInfo);
 void OpalShaderShutdown(OpalShader* _shader);
 
+OpalResult OpalInputLayoutInit(OpalInputLayout* _layout, OpalInputLayoutInitInfo _initInfo);
+void OpalInputLayoutShutdown(OpalInputLayout* _layout);
 OpalResult OpalInputSetInit(OpalInputSet* _set, OpalInputSetInitInfo _initInfo);
 void OpalInputSetShutdown(OpalInputSet* _set);
 OpalResult OpalInputSetUpdate(OpalInputSet _set, uint32_t _count, OpalInputInfo* _pInputs);

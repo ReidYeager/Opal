@@ -75,6 +75,8 @@ void OvkFramebufferShutdown(OpalFramebuffer_T* _framebuffer);
 OpalResult OvkShaderInit(OpalShader_T* _shader, OpalShaderInitInfo _initInfo);
 void OvkShaderShutdown(OpalShader_T* _shader);
 
+OpalResult OvkInputLayoutInit(OpalInputLayout_T* _layout, OpalInputLayoutInitInfo _initInfo);
+void OvkInputLayoutShutdown(OpalInputLayout_T* _layout);
 OpalResult OvkInputSetInit(OpalInputSet_T* _set, OpalInputSetInitInfo _initInfo);
 void OvkInputSetShutdown(OpalInputSet_T* _set);
 OpalResult OvkInputSetUpdate(OpalInputSet _set, uint32_t _count, OpalInputInfo* _pInputs);

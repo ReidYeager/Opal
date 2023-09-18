@@ -23,6 +23,7 @@ DEFINE_OPAL_HANDLE(OpalBuffer);
 DEFINE_OPAL_HANDLE(OpalRenderpass);
 DEFINE_OPAL_HANDLE(OpalFramebuffer);
 DEFINE_OPAL_HANDLE(OpalShader);
+DEFINE_OPAL_HANDLE(OpalInputLayout);
 DEFINE_OPAL_HANDLE(OpalInputSet);
 DEFINE_OPAL_HANDLE(OpalMaterial);
 DEFINE_OPAL_HANDLE(OpalMesh);
@@ -135,18 +136,24 @@ typedef union OpalMaterialInputValue
   } inputAttachment;
 } OpalMaterialInputValue;
 
+typedef struct OpalInputLayoutInitInfo
+{
+  uint32_t count;
+  OpalInputType* pTypes;
+} OpalInputLayoutInitInfo;
+
+typedef struct OpalInputSetInitInfo
+{
+  OpalInputLayout layout;
+  OpalMaterialInputValue* pInputValues;
+} OpalInputSetInitInfo;
+
 typedef struct OpalInputInfo
 {
   uint32_t index;
   OpalInputType type;
-  OpalMaterialInputValue inputValue;
+  OpalMaterialInputValue value;
 } OpalInputInfo;
-
-typedef struct OpalInputSetInitInfo
-{
-  uint32_t count;
-  OpalInputInfo* pInputs;
-} OpalInputSetInitInfo;
 
 typedef struct OpalMaterialInitInfo
 {
@@ -156,9 +163,8 @@ typedef struct OpalMaterialInitInfo
   uint32_t shaderCount;
   OpalShader* pShaders;
 
-  uint32_t inputSetCount;
-  OpalInputSet* pInputSets;
-
+  uint32_t inputLayoutCount;
+  OpalInputLayout* pInputLayouts;
 } OpalMaterialInitInfo;
 
 typedef struct OpalMeshInitInfo

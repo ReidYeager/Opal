@@ -18,9 +18,13 @@ typedef struct OpalShader_T
   OvkShader_T vk;
 } OpalShader_T;
 
-typedef struct OvkInputSet_T
+typedef struct OvkInputLayout_T
 {
   VkDescriptorSetLayout descriptorLayout;
+} OvkInputLayout_T;
+
+typedef struct OvkInputSet_T
+{
   VkDescriptorSet descriptorSet;
 } OvkInputSet_T;
 
@@ -32,6 +36,13 @@ typedef struct OvkMaterial_T
   uint32_t inputSetCount;
   OpalInputSet* pInputSets;
 } OvkMaterial_T;
+
+typedef struct OpalInputLayout_T
+{
+  uint32_t count;
+  OpalInputType* pTypes;
+  OvkInputLayout_T vk;
+} OpalInputLayout_T;
 
 typedef struct OpalInputSet_T
 {

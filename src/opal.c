@@ -187,14 +187,35 @@ void OpalShaderShutdown(OpalShader* _shader)
   OpalLog("Shader shutdown complete\n");
 }
 
+OpalResult OpalInputLayoutInit(OpalInputLayout* _layout, OpalInputLayoutInitInfo _initInfo)
+{
+  OpalInputLayout_T* newLayout = LapisMemAllocZeroSingle(OpalInputLayout_T);
+
+  OPAL_ATTEMPT(OvkInputLayoutInit(newLayout, _initInfo), LapisMemFree(newLayout));
+
+  newLayout->count = _initInfo.count;
+  newLayout->pTypes = LapisMemAllocZeroArray(OpalInputType, _initInfo.count);
+  LapisMemCopy(_initInfo.pTypes, newLayout->pTypes, sizeof(OpalInputType) * _initInfo.count);
+
+  *_layout = newLayout;
+  return Opal_Success;
+}
+
 OpalResult OpalInputSetInit(OpalInputSet* _set, OpalInputSetInitInfo _initInfo)
 {
   OpalInputSet_T* newSet = LapisMemAllocZeroSingle(OpalInputSet_T);
 
-  OPAL_ATTEMPT(OvkInputSetInit(newSet, _initInfo));
+  OPAL_ATTEMPT(OvkInputSetInit(newSet, _initInfo), LapisMemFree(newSet));
 
   *_set = newSet;
   return Opal_Success;
+}
+
+void OpalInputLayoutShutdown(OpalInputLayout* _layout)
+{
+  OvkInputLayoutShutdown(*_layout);
+  LapisMemFree(*_layout);
+  *_layout = OPAL_NULL_HANDLE;
 }
 
 void OpalInputSetShutdown(OpalInputSet* _set)
