@@ -81,6 +81,8 @@ OpalResult CreateView_Ovk(OpalImage_T* _image)
     vCreateInfo.subresourceRange.aspectMask |= VK_IMAGE_ASPECT_COLOR_BIT;
   if (_image->usage & Opal_Image_Usage_Depth)
     vCreateInfo.subresourceRange.aspectMask |= VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
+  if (_image->usage & Opal_Image_Usage_Uniform)
+    vCreateInfo.subresourceRange.aspectMask |= VK_IMAGE_ASPECT_COLOR_BIT;
   vCreateInfo.subresourceRange.levelCount = 1;
   vCreateInfo.subresourceRange.baseMipLevel = 0;
   vCreateInfo.subresourceRange.layerCount = 1;
@@ -91,14 +93,26 @@ OpalResult CreateView_Ovk(OpalImage_T* _image)
   return Opal_Success;
 }
 
-OpalResult CreateSampler_Ovk(OpalImage_T* _image)
+OpalResult CreateSampler_Ovk(OpalImage_T* _image, OpalImageInitInfo _initInfo)
 {
   VkSamplerCreateInfo createInfo = { 0 };
   createInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
   createInfo.pNext = NULL;
   createInfo.flags = 0;
-  createInfo.magFilter = VK_FILTER_LINEAR;
-  createInfo.minFilter = VK_FILTER_LINEAR;
+  switch (_initInfo.sampleType)
+  {
+  case Opal_Sample_Bilinear:
+  {
+    createInfo.magFilter = VK_FILTER_LINEAR;
+    createInfo.minFilter = VK_FILTER_LINEAR;
+  } break;
+  case Opal_Sample_Point:
+  default:
+  {
+    createInfo.magFilter = VK_FILTER_NEAREST;
+    createInfo.minFilter = VK_FILTER_NEAREST;
+  } break;
+  }
   createInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT; // VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
   createInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT; // VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
   createInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT; // VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
@@ -129,7 +143,7 @@ OpalResult OvkImageInit(OpalImage_T* _image, OpalImageInitInfo _initInfo)
 
   if (_image->usage & Opal_Image_Usage_Uniform)
   {
-    OPAL_ATTEMPT(CreateSampler_Ovk(_image));
+    OPAL_ATTEMPT(CreateSampler_Ovk(_image, _initInfo));
   }
   else
   {

@@ -61,11 +61,18 @@ typedef enum OpalImageUsageBits
   Opal_Image_Usage_Uniform = 0x10,
 } OpalImageUsage;
 
+typedef enum OpalImageSampleType
+{
+  Opal_Sample_Point,
+  Opal_Sample_Bilinear
+} OpalImageSampleType;
+
 typedef struct OpalImageInitInfo
 {
   OpalExtent extent;
   OpalFormat format;
   OpalImageUsage usage;
+  OpalImageSampleType sampleType;
 } OpalImageInitInfo;
 
 #endif // !GEM_OPAL_DEFINE_IMAGE_H
