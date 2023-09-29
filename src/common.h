@@ -92,5 +92,6 @@ void OvkRenderEndRenderpass(OpalRenderpass _renderpass);
 void OvkRenderBindInputSet(OpalInputSet _set, uint32_t _setIndex);
 void OvkRenderBindMaterial(OpalMaterial _material);
 void OvkRenderMesh(OpalMesh _mesh);
+void OvkRenderSetPushConstant(void* _data);
 
 #endif // !GEM_OPAL_LOCAL_COMMON_H_

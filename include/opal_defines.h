@@ -165,6 +165,8 @@ typedef struct OpalMaterialInitInfo
 
   uint32_t inputLayoutCount;
   OpalInputLayout* pInputLayouts;
+
+  uint32_t pushConstantSize;
 } OpalMaterialInitInfo;
 
 typedef struct OpalMeshInitInfo

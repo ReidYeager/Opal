@@ -243,6 +243,8 @@ OpalResult OpalMaterialInit(OpalMaterial* _material, OpalMaterialInitInfo _initI
   newMaterial->pShaders = LapisMemAllocZeroArray(OpalShader, _initInfo.shaderCount);
   LapisMemCopy(_initInfo.pShaders, newMaterial->pShaders, sizeof(OpalShader) * _initInfo.shaderCount);
 
+  newMaterial->pushConstantSize = _initInfo.pushConstantSize;
+
   OpalLog("Material init complete\n");
   *_material = newMaterial;
   return Opal_Success;
@@ -297,6 +299,11 @@ void OpalRenderBindMaterial(OpalMaterial _material)
 void OpalRenderMesh(OpalMesh _mesh)
 {
   OvkRenderMesh(_mesh);
+}
+
+void OpalRenderSetPushConstant(void* _data)
+{
+  OvkRenderSetPushConstant(_data);
 }
 
 OpalResult OpalBufferInit(OpalBuffer* _buffer, OpalBufferInitInfo _initInfo)

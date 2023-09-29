@@ -211,10 +211,15 @@ OpalResult CreatePipelineLayout_Ovk(OpalMaterial_T* _material, OpalMaterialInitI
     pLayouts[i] = _initInfo.pInputLayouts[i]->vk.descriptorLayout;
   }
 
+  VkPushConstantRange pushRange = { 0 };
+  pushRange.offset = 0;
+  pushRange.size = _initInfo.pushConstantSize;
+  pushRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
+
   VkPipelineLayoutCreateInfo createInfo = { 0 };
   createInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-  createInfo.pushConstantRangeCount = 0;
-  createInfo.pPushConstantRanges = NULL;
+  createInfo.pushConstantRangeCount = (_initInfo.pushConstantSize > 0);
+  createInfo.pPushConstantRanges = (_initInfo.pushConstantSize) ? &pushRange : NULL;
   createInfo.setLayoutCount = _initInfo.inputLayoutCount;
   createInfo.pSetLayouts = pLayouts;
 

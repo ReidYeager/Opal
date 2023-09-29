@@ -4,6 +4,7 @@
 VkCommandBuffer currentRenderCmd_Ovk;
 OpalWindow currentRenderWindow_Ovk;
 VkPipelineLayout currentPipelineLayout_Ovk;
+OpalMaterial currentRenderMaterial_Ovk;
 uint32_t syncIndex = 0;
 uint32_t swapchainImageIndex = 0;
 OvkSync_T* curSync = NULL;
@@ -155,6 +156,7 @@ void OvkRenderBindMaterial(OpalMaterial _material)
   vkCmdSetScissor(currentRenderCmd_Ovk, 0, 1, &scissor);
 
   currentPipelineLayout_Ovk = _material->vk.pipelineLayout;
+  currentRenderMaterial_Ovk = _material;
 }
 
 void OvkRenderMesh(OpalMesh _mesh)
@@ -163,4 +165,15 @@ void OvkRenderMesh(OpalMesh _mesh)
   vkCmdBindIndexBuffer(currentRenderCmd_Ovk, _mesh->indexBuffer->vk.buffer, 0, VK_INDEX_TYPE_UINT32);
   vkCmdBindVertexBuffers(currentRenderCmd_Ovk, 0, 1, &_mesh->vertBuffer->vk.buffer, &offset);
   vkCmdDrawIndexed(currentRenderCmd_Ovk, _mesh->indexCount, 1, 0, 0, 0);
+}
+
+void OvkRenderSetPushConstant(void* _data)
+{
+  vkCmdPushConstants(
+    currentRenderCmd_Ovk,
+    currentRenderMaterial_Ovk->vk.pipelineLayout,
+    VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
+    0,
+    currentRenderMaterial_Ovk->pushConstantSize,
+    _data);
 }

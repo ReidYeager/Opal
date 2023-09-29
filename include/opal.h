@@ -50,6 +50,7 @@ void OpalRenderEndRenderpass(OpalRenderpass _renderpass);
 void OpalRenderBindInputSet(OpalInputSet _set, uint32_t _setIndex);
 void OpalRenderBindMaterial(OpalMaterial _material);
 void OpalRenderMesh(OpalMesh _mesh);
+void OpalRenderSetPushConstant(void* _data);
 
 OpalResult OpalBufferInit(OpalBuffer* _buffer, OpalBufferInitInfo _initInfo);
 void OpalBufferShutdown(OpalBuffer* _buffer);

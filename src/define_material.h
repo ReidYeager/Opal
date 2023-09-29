@@ -60,6 +60,8 @@ typedef struct OpalMaterial_T
   //uint32_t inputCount;
   //OpalInputInfo* pInputs;
 
+  uint32_t pushConstantSize;
+
   OvkMaterial_T vk;
 } OpalMaterial_T;
 
