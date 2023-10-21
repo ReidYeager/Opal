@@ -2,9 +2,11 @@
 #ifndef GEM_OPAL_DEFINE_MESH_H_
 #define GEM_OPAL_DEFINE_MESH_H_
 
-#include "include/opal.h"
+#include "include/opal_define_buffer.h"
 
 #include <vulkan/vulkan.h>
+
+typedef struct OpalMesh_T* OpalMesh;
 
 typedef struct OvkMesh_T
 {

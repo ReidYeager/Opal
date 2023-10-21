@@ -2,13 +2,15 @@
 #ifndef GEM_OPAL_DEFINE_FRAMEBUFFER_H_
 #define GEM_OPAL_DEFINE_FRAMEBUFFER_H_ 1
 
-#include "include/opal.h"
-#include "src/define_image.h"
+#include "include/opal_define_image.h"
+#include "include/opal_define_renderpass.h"
 
 #include <vulkan/vulkan.h>
 
 #include <stdint.h>
 #include <stdbool.h>
+
+typedef struct OpalFramebuffer_T* OpalFramebuffer;
 
 typedef struct OvkFramebuffer_T
 {

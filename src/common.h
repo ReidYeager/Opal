@@ -2,7 +2,7 @@
 #ifndef GEM_OPAL_LOCAL_COMMON_H_
 #define GEM_OPAL_LOCAL_COMMON_H_ 1
 
-#include "src/defines.h"
+#include "include/opal.h"
 #include <vulkan/vulkan.h>
 #include <stdio.h>
 

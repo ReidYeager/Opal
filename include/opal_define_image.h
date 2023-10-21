@@ -5,6 +5,8 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#include <vulkan/vulkan.h>
+
 typedef struct OpalImage_T* OpalImage;
 
 typedef struct OpalExtent
@@ -74,5 +76,25 @@ typedef struct OpalImageInitInfo
   OpalImageUsage usage;
   OpalImageSampleType sampleType;
 } OpalImageInitInfo;
+
+typedef struct OvkImage_T
+{
+  VkImage image;
+  VkImageView view;
+  VkSampler sampler;
+  VkDeviceMemory memory;
+
+  VkFormat format;
+  VkImageLayout layout;
+} OvkImage_T;
+
+typedef struct OpalImage_T
+{
+  OpalExtent extents;
+  OpalFormat format;
+  OpalImageUsage usage;
+
+  OvkImage_T vk;
+} OpalImage_T;
 
 #endif // !GEM_OPAL_DEFINE_IMAGE_H

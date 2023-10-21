@@ -2,10 +2,13 @@
 #ifndef GEM_OPAL_WINDOW_H_
 #define GEM_OPAL_WINDOW_H_ 1
 
-#include "include/opal_defines.h"
-#include "src/define_image.h"
+#include "include/opal_define_image.h"
+
+#include <lapis.h>
 
 #include <vulkan/vulkan.h>
+
+typedef struct OpalWindow_T* OpalWindow;
 
 typedef struct OvkSync_T
 {

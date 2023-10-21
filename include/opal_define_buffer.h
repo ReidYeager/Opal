@@ -2,9 +2,9 @@
 #ifndef GEM_OPAL_DEFINE_BUFFER_H_
 #define GEM_OPAL_DEFINE_BUFFER_H_
 
-#include "include/opal.h"
-
 #include <vulkan/vulkan.h>
+
+typedef struct OpalBuffer_T* OpalBuffer;
 
 typedef struct OvkBuffer_T
 {
