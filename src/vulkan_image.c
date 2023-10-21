@@ -193,7 +193,7 @@ OpalResult OvkImageResize(OpalImage_T* _image, OpalExtent _extents)
 OpalResult CopyBufferToImage_Ovk(OpalImage_T* _image, OpalBuffer _buffer)
 {
   VkCommandBuffer cmd;
-  OPAL_ATTEMPT(OvkBeginSingleUseCommand(oState.vk.graphicsCommandPool, &cmd));
+  OPAL_ATTEMPT(OpalBeginSingleUseCommand(oState.vk.graphicsCommandPool, &cmd));
 
   VkBufferImageCopy copyRegion = { 0 };
   copyRegion.bufferOffset = 0;
@@ -208,7 +208,7 @@ OpalResult CopyBufferToImage_Ovk(OpalImage_T* _image, OpalBuffer _buffer)
 
   vkCmdCopyBufferToImage(cmd, _buffer->vk.buffer, _image->vk.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copyRegion);
 
-  OPAL_ATTEMPT(OvkEndSingleUseCommand(oState.vk.graphicsCommandPool, oState.vk.queueGraphics, cmd));
+  OPAL_ATTEMPT(OpalEndSingleUseCommand(oState.vk.graphicsCommandPool, oState.vk.queueGraphics, cmd));
 
   return Opal_Success;
 }
@@ -297,9 +297,9 @@ OpalResult OvkTransitionImageLayout(VkImage _image, VkImageLayout _layout, VkIma
   }
 
   VkCommandBuffer cmd;
-  OPAL_ATTEMPT(OvkBeginSingleUseCommand(oState.vk.graphicsCommandPool, &cmd));
+  OPAL_ATTEMPT(OpalBeginSingleUseCommand(oState.vk.graphicsCommandPool, &cmd));
   vkCmdPipelineBarrier(cmd, srcStage, dstStage, 0, 0, NULL, 0, NULL, 1, &memBarrier);
-  OPAL_ATTEMPT(OvkEndSingleUseCommand(oState.vk.graphicsCommandPool, oState.vk.queueGraphics, cmd));
+  OPAL_ATTEMPT(OpalEndSingleUseCommand(oState.vk.graphicsCommandPool, oState.vk.queueGraphics, cmd));
 
   return Opal_Success;
 }

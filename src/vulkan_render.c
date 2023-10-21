@@ -46,7 +46,7 @@ OpalResult CopyRenderBufferToSwapchain_Ovk()
   OPAL_ATTEMPT(OvkTransitionImageLayout(currentRenderWindow_Ovk->vk.swapchain.pImages[swapchainImageIndex], VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL));
 
   VkCommandBuffer tmpcmd;
-  OPAL_ATTEMPT(OvkBeginSingleUseCommand(oState.vk.transientCommandPool, &tmpcmd));
+  OPAL_ATTEMPT(OpalBeginSingleUseCommand(oState.vk.transientCommandPool, &tmpcmd));
   vkCmdCopyImage(
     tmpcmd,
     currentRenderWindow_Ovk->renderBufferImage->vk.image,
@@ -55,7 +55,7 @@ OpalResult CopyRenderBufferToSwapchain_Ovk()
     VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
     1,
     &imageCopy);
-  OPAL_ATTEMPT(OvkEndSingleUseCommand(oState.vk.transientCommandPool, oState.vk.queueTransfer, tmpcmd));
+  OPAL_ATTEMPT(OpalEndSingleUseCommand(oState.vk.transientCommandPool, oState.vk.queueTransfer, tmpcmd));
 
   OPAL_ATTEMPT(OvkTransitionImageLayout(currentRenderWindow_Ovk->vk.swapchain.pImages[swapchainImageIndex], VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR));
 
@@ -100,6 +100,11 @@ OpalResult OvkRenderEnd()
   syncIndex = (syncIndex + 1) % currentRenderWindow_Ovk->imageCount;
 
   return Opal_Success;
+}
+
+VkCommandBuffer OvkRenderGetCommandBuffer()
+{
+  return currentRenderCmd_Ovk;
 }
 
 void OvkRenderBeginRenderpass(OpalRenderpass _renderpass, OpalFramebuffer _framebuffer)

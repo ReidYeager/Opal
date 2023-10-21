@@ -60,7 +60,7 @@ OpalResult OpalWindowInit(OpalWindow* _outWindow, OpalWindowInitInfo _initInfo)
   OpalLog("Creating new window\n");
   OpalWindow_T* newWindow = LapisMemAllocZeroSingle(OpalWindow_T);
 
-  newWindow->lapisWindow = _initInfo.lapisWindow;
+  newWindow->platform = _initInfo.platformInfo;
 
   OPAL_ATTEMPT(OvkWindowInit(newWindow, _initInfo), LapisMemFree(newWindow));
 
@@ -274,6 +274,11 @@ OpalResult OpalRenderEnd()
 {
   OPAL_ATTEMPT(OvkRenderEnd());
   return Opal_Success;
+}
+
+VkCommandBuffer OpalRenderGetCommandBuffer()
+{
+  return OvkRenderGetCommandBuffer();
 }
 
 void OpalRenderBeginRenderpass(OpalRenderpass _renderpass, OpalFramebuffer _framebuffer)

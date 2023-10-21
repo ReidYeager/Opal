@@ -1,7 +1,7 @@
 
 #include "src/common.h"
 
-OpalResult OvkBeginSingleUseCommand(VkCommandPool _pool, VkCommandBuffer* _cmd)
+OpalResult OpalBeginSingleUseCommand(VkCommandPool _pool, VkCommandBuffer* _cmd)
 {
   VkCommandBufferAllocateInfo allocInfo = { 0 };
   allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
@@ -21,7 +21,7 @@ OpalResult OvkBeginSingleUseCommand(VkCommandPool _pool, VkCommandBuffer* _cmd)
   return Opal_Success;
 }
 
-OpalResult OvkEndSingleUseCommand(VkCommandPool _pool, VkQueue _queue, VkCommandBuffer _cmd)
+OpalResult OpalEndSingleUseCommand(VkCommandPool _pool, VkQueue _queue, VkCommandBuffer _cmd)
 {
   OVK_ATTEMPT(vkEndCommandBuffer(_cmd));
 

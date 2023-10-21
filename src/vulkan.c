@@ -350,7 +350,7 @@ OpalResult OvkInit(OpalInitInfo _initInfo)
 
   OPAL_ATTEMPT(CreateInstance_Ovk(_initInfo.debug));
   VkSurfaceKHR tmpInitSurface;
-  if (LapisWindowVulkanCreateSurface(_initInfo.lapisWindow, oState.vk.instance, &tmpInitSurface))
+  if (OpalPlatformCreateSurface(_initInfo.windowPlatformInfo, oState.vk.instance, &tmpInitSurface))
   {
     OpalLog("Failed to create surface for lapis window\n");
     return Opal_Failure;

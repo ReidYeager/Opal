@@ -52,12 +52,12 @@ OpalResult OvkBufferInit(OpalBuffer _buffer, OpalBufferInitInfo _initInfo);
 void OvkBufferShutdown(OpalBuffer _buffer);
 OpalResult OvkBufferPushData(OpalBuffer _buffer, void* _data);
 
-OpalResult OvkBeginSingleUseCommand(VkCommandPool _pool, VkCommandBuffer* _cmd);
-OpalResult OvkEndSingleUseCommand(VkCommandPool _pool, VkQueue _queue, VkCommandBuffer _cmd);
-
 OpalResult OvkWindowInit(OpalWindow_T* _window, OpalWindowInitInfo _initInfo);
 OpalResult OvkWindowReinit(OpalWindow_T* _window);
 OpalResult OvkWindowShutdown(OpalWindow_T* _window);
+
+void OpalPlatformGetRequiredExtensions(uint32_t* _extensionCount, const char** _extensionNames);
+OpalResult OpalPlatformCreateSurface(OpalWindowPlatformInfo_T _window, VkInstance _instance, VkSurfaceKHR* _surface);
 
 OpalResult OvkImageInit(OpalImage_T* _image, OpalImageInitInfo _initInfo);
 void OvkImageShutdown(OpalImage_T* _image);
@@ -87,6 +87,7 @@ OpalResult OvkMaterialReinit(OpalMaterial_T* _material);
 
 OpalResult OvkRenderBegin(OpalWindow _window);
 OpalResult OvkRenderEnd();
+VkCommandBuffer OvkRenderGetCommandBuffer();
 void OvkRenderBeginRenderpass(OpalRenderpass _renderpass, OpalFramebuffer _framebuffer);
 void OvkRenderEndRenderpass(OpalRenderpass _renderpass);
 void OvkRenderBindInputSet(OpalInputSet _set, uint32_t _setIndex);

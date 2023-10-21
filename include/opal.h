@@ -7,6 +7,82 @@ extern "C" {
 #endif // __cplusplus
 
 #include "include/opal_defines.h"
+#include "include/opal_define_image.h"
+#include "include/opal_define_buffer.h"
+#include "include/opal_define_framebuffer.h"
+#include "include/opal_define_image.h"
+#include "include/opal_define_material.h"
+#include "include/opal_define_mesh.h"
+#include "include/opal_define_renderpass.h"
+#include "include/opal_define_window.h"
+
+typedef struct OpalInitInfo
+{
+  OpalWindowPlatformInfo_T windowPlatformInfo;
+  bool debug;
+
+  struct
+  {
+    uint32_t count;
+    OpalFormat* pFormats;
+  } vertexStruct;
+} OpalInitInfo;
+
+typedef struct OpalVkGpu_T
+{
+  VkPhysicalDevice device;
+  VkPhysicalDeviceFeatures features;
+  VkPhysicalDeviceProperties properties;
+  VkPhysicalDeviceMemoryProperties memoryProperties;
+
+  uint32_t queueFamilyPropertiesCount;
+  VkQueueFamilyProperties* queueFamilyProperties;
+
+  uint32_t queueIndexGraphics;
+  uint32_t queueIndexTransfer;
+  uint32_t queueIndexPresent;
+} OpalVkGpu_T;
+
+typedef struct OpalVkState_T
+{
+  const VkAllocationCallbacks* allocator;
+  VkInstance instance;
+  VkPhysicalDevice gpu;
+  OpalVkGpu_T gpuInfo;
+  VkDevice device;
+
+  VkQueue queueGraphics;
+  VkQueue queueTransfer;
+  VkQueue queuePresent;
+
+  VkCommandPool transientCommandPool;
+  VkCommandPool graphicsCommandPool;
+
+  VkDescriptorPool descriptorPool;
+} OpalVkState_T;
+
+typedef struct OpalVkVertexInfo_T
+{
+  VkVertexInputAttributeDescription* pAttribDescriptions;
+  VkVertexInputBindingDescription bindingDescription;
+} OpalVkVertexInfo_T;
+
+typedef struct OpalState_T
+{
+  //OpalWindow_T window;
+  OpalVkState_T vk;
+
+  struct
+  {
+    uint32_t attribCount;
+    uint32_t structSize;
+    OpalFormat* pFormats;
+
+    OpalVkVertexInfo_T vk;
+  } vertexFormat;
+
+} OpalState_T;
+extern OpalState_T oState;
 
 OpalResult OpalInit(OpalInitInfo _createInfo);
 void OpalShutdown();
@@ -45,6 +121,7 @@ OpalResult OpalMaterialReinit(OpalMaterial _material);
 
 OpalResult OpalRenderBegin(OpalWindow _window);
 OpalResult OpalRenderEnd();
+VkCommandBuffer OpalRenderGetCommandBuffer();
 void OpalRenderBeginRenderpass(OpalRenderpass _renderpass, OpalFramebuffer _framebuffer);
 void OpalRenderEndRenderpass(OpalRenderpass _renderpass);
 void OpalRenderBindInputSet(OpalInputSet _set, uint32_t _setIndex);
@@ -58,6 +135,9 @@ OpalResult OpalBufferPushData(OpalBuffer _buffer, void* _data);
 
 OpalResult OpalMeshInit(OpalMesh* _mesh, OpalMeshInitInfo _initInfo);
 void OpalMeshShutdown(OpalMesh* _mesh);
+
+OpalResult OpalBeginSingleUseCommand(VkCommandPool _pool, VkCommandBuffer* _cmd);
+OpalResult OpalEndSingleUseCommand(VkCommandPool _pool, VkQueue _queue, VkCommandBuffer _cmd);
 
 //void OpalRenderBindShaderArguments(); // For descriptor set input
 

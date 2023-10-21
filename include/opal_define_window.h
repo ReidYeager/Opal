@@ -33,9 +33,24 @@ typedef struct OvkWindow_T
   OvkSync_T* pSync;
 } OvkWindow_T;
 
+#ifdef OPAL_PLATFORM_WIN32
+#include <Windows.h>
+#include <Windowsx.h>
+typedef struct OpalWindowPlatformInfo_T
+{
+  HWND hwnd;
+  HINSTANCE hinstance;
+} OpalWindowPlatformInfo_T;
+#else
+typedef struct OpalWindowPlatformInfo_T
+{
+  int none;
+} OpalWindowPlatformInfo_T;
+#endif // OPAL_PLATFORM_
+
 typedef struct OpalWindow_T
 {
-  LapisWindow lapisWindow;
+  OpalWindowPlatformInfo_T platform;
 
   uint32_t imageCount;
   OpalExtent extents;
@@ -45,5 +60,13 @@ typedef struct OpalWindow_T
 
   OvkWindow_T vk;
 } OpalWindow_T;
+
+typedef struct OpalWindowInitInfo
+{
+  OpalWindowPlatformInfo_T platformInfo;
+
+  Vec2U extents;
+  //Vec2I position;
+} OpalWindowInitInfo;
 
 #endif // !GEM_OPAL_WINDOW_H_

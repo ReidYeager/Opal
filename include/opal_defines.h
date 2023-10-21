@@ -6,15 +6,14 @@
 extern "C" {
 #endif // __cplusplus
 
-#include "include/opal_define_image.h"
-#include "include/opal_define_buffer.h"
-#include "include/opal_define_framebuffer.h"
-#include "include/opal_define_image.h"
-#include "include/opal_define_material.h"
-#include "include/opal_define_mesh.h"
-#include "include/opal_define_renderpass.h"
-#include "include/opal_define_window.h"
-#include <lapis.h>
+#if defined(WIN32) || defined(_WIN32) || defined(__WIN32__)
+#define OPAL_PLATFORM_WIN32 1
+#ifndef _WIN64
+#error "Must have 64-bit windows"
+#endif
+#else
+#error "Unsupported platform"
+#endif
 
 typedef enum OpalResult
 {
@@ -33,101 +32,6 @@ typedef enum OpalBufferUsageBits
   Opal_Buffer_Usage_Index = 0x10,
   Opal_Buffer_Usage_Cpu_Read = 0x20
 } OpalBufferUsageBits;
-
-typedef struct OpalBufferInitInfo
-{
-  uint64_t size;
-  uint32_t usage;
-} OpalBufferInitInfo;
-
-typedef struct OpalFramebufferInitInfo
-{
-  OpalRenderpass renderpass;
-
-  uint32_t imageCount;
-  OpalImage* pImages;
-} OpalFramebufferInitInfo;
-
-typedef struct OpalMeshInitInfo
-{
-  uint32_t vertexCount;
-  void* pVertices;
-  uint32_t indexCount;
-  uint32_t* pIndices;
-} OpalMeshInitInfo;
-
-typedef struct OpalWindowInitInfo
-{
-  LapisWindow lapisWindow;
-} OpalWindowInitInfo;
-
-typedef struct OpalInitInfo
-{
-  LapisWindow lapisWindow;
-  bool debug;
-
-  struct
-  {
-    uint32_t count;
-    OpalFormat* pFormats;
-  } vertexStruct;
-} OpalInitInfo;
-
-typedef struct OpalVkGpu_T
-{
-  VkPhysicalDevice device;
-  VkPhysicalDeviceFeatures features;
-  VkPhysicalDeviceProperties properties;
-  VkPhysicalDeviceMemoryProperties memoryProperties;
-
-  uint32_t queueFamilyPropertiesCount;
-  VkQueueFamilyProperties* queueFamilyProperties;
-
-  uint32_t queueIndexGraphics;
-  uint32_t queueIndexTransfer;
-  uint32_t queueIndexPresent;
-} OpalVkGpu_T;
-
-typedef struct OpalVkState_T
-{
-  const VkAllocationCallbacks* allocator;
-  VkInstance instance;
-  VkPhysicalDevice gpu;
-  OpalVkGpu_T gpuInfo;
-  VkDevice device;
-
-  VkQueue queueGraphics;
-  VkQueue queueTransfer;
-  VkQueue queuePresent;
-
-  VkCommandPool transientCommandPool;
-  VkCommandPool graphicsCommandPool;
-
-  VkDescriptorPool descriptorPool;
-} OpalVkState_T;
-
-typedef struct OpalVkVertexInfo_T
-{
-  VkVertexInputAttributeDescription* pAttribDescriptions;
-  VkVertexInputBindingDescription bindingDescription;
-} OpalVkVertexInfo_T;
-
-typedef struct OpalState_T
-{
-  //OpalWindow_T window;
-  OpalVkState_T vk;
-
-  struct
-  {
-    uint32_t attribCount;
-    uint32_t structSize;
-    OpalFormat* pFormats;
-
-    OpalVkVertexInfo_T vk;
-  } vertexFormat;
-
-} OpalState_T;
-extern OpalState_T oState;
 
 #ifdef __cplusplus
 }

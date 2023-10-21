@@ -3,7 +3,7 @@
 
 OpalResult CreateSurface_Ovk(OpalWindow_T* _window)
 {
-  if (LapisWindowVulkanCreateSurface(_window->lapisWindow, oState.vk.instance, &_window->vk.surface))
+  if (OpalPlatformCreateSurface(_window->platform, oState.vk.instance, &_window->vk.surface))
   {
     OpalLog("Failed to create Vk surface for Lapis window\n");
     return Opal_Failure;
@@ -207,8 +207,8 @@ OpalResult OvkWindowInit(OpalWindow_T* _window, OpalWindowInitInfo _initInfo)
     vkDestroySurfaceKHR(oState.vk.instance, _window->vk.surface, oState.vk.allocator);
   }
 
-  uint32_t newWidth = LapisWindowGetWidth(_initInfo.lapisWindow);
-  uint32_t newHeight = LapisWindowGetHeight(_initInfo.lapisWindow);
+  uint32_t newWidth = _initInfo.extents.width;
+  uint32_t newHeight = _initInfo.extents.height;
 
   if (!newWidth || !newHeight)
     return Opal_Failure;
@@ -237,8 +237,8 @@ OpalResult OvkWindowInit(OpalWindow_T* _window, OpalWindowInitInfo _initInfo)
 
 OpalResult OvkWindowReinit(OpalWindow_T* _window)
 {
-  uint32_t newWidth, newHeight;
-  LapisWindowGetExtents(_window->lapisWindow, &newWidth, &newHeight);
+  uint32_t newWidth = _window->extents.width;
+  uint32_t newHeight = _window->extents.height;
 
   if (!newWidth || !newHeight)
     return Opal_Success;

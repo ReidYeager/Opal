@@ -28,4 +28,12 @@ typedef struct OpalFramebuffer_T
   OvkFramebuffer_T vk;
 } OpalFramebuffer_T;
 
+typedef struct OpalFramebufferInitInfo
+{
+  OpalRenderpass renderpass;
+
+  uint32_t imageCount;
+  OpalImage* pImages;
+} OpalFramebufferInitInfo;
+
 #endif // !GEM_OPAL_DEFINE_FRAMEBUFFER_H_
