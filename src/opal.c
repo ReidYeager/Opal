@@ -202,7 +202,12 @@ OpalResult OpalFramebufferReinit(OpalFramebuffer _framebuffer)
 
 OpalResult OpalShaderInit(OpalShader* _shader, OpalShaderInitInfo _initInfo)
 {
-  OpalShader_T* newShader = LapisMemAllocZeroSingle(OpalShader_T);
+  OpalShader_T* newShader = *_shader;
+
+  if (newShader == NULL)
+  {
+    newShader = LapisMemAllocZeroSingle(OpalShader_T);
+  }
 
   OPAL_ATTEMPT(OvkShaderInit(newShader, _initInfo), LapisMemFree(newShader));
 

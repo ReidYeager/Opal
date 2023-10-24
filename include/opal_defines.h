@@ -13,7 +13,7 @@ extern "C" {
 #endif
 #else
 #error "Unsupported platform"
-#endif
+#endif // OPAL_PLATFORM_*
 
 #define OPAL_NULL_HANDLE NULL
 
