@@ -12,19 +12,51 @@ uint32_t OpalFormatToSize_Ovk(OpalFormat _format)
 {
   switch (_format)
   {
-  case Opal_Format_RGBA8 : return 4;
-  case Opal_Format_RGB8 : return 3;
-  case Opal_Format_RG8 : return 2;
-  case Opal_Format_R8 : return 1;
-  case Opal_Format_RGBA32 : return 16;
-  case Opal_Format_RGB32 : return 12;
-  case Opal_Format_RG32 : return 8;
-  case Opal_Format_R32 : return 4;
+    // R G B A variants
+  case Opal_Format_R8:     case Opal_Format_R8I:     case Opal_Format_R8U:     case Opal_Format_R8_Nonlinear:
+    return 1;
+  case Opal_Format_RG8:    case Opal_Format_RG8I:    case Opal_Format_RG8U:    case Opal_Format_RG8_Nonlinear:
+    return 2;
+  case Opal_Format_RGB8:   case Opal_Format_RGB8I:   case Opal_Format_RGB8U:   case Opal_Format_RGB8_Nonlinear:
+    return 3;
+  case Opal_Format_RGBA8:  case Opal_Format_RGBA8I:  case Opal_Format_RGBA8U:  case Opal_Format_RGBA8_Nonlinear:
+    return 4;
+  case Opal_Format_R32:    case Opal_Format_R32I:    case Opal_Format_R32U:    case Opal_Format_R32_Nonlinear:
+    return 4;
+  case Opal_Format_RG32:   case Opal_Format_RG32I:   case Opal_Format_RG32U:   case Opal_Format_RG32_Nonlinear:
+    return 8;
+  case Opal_Format_RGB32:  case Opal_Format_RGB32I:  case Opal_Format_RGB32U:  case Opal_Format_RGB32_Nonlinear:
+    return 12;
+  case Opal_Format_RGBA32: case Opal_Format_RGBA32I: case Opal_Format_RGBA32U: case Opal_Format_RGBA32_Nonlinear:
+    return 16;
+  case Opal_Format_R64:    case Opal_Format_R64I:    case Opal_Format_R64U:    case Opal_Format_R64_Nonlinear:
+    return 8;
+  case Opal_Format_RG64:   case Opal_Format_RG64I:   case Opal_Format_RG64U:   case Opal_Format_RG64_Nonlinear:
+    return 16;
+  case Opal_Format_RGB64:  case Opal_Format_RGB64I:  case Opal_Format_RGB64U:  case Opal_Format_RGB64_Nonlinear:
+    return 24;
+  case Opal_Format_RGBA64: case Opal_Format_RGBA64I: case Opal_Format_RGBA64U: case Opal_Format_RGBA64_Nonlinear:
+    return 32;
 
-  case Opal_Format_Depth:  return 16;
-  case Opal_Format_BGRA8: return 4;
-  case Opal_Format_BGR8: return 3;
-  default: return 0;
+    // B G R A variants
+  case Opal_Format_BGR8:
+    return 3;
+  case Opal_Format_BGRA8:
+    return 4;
+  case Opal_Format_BGR32:
+    return 12;
+  case Opal_Format_BGRA32:
+    return 16;
+
+    // Depth stencils
+  case Opal_Format_D24_S8: case Opal_Format_D16_S8: case Opal_Format_D32:
+    return 4;
+
+    // Other
+  case Opal_Format_Mat4x4:
+    return 64;
+  default:
+    return 0;
   }
 }
 

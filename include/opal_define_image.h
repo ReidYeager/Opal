@@ -2,10 +2,12 @@
 #ifndef GEM_OPAL_DEFINE_IMAGE_H
 #define GEM_OPAL_DEFINE_IMAGE_H 1
 
-#include <stdint.h>
-#include <stdbool.h>
+#include "include/opal_defines.h"
 
 #include <vulkan/vulkan.h>
+
+#include <stdint.h>
+#include <stdbool.h>
 
 typedef struct OpalImage_T* OpalImage;
 
@@ -34,25 +36,6 @@ typedef union OpalClearValue
   OpalColorValue color;
   OpalDepthStencilValue depthStencil;
 } OpalClearValue;
-
-typedef enum OpalFormat
-{
-  Opal_Format_RGBA8, // r-g-b
-  Opal_Format_RGB8,
-  Opal_Format_RG8,
-  Opal_Format_R8,
-  Opal_Format_RGBA32,
-  Opal_Format_RGB32,
-  Opal_Format_RG32,
-  Opal_Format_R32,
-
-  Opal_Format_BGRA8, // b-g-r
-  Opal_Format_BGR8,
-  Opal_Format_BGRA32,
-  Opal_Format_BGR32,
-
-  Opal_Format_Depth
-} OpalFormat;
 
 typedef enum OpalImageUsageBits
 {

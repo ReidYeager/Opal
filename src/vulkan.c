@@ -15,7 +15,7 @@ VkFormat OpalFormatToVkFormat_Ovk(OpalFormat _format)
   case Opal_Format_RG32: return VK_FORMAT_R32G32_SFLOAT;
   case Opal_Format_R32: return VK_FORMAT_R32_SFLOAT;
 
-  case Opal_Format_Depth: return VK_FORMAT_D24_UNORM_S8_UINT;
+  case Opal_Format_D24_S8: return VK_FORMAT_D24_UNORM_S8_UINT;
 
     // Display formats
   case Opal_Format_BGRA8: return VK_FORMAT_B8G8R8A8_SRGB;
