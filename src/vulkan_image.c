@@ -1,7 +1,7 @@
 
 #include "src/common.h"
 
-VkImageUsageFlags OpalUsageToVkUsage_Ovk(OpalImageUsage _usage)
+VkImageUsageFlags OpalUsageToVkUsage_Ovk(OpalImageUsageFlags _usage)
 {
   #define uses(o, vk) ((_usage & o) != 0) * vk
   VkImageUsageFlags vkUsage = 0;

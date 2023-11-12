@@ -44,7 +44,8 @@ typedef enum OpalImageUsageBits
   Opal_Image_Usage_Copy_Src = 0x04,
   Opal_Image_Usage_Copy_Dst = 0x08,
   Opal_Image_Usage_Uniform = 0x10,
-} OpalImageUsage;
+} OpalImageUsageBits;
+typedef OpalFlags OpalImageUsageFlags;
 
 typedef enum OpalImageSampleType
 {
@@ -56,7 +57,7 @@ typedef struct OpalImageInitInfo
 {
   OpalExtent extent;
   OpalFormat format;
-  OpalImageUsage usage;
+  OpalImageUsageFlags usage;
   OpalImageSampleType sampleType;
 } OpalImageInitInfo;
 
@@ -75,7 +76,7 @@ typedef struct OpalImage_T
 {
   OpalExtent extents;
   OpalFormat format;
-  OpalImageUsage usage;
+  OpalImageUsageFlags usage;
 
   OvkImage_T vk;
 } OpalImage_T;

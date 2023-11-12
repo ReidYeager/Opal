@@ -22,7 +22,7 @@ typedef struct OpalBuffer_T
 typedef struct OpalBufferInitInfo
 {
   uint64_t size;
-  uint32_t usage;
+  OpalBufferUsageFlags usage;
 } OpalBufferInitInfo;
 
 #endif // !GEM_OPAL_DEFINE_BUFFER_H_

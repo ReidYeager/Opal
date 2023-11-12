@@ -17,6 +17,10 @@ extern "C" {
 
 #define OPAL_NULL_HANDLE NULL
 
+#include <stdint.h>
+
+typedef uint32_t OpalFlags;
+
 typedef enum OpalResult
 {
   Opal_Success = 0,
@@ -107,6 +111,7 @@ typedef enum OpalBufferUsageBits
   Opal_Buffer_Usage_Index = 0x10,
   Opal_Buffer_Usage_Cpu_Read = 0x20
 } OpalBufferUsageBits;
+typedef OpalFlags OpalBufferUsageFlags;
 
 #ifdef __cplusplus
 }
