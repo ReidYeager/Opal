@@ -375,6 +375,12 @@ OpalResult OpalBufferPushData(OpalBuffer _buffer, void* _data)
   return Opal_Success;
 }
 
+OpalResult OpalBufferPushDataSegment(OpalBuffer _buffer, void* _data, uint32_t size, uint32_t offset)
+{
+  OPAL_ATTEMPT(OvkBufferPushDataSegment(_buffer, _data, size, offset));
+  return Opal_Success;
+}
+
 OpalResult OpalMeshInit(OpalMesh* _mesh, OpalMeshInitInfo _initInfo)
 {
   OpalMesh_T* newMesh = LapisMemAllocZeroSingle(OpalMesh_T);

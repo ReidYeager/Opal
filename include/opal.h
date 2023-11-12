@@ -132,6 +132,8 @@ void OpalRenderSetPushConstant(void* _data);
 OpalResult OpalBufferInit(OpalBuffer* _buffer, OpalBufferInitInfo _initInfo);
 void OpalBufferShutdown(OpalBuffer* _buffer);
 OpalResult OpalBufferPushData(OpalBuffer _buffer, void* _data);
+OpalResult OpalBufferPushDataSegment(OpalBuffer _buffer, void* _data, uint32_t size, uint32_t offset);
+
 
 OpalResult OpalMeshInit(OpalMesh* _mesh, OpalMeshInitInfo _initInfo);
 void OpalMeshShutdown(OpalMesh* _mesh);
