@@ -3,6 +3,7 @@
 
 VkCommandBuffer currentRenderCmd_Ovk;
 OpalWindow currentRenderWindow_Ovk;
+OpalFramebuffer currentRenderFramebuffer_Ovk;
 VkPipelineLayout currentPipelineLayout_Ovk;
 OpalMaterial currentRenderMaterial_Ovk;
 uint32_t syncIndex = 0;
@@ -120,6 +121,8 @@ void OvkRenderBeginRenderpass(OpalRenderpass _renderpass, OpalFramebuffer _frame
   beginInfo.renderArea.extent = (VkExtent2D){ _framebuffer->extent.width, _framebuffer->extent.height };
   beginInfo.renderArea.offset = (VkOffset2D){ 0, 0 };
 
+  currentRenderFramebuffer_Ovk = _framebuffer;
+
   vkCmdBeginRenderPass(currentRenderCmd_Ovk, &beginInfo, VK_SUBPASS_CONTENTS_INLINE);
 }
 
@@ -148,13 +151,13 @@ void OvkRenderBindMaterial(OpalMaterial _material)
   VkViewport viewport = { 0, 0, 1, 1, 0, 1 };
   viewport.x = 0;
   viewport.y = 0;
-  viewport.width = currentRenderWindow_Ovk->extents.width;
-  viewport.height = currentRenderWindow_Ovk->extents.height;
+  viewport.width = currentRenderFramebuffer_Ovk->extent.width;
+  viewport.height = currentRenderFramebuffer_Ovk->extent.height;
   viewport.minDepth = 0;
   viewport.maxDepth = 1;
 
   VkRect2D scissor = { 0 };
-  scissor.extent = (VkExtent2D){ currentRenderWindow_Ovk->extents.width, currentRenderWindow_Ovk->extents.height };
+  scissor.extent = (VkExtent2D){ currentRenderFramebuffer_Ovk->extent.width, currentRenderFramebuffer_Ovk->extent.height };
   scissor.offset = (VkOffset2D){ 0, 0 };
 
   vkCmdSetViewport(currentRenderCmd_Ovk, 0, 1, &viewport);
