@@ -5,22 +5,65 @@ VkFormat OpalFormatToVkFormat_Ovk(OpalFormat _format)
 {
   switch (_format)
   {
-  case Opal_Format_RGBA8: return VK_FORMAT_R8G8B8A8_SRGB;
-  case Opal_Format_RGB8: return VK_FORMAT_R8G8B8_SRGB;
-  case Opal_Format_RG8: return VK_FORMAT_R8G8_SRGB;
-  case Opal_Format_R8: return VK_FORMAT_R8_SRGB;
+  case Opal_Format_R8 : return VK_FORMAT_R8_UNORM;
+  case Opal_Format_RG8 : return VK_FORMAT_R8G8_UNORM;
+  case Opal_Format_RGB8 : return VK_FORMAT_R8G8B8_UNORM;
+  case Opal_Format_RGBA8 : return VK_FORMAT_R8G8B8A8_UNORM;
+  case Opal_Format_R32 : return VK_FORMAT_R32_SFLOAT;
+  case Opal_Format_RG32 : return VK_FORMAT_R32G32_SFLOAT;
+  case Opal_Format_RGB32 : return VK_FORMAT_R32G32B32_SFLOAT;
+  case Opal_Format_RGBA32 : return VK_FORMAT_R32G32B32A32_SFLOAT;
+  case Opal_Format_R64 : return VK_FORMAT_R64_SFLOAT;
+  case Opal_Format_RG64 : return VK_FORMAT_R64G64_SFLOAT;
+  case Opal_Format_RGB64 : return VK_FORMAT_R64G64B64_SFLOAT;
+  case Opal_Format_RGBA64 : return VK_FORMAT_R64G64B64A64_SFLOAT;
 
-  case Opal_Format_RGBA32: return VK_FORMAT_R32G32B32A32_SFLOAT;
-  case Opal_Format_RGB32: return VK_FORMAT_R32G32B32_SFLOAT;
-  case Opal_Format_RG32: return VK_FORMAT_R32G32_SFLOAT;
-  case Opal_Format_R32: return VK_FORMAT_R32_SFLOAT;
+  case Opal_Format_R8I : return VK_FORMAT_R8_SINT;
+  case Opal_Format_RG8I : return VK_FORMAT_R8G8_SINT;
+  case Opal_Format_RGB8I : return VK_FORMAT_R8G8B8_SINT;
+  case Opal_Format_RGBA8I : return VK_FORMAT_R8G8B8A8_SINT;
+  case Opal_Format_R32I : return VK_FORMAT_R32_SINT;
+  case Opal_Format_RG32I : return VK_FORMAT_R32G32_SINT;
+  case Opal_Format_RGB32I : return VK_FORMAT_R32G32B32_SINT;
+  case Opal_Format_RGBA32I : return VK_FORMAT_R32G32B32A32_SINT;
+  case Opal_Format_R64I : return VK_FORMAT_R64_SINT;
+  case Opal_Format_RG64I : return VK_FORMAT_R64G64_SINT;
+  case Opal_Format_RGB64I : return VK_FORMAT_R64G64B64_SINT;
+  case Opal_Format_RGBA64I : return VK_FORMAT_R64G64B64A64_SINT;
 
-  case Opal_Format_D24_S8: return VK_FORMAT_D24_UNORM_S8_UINT;
+  case Opal_Format_R8U : return VK_FORMAT_R8_UINT;
+  case Opal_Format_RG8U : return VK_FORMAT_R8G8_UINT;
+  case Opal_Format_RGB8U : return VK_FORMAT_R8G8B8_UINT;
+  case Opal_Format_RGBA8U : return VK_FORMAT_R8G8B8A8_UINT;
+  case Opal_Format_R32U : return VK_FORMAT_R32_UINT;
+  case Opal_Format_RG32U : return VK_FORMAT_R32G32_UINT;
+  case Opal_Format_RGB32U : return VK_FORMAT_R32G32B32_UINT;
+  case Opal_Format_RGBA32U : return VK_FORMAT_R32G32B32A32_UINT;
+  case Opal_Format_R64U : return VK_FORMAT_R64_UINT;
+  case Opal_Format_RG64U : return VK_FORMAT_R64G64_UINT;
+  case Opal_Format_RGB64U : return VK_FORMAT_R64G64B64_UINT;
+  case Opal_Format_RGBA64U : return VK_FORMAT_R64G64B64A64_UINT;
 
-    // Display formats
-  case Opal_Format_BGRA8: return VK_FORMAT_B8G8R8A8_SRGB;
-  case Opal_Format_BGR8: return VK_FORMAT_B8G8R8_SRGB;
-  default: OpalLog("Vulkan unkown opal format %d\n", _format); return VK_FORMAT_UNDEFINED;
+  // SRGB
+  case Opal_Format_R8_Nonlinear : return VK_FORMAT_R8_SRGB;
+  case Opal_Format_RG8_Nonlinear : return VK_FORMAT_R8G8_SRGB;
+  case Opal_Format_RGB8_Nonlinear : return VK_FORMAT_R8G8B8_SRGB;
+  case Opal_Format_RGBA8_Nonlinear : return VK_FORMAT_R8G8B8A8_SRGB;
+
+  // B G R A variants
+  case Opal_Format_BGR8 : return VK_FORMAT_B8G8R8A8_UNORM;
+  case Opal_Format_BGRA8 : return VK_FORMAT_B8G8R8A8_UNORM;
+  case Opal_Format_BGR32 : return VK_FORMAT_R32G32B32_SFLOAT;
+  case Opal_Format_BGRA32 : return VK_FORMAT_R32G32B32A32_SFLOAT;
+  case Opal_Format_BGR8_Nonlinear: return VK_FORMAT_B8G8R8A8_SRGB;
+  case Opal_Format_BGRA8_Nonlinear: return VK_FORMAT_B8G8R8A8_SRGB;
+
+  // Depth stencils
+  case Opal_Format_D16_S8 : return VK_FORMAT_D16_UNORM_S8_UINT;
+  case Opal_Format_D24_S8 : return VK_FORMAT_D24_UNORM_S8_UINT;
+  case Opal_Format_D32 : return VK_FORMAT_D32_SFLOAT;
+
+  default: OpalLog("Vulkan unkown or unsupported opal format %d\n", _format); return VK_FORMAT_UNDEFINED;
   }
 }
 

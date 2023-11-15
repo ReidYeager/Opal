@@ -21,21 +21,21 @@ uint32_t OpalFormatToSize_Ovk(OpalFormat _format)
     return 3;
   case Opal_Format_RGBA8:  case Opal_Format_RGBA8I:  case Opal_Format_RGBA8U:  case Opal_Format_RGBA8_Nonlinear:
     return 4;
-  case Opal_Format_R32:    case Opal_Format_R32I:    case Opal_Format_R32U:    case Opal_Format_R32_Nonlinear:
+  case Opal_Format_R32:    case Opal_Format_R32I:    case Opal_Format_R32U:
     return 4;
-  case Opal_Format_RG32:   case Opal_Format_RG32I:   case Opal_Format_RG32U:   case Opal_Format_RG32_Nonlinear:
+  case Opal_Format_RG32:   case Opal_Format_RG32I:   case Opal_Format_RG32U:
     return 8;
-  case Opal_Format_RGB32:  case Opal_Format_RGB32I:  case Opal_Format_RGB32U:  case Opal_Format_RGB32_Nonlinear:
+  case Opal_Format_RGB32:  case Opal_Format_RGB32I:  case Opal_Format_RGB32U:
     return 12;
-  case Opal_Format_RGBA32: case Opal_Format_RGBA32I: case Opal_Format_RGBA32U: case Opal_Format_RGBA32_Nonlinear:
+  case Opal_Format_RGBA32: case Opal_Format_RGBA32I: case Opal_Format_RGBA32U:
     return 16;
-  case Opal_Format_R64:    case Opal_Format_R64I:    case Opal_Format_R64U:    case Opal_Format_R64_Nonlinear:
+  case Opal_Format_R64:    case Opal_Format_R64I:    case Opal_Format_R64U:
     return 8;
-  case Opal_Format_RG64:   case Opal_Format_RG64I:   case Opal_Format_RG64U:   case Opal_Format_RG64_Nonlinear:
+  case Opal_Format_RG64:   case Opal_Format_RG64I:   case Opal_Format_RG64U:
     return 16;
-  case Opal_Format_RGB64:  case Opal_Format_RGB64I:  case Opal_Format_RGB64U:  case Opal_Format_RGB64_Nonlinear:
+  case Opal_Format_RGB64:  case Opal_Format_RGB64I:  case Opal_Format_RGB64U:
     return 24;
-  case Opal_Format_RGBA64: case Opal_Format_RGBA64I: case Opal_Format_RGBA64U: case Opal_Format_RGBA64_Nonlinear:
+  case Opal_Format_RGBA64: case Opal_Format_RGBA64I: case Opal_Format_RGBA64U:
     return 32;
 
     // B G R A variants

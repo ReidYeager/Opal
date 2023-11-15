@@ -76,24 +76,26 @@ typedef enum OpalFormat
   Opal_Format_RG8_Nonlinear,
   Opal_Format_RGB8_Nonlinear,
   Opal_Format_RGBA8_Nonlinear,
-  Opal_Format_R32_Nonlinear,
-  Opal_Format_RG32_Nonlinear,
-  Opal_Format_RGB32_Nonlinear,
-  Opal_Format_RGBA32_Nonlinear,
-  Opal_Format_R64_Nonlinear,
-  Opal_Format_RG64_Nonlinear,
-  Opal_Format_RGB64_Nonlinear,
-  Opal_Format_RGBA64_Nonlinear,
+  //Opal_Format_R32_Nonlinear,
+  //Opal_Format_RG32_Nonlinear,
+  //Opal_Format_RGB32_Nonlinear,
+  //Opal_Format_RGBA32_Nonlinear,
+  //Opal_Format_R64_Nonlinear,
+  //Opal_Format_RG64_Nonlinear,
+  //Opal_Format_RGB64_Nonlinear,
+  //Opal_Format_RGBA64_Nonlinear,
 
   // B G R A variants
   Opal_Format_BGR8,
   Opal_Format_BGRA8,
   Opal_Format_BGR32,
   Opal_Format_BGRA32,
+  Opal_Format_BGR8_Nonlinear,
+  Opal_Format_BGRA8_Nonlinear,
 
   // Depth stencils
-  Opal_Format_D24_S8,
   Opal_Format_D16_S8,
+  Opal_Format_D24_S8,
   Opal_Format_D32,
 
   // Others
