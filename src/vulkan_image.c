@@ -166,6 +166,7 @@ OpalResult OvkImageInit(OpalImage_T* _image, OpalImageInitInfo _initInfo)
 
 void OvkImageShutdown(OpalImage_T* _image)
 {
+  vkDeviceWaitIdle(oState.vk.device);
   if (_image->usage & Opal_Image_Usage_Uniform)
   {
     vkDestroySampler(oState.vk.device, _image->vk.sampler, oState.vk.allocator);
