@@ -207,6 +207,11 @@ OpalResult OpalFramebufferReinit(OpalFramebuffer _framebuffer)
 
 OpalResult OpalShaderInit(OpalShader* _shader, OpalShaderInitInfo _initInfo)
 {
+  if (*_shader != NULL && (*_shader)->vk.module != VK_NULL_HANDLE)
+  {
+    OpalShaderShutdown(_shader);
+  }
+
   OpalShader_T* newShader = *_shader;
 
   if (newShader == NULL)
