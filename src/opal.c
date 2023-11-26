@@ -87,6 +87,11 @@ void OpalShutdown()
   OvkShutdown();
 }
 
+OpalResult OpalWaitIdle()
+{
+  return OvkWaitIdle();
+}
+
 OpalResult OpalWindowInit(OpalWindow* _outWindow, OpalWindowInitInfo _initInfo)
 {
   OpalLog("Creating new window\n");

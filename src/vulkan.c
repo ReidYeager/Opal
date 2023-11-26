@@ -67,6 +67,14 @@ VkFormat OpalFormatToVkFormat_Ovk(OpalFormat _format)
   }
 }
 
+OpalResult OvkWaitIdle()
+{
+  if (vkDeviceWaitIdle(oState.vk.device) != VK_SUCCESS);
+    return Opal_Failure;
+
+  return Opal_Success;
+}
+
 OpalResult CreateInstance_Ovk(bool _debug)
 {
   VkApplicationInfo appInfo = { 0 };

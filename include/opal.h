@@ -88,6 +88,7 @@ OpalResult OpalInit(OpalInitInfo _createInfo);
 void OpalShutdown();
 
 uint32_t OpalFormatToSize(OpalFormat _format);
+OpalResult OpalWaitIdle();
 
 OpalResult OpalWindowInit(OpalWindow* _outWindow, OpalWindowInitInfo _initInfo);
 void OpalWindowShutdown(OpalWindow* _window);
