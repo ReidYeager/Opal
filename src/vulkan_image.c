@@ -133,10 +133,6 @@ OpalResult CreateSampler_Ovk(OpalImage_T* _image, OpalImageInitInfo _initInfo)
 
 OpalResult OvkImageInit(OpalImage_T* _image, OpalImageInitInfo _initInfo)
 {
-  _image->extents = _initInfo.extent;
-  _image->format = _initInfo.format;
-  _image->usage = _initInfo.usage;
-
   OPAL_ATTEMPT(CreateImage_Ovk(_image, _initInfo));
   OPAL_ATTEMPT(AllocAndBindMemory_Ovk(_image));
   OPAL_ATTEMPT(CreateView_Ovk(_image));
@@ -186,6 +182,10 @@ OpalResult OvkImageResize(OpalImage_T* _image, OpalExtent _extents)
   newInitInfo.format = _image->format;
   newInitInfo.usage = _image->usage;
 
+  _image->extents = newInitInfo.extent;
+  _image->format = newInitInfo.format;
+  _image->usage = newInitInfo.usage;
+
   OPAL_ATTEMPT(OvkImageInit(_image, newInitInfo));
 
   return Opal_Success;
@@ -214,10 +214,33 @@ OpalResult CopyBufferToImage_Ovk(OpalImage_T* _image, OpalBuffer _buffer)
   return Opal_Success;
 }
 
+OpalResult CopyImageToBuffer_Ovk(OpalImage image, OpalBuffer buffer)
+{
+  VkCommandBuffer cmd;
+  OPAL_ATTEMPT(OpalBeginSingleUseCommand(oState.vk.graphicsCommandPool, &cmd));
+
+  VkBufferImageCopy copyRegion = { 0 };
+  copyRegion.bufferOffset = 0;
+  copyRegion.bufferRowLength = image->extents.width;
+  copyRegion.bufferImageHeight = image->extents.height;
+  copyRegion.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+  copyRegion.imageSubresource.mipLevel = 0;
+  copyRegion.imageSubresource.layerCount = 1;
+  copyRegion.imageSubresource.baseArrayLayer = 0;
+  copyRegion.imageOffset = (VkOffset3D){ 0, 0, 0 };
+  copyRegion.imageExtent = (VkExtent3D){ image->extents.width, image->extents.height, image->extents.depth };
+
+  vkCmdCopyImageToBuffer(cmd, image->vk.image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, buffer->vk.buffer, 1, &copyRegion);
+
+  OPAL_ATTEMPT(OpalEndSingleUseCommand(oState.vk.graphicsCommandPool, oState.vk.queueGraphics, cmd));
+
+  return Opal_Success;
+}
+
 OpalResult OvkImageFill(OpalImage_T* _image, void* _data)
 {
   OpalBufferInitInfo bufferInfo = { 0 };
-  bufferInfo.size = OpalFormatToSize_Ovk(_image->format) * _image->extents.width * _image->extents.height * _image->extents.depth;
+  bufferInfo.size = OpalFormatToSize(_image->format) * _image->extents.width * _image->extents.height * _image->extents.depth;
   bufferInfo.usage = Opal_Buffer_Usage_Cpu_Read | Opal_Buffer_Usage_Transfer_Src;
   OpalBuffer buffer;
   OPAL_ATTEMPT(OpalBufferInit(&buffer, bufferInfo));
@@ -231,6 +254,27 @@ OpalResult OvkImageFill(OpalImage_T* _image, void* _data)
   OpalBufferShutdown(&buffer);
 
   return Opal_Success;
+}
+
+uint32_t OvkImageDumpData(OpalImage image, void** data)
+{
+  OpalBufferInitInfo bufferInfo = { 0 };
+  bufferInfo.size = image->extents.width * image->extents.height * image->extents.depth * OpalFormatToSize(image->format);
+  bufferInfo.usage = Opal_Buffer_Usage_Cpu_Read | Opal_Buffer_Usage_Transfer_Dst;
+  OpalBuffer buffer;
+  OPAL_ATTEMPT(OpalBufferInit(&buffer, bufferInfo));
+
+  VkImageLayout ogLayout = image->vk.layout;
+  OPAL_ATTEMPT(OvkTransitionImageLayout(image->vk.image, image->vk.layout, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL));
+  OPAL_ATTEMPT(CopyImageToBuffer_Ovk(image, buffer));
+  OPAL_ATTEMPT(OvkTransitionImageLayout(image->vk.image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, ogLayout));
+
+  uint32_t outSize = 0;
+  outSize = OpalBufferDumpData(buffer, data);
+
+  OpalBufferShutdown(&buffer);
+
+  return outSize;
 }
 
 // TODO : Change this to (OpalImage_T*, vkImageLayout) when swapchain buffer image is transitioned to OpalImage
@@ -261,6 +305,14 @@ OpalResult OvkTransitionImageLayout(VkImage _image, VkImageLayout _layout, VkIma
 
       dstStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
       memBarrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+    } break;
+    case VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL:
+    {
+      srcStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+      memBarrier.srcAccessMask = 0;
+
+      dstStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+      memBarrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
     } break;
     case VK_IMAGE_LAYOUT_PRESENT_SRC_KHR:
     {

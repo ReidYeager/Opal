@@ -374,7 +374,7 @@ OpalResult CreateVertexFormat_Ovk(uint32_t _count, OpalFormat* _pFormats)
     pAttribs[i].location = i;
     pAttribs[i].offset = offsetSum;
     pAttribs[i].format = OpalFormatToVkFormat_Ovk(_pFormats[i]);
-    offsetSum += OpalFormatToSize_Ovk(_pFormats[i]);
+    offsetSum += OpalFormatToSize(_pFormats[i]);
   }
 
   binding.binding = 0;

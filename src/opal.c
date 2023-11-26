@@ -8,7 +8,7 @@
 OpalState_T oState = { 0 };
 
 // Size in bytes
-uint32_t OpalFormatToSize_Ovk(OpalFormat _format)
+uint32_t OpalFormatToSize(OpalFormat _format)
 {
   switch (_format)
   {
@@ -71,7 +71,7 @@ OpalResult OpalInit(OpalInitInfo _initInfo)
   oState.vertexFormat.structSize = 0;
   for (uint32_t i = 0; i < _initInfo.vertexStruct.count; i++)
   {
-    oState.vertexFormat.structSize += OpalFormatToSize_Ovk(_initInfo.vertexStruct.pFormats[i]);
+    oState.vertexFormat.structSize += OpalFormatToSize(_initInfo.vertexStruct.pFormats[i]);
   }
   oState.vertexFormat.attribCount = _initInfo.vertexStruct.count;
   oState.vertexFormat.pFormats = LapisMemAllocZeroArray(OpalFormat, _initInfo.vertexStruct.count);
@@ -379,6 +379,11 @@ OpalResult OpalBufferPushDataSegment(OpalBuffer _buffer, void* _data, uint32_t s
 {
   OPAL_ATTEMPT(OvkBufferPushDataSegment(_buffer, _data, size, offset));
   return Opal_Success;
+}
+
+uint32_t OpalBufferDumpData(OpalBuffer buffer, void** data)
+{
+  return OvkBufferDumpData(buffer, data);
 }
 
 OpalResult OpalMeshInit(OpalMesh* _mesh, OpalMeshInitInfo _initInfo)

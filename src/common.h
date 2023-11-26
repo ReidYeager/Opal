@@ -43,7 +43,6 @@
 }
 
 VkFormat OpalFormatToVkFormat_Ovk(OpalFormat _format);
-uint32_t OpalFormatToSize_Ovk(OpalFormat _format);
 
 OpalResult OvkInit(OpalInitInfo _initInfo);
 void OvkShutdown();
@@ -52,6 +51,7 @@ OpalResult OvkBufferInit(OpalBuffer _buffer, OpalBufferInitInfo _initInfo);
 void OvkBufferShutdown(OpalBuffer _buffer);
 OpalResult OvkBufferPushData(OpalBuffer _buffer, void* _data);
 OpalResult OvkBufferPushDataSegment(OpalBuffer _buffer, void* _data, uint32_t size, uint32_t offset);
+uint32_t OvkBufferDumpData(OpalBuffer buffer, void** data);
 
 OpalResult OvkWindowInit(OpalWindow_T* _window, OpalWindowInitInfo _initInfo);
 OpalResult OvkWindowReinit(OpalWindow_T* _window);
@@ -64,6 +64,7 @@ OpalResult OvkImageInit(OpalImage_T* _image, OpalImageInitInfo _initInfo);
 void OvkImageShutdown(OpalImage_T* _image);
 OpalResult OvkImageResize(OpalImage_T* _image, OpalExtent _extents);
 OpalResult OvkImageFill(OpalImage_T* _image, void* _data);
+uint32_t OvkImageDumpData(OpalImage image, void** data);
 OpalResult OvkTransitionImageLayout(VkImage _image, VkImageLayout _layout, VkImageLayout _newLayout);
 
 OpalResult OvkRenderpassInit(OpalRenderpass_T* _renderpass, OpalRenderpassInitInfo _initInfo);

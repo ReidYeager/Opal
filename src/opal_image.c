@@ -3,7 +3,18 @@
 
 OpalResult OpalImageInit(OpalImage* _image, OpalImageInitInfo _initInfo)
 {
+  if (!_initInfo.extent.width || !_initInfo.extent.height || !_initInfo.extent.depth)
+  {
+    OpalLogError("Image extents must all be greater than zero\n");
+    OpalLogError("    Current extents : (%u, %u, %u)\n", _initInfo.extent.width, _initInfo.extent.height, _initInfo.extent.depth);
+    return Opal_Failure;
+  }
+
   OpalImage_T* newImage = LapisMemAllocZeroSingle(OpalImage_T);
+
+  newImage->extents = _initInfo.extent;
+  newImage->format = _initInfo.format;
+  newImage->usage = _initInfo.usage;
 
   OPAL_ATTEMPT(OvkImageInit(newImage, _initInfo));
 
@@ -45,4 +56,9 @@ OpalFormat OpalImageGetFormat(OpalImage _image)
 OpalExtent OpalImageGetExtents(OpalImage _image)
 {
   return _image->extents;
+}
+
+uint32_t OpalImageDumpData(OpalImage image, void** data)
+{
+  return OvkImageDumpData(image, data);
 }

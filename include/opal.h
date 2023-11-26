@@ -87,6 +87,8 @@ extern OpalState_T oState;
 OpalResult OpalInit(OpalInitInfo _createInfo);
 void OpalShutdown();
 
+uint32_t OpalFormatToSize(OpalFormat _format);
+
 OpalResult OpalWindowInit(OpalWindow* _outWindow, OpalWindowInitInfo _initInfo);
 void OpalWindowShutdown(OpalWindow* _window);
 OpalResult OpalWindowReinit(OpalWindow _window);
@@ -98,6 +100,7 @@ OpalResult OpalImageResize(OpalImage _image, OpalExtent _extents);
 OpalResult OpalImageFill(OpalImage _image, void* _data);
 OpalFormat OpalImageGetFormat(OpalImage _image);
 OpalExtent OpalImageGetExtents(OpalImage _image);
+uint32_t OpalImageDumpData(OpalImage image, void** data);
 
 OpalResult OpalRenderpassInit(OpalRenderpass* _renderpass, OpalRenderpassInitInfo _initInfo);
 void OpalRenderpassShutdown(OpalRenderpass* _renderpass);
@@ -133,6 +136,7 @@ OpalResult OpalBufferInit(OpalBuffer* _buffer, OpalBufferInitInfo _initInfo);
 void OpalBufferShutdown(OpalBuffer* _buffer);
 OpalResult OpalBufferPushData(OpalBuffer _buffer, void* _data);
 OpalResult OpalBufferPushDataSegment(OpalBuffer _buffer, void* _data, uint32_t size, uint32_t offset);
+uint32_t OpalBufferDumpData(OpalBuffer buffer, void** data);
 
 
 OpalResult OpalMeshInit(OpalMesh* _mesh, OpalMeshInitInfo _initInfo);

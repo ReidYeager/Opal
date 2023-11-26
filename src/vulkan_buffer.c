@@ -39,9 +39,10 @@ OpalResult CreateBuffer_Ovk(OpalBuffer _buffer, OpalBufferInitInfo _initInfo)
   }
 
 #define ovusage(opal, vk) ((_initInfo.usage & opal) != 0) * vk
-  createInfo.usage = ovusage(Opal_Buffer_Usage_Transfer_Dst, VK_BUFFER_USAGE_TRANSFER_DST_BIT)
-    | ovusage(Opal_Buffer_Usage_Uniform, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT)
+  createInfo.usage =
+      ovusage(Opal_Buffer_Usage_Transfer_Dst, VK_BUFFER_USAGE_TRANSFER_DST_BIT)
     | ovusage(Opal_Buffer_Usage_Transfer_Src, VK_BUFFER_USAGE_TRANSFER_SRC_BIT)
+    | ovusage(Opal_Buffer_Usage_Uniform, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT)
     | ovusage(Opal_Buffer_Usage_Vertex, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT)
     | ovusage(Opal_Buffer_Usage_Index, VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
 #undef ovusage
@@ -165,4 +166,14 @@ OpalResult OvkBufferPushDataSegment(OpalBuffer _buffer, void* _data, uint32_t si
 OpalResult OvkBufferPushData(OpalBuffer _buffer, void* _data)
 {
   return OvkBufferPushDataSegment(_buffer, _data, _buffer->size, 0);
+}
+
+uint32_t OvkBufferDumpData(OpalBuffer buffer, void** data)
+{
+  void* mappedMemory;
+  OVK_ATTEMPT(vkMapMemory(oState.vk.device, buffer->vk.memory, 0, (VkDeviceSize)buffer->size, 0, &mappedMemory));
+  *data = LapisMemAlloc(buffer->size);
+  LapisMemCopy(mappedMemory, *data, buffer->size);
+  vkUnmapMemory(oState.vk.device, buffer->vk.memory);
+  return buffer->size;
 }
