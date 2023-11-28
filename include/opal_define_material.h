@@ -17,6 +17,7 @@ typedef enum OpalShaderType
   Opal_Shader_Fragment,
   //Opal_Shader_Compute, // Not supported yet
   //Opal_Shader_Geometry // Not supported yet
+  Opal_Shader_COUNT
 } OpalShaderType;
 
 typedef enum OpalInputType
