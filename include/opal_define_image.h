@@ -44,13 +44,15 @@ typedef enum OpalImageUsageBits
   Opal_Image_Usage_Copy_Src = 0x04,
   Opal_Image_Usage_Copy_Dst = 0x08,
   Opal_Image_Usage_Uniform = 0x10,
+  Opal_Image_Usage_COUNT = 0x05
 } OpalImageUsageBits;
 typedef OpalFlags OpalImageUsageFlags;
 
 typedef enum OpalImageSampleType
 {
   Opal_Sample_Point,
-  Opal_Sample_Bilinear
+  Opal_Sample_Bilinear,
+  Opal_Sample_COUNT
 } OpalImageSampleType;
 
 typedef struct OpalImageInitInfo

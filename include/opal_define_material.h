@@ -24,7 +24,8 @@ typedef enum OpalInputType
 {
   Opal_Input_Type_Uniform_Buffer,
   Opal_Input_Type_Samped_Image,
-  Opal_Input_Type_Subpass_Input
+  Opal_Input_Type_Subpass_Input,
+  Opal_Input_Type_COUNT
 } OpalInputType;
 
 typedef struct OvkShader_T
