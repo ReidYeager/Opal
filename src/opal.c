@@ -221,6 +221,8 @@ OpalResult OpalShaderInit(OpalShader* _shader, OpalShaderInitInfo _initInfo)
 
   OPAL_ATTEMPT(OvkShaderInit(newShader, _initInfo), LapisMemFree(newShader));
 
+  newShader->type = _initInfo.type;
+
   OpalLog("Shader init complete\n");
   *_shader = newShader;
   return Opal_Success;

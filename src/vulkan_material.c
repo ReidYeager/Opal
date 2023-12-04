@@ -234,19 +234,20 @@ OpalResult CreatePipelineLayout_Ovk(OpalMaterial_T* _material, OpalMaterialInitI
 OpalResult CreatePipeline_Ovk(OpalMaterial_T* _material, OpalMaterialInitInfo _initInfo)
 {
     // Shader stages =====
-  VkPipelineShaderStageCreateInfo pShaderStages[2] = { 0 };
+  VkPipelineShaderStageCreateInfo* pShaderStages = NULL;
 
-  // Vert
-  pShaderStages[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-  pShaderStages[0].module = _initInfo.pShaders[0]->vk.module;
-  pShaderStages[0].stage = _initInfo.pShaders[0]->vk.stage;
-  pShaderStages[0].pName = "main";
+  if (_initInfo.shaderCount > 0)
+  {
+    pShaderStages = LapisMemAllocZeroArray(VkPipelineShaderStageCreateInfo, _initInfo.shaderCount);
+  }
 
-  // Frag
-  pShaderStages[1].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-  pShaderStages[1].module = _initInfo.pShaders[1]->vk.module;
-  pShaderStages[1].stage = _initInfo.pShaders[1]->vk.stage;
-  pShaderStages[1].pName = "main";
+  for (uint32_t i = 0; i < _initInfo.shaderCount; i++)
+  {
+    pShaderStages[i].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+    pShaderStages[i].module = _initInfo.pShaders[i]->vk.module;
+    pShaderStages[i].stage = _initInfo.pShaders[i]->vk.stage;
+    pShaderStages[i].pName = "main";
+  }
 
   // Vertex input stage =====
   VkPipelineVertexInputStateCreateInfo vertexInputStateInfo = { 0 };
