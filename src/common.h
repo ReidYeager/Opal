@@ -6,40 +6,42 @@
 #include <vulkan/vulkan.h>
 #include <stdio.h>
 
-#ifdef LAPIS_MODE
+#ifdef GEM_LAPIS
 #define OpalLog(message, ...) LapisConsolePrintMessage(Lapis_Console_Info, "Opal :: " message, __VA_ARGS__)
 #else
 #define OpalLog(message, ...) printf("Opal :: " message, __VA_ARGS__)
-#endif // LAPIS_MODE
+#endif // GEM_LAPIS
 
-#ifdef LAPIS_MODE
+#ifdef GEM_LAPIS
 #define OpalLogError(message, ...) LapisConsolePrintMessage(Lapis_Console_Error, "Opal :: Err :: " message, __VA_ARGS__)
 #else
 #define OpalLogError(message, ...) printf("Opal :: Err :: " message, __VA_ARGS__)
-#endif // LAPIS_MODE
+#endif // GEM_LAPIS
 
-#define OPAL_ATTEMPT(fn, ...)                                        \
-{                                                                    \
-  OpalResult oResult = (fn);                                         \
-  if (oResult)                                                       \
-  {                                                                  \
+#define OPAL_ATTEMPT(fn, ...)                                          \
+{                                                                      \
+  OpalResult oResult = (fn);                                           \
+  if (oResult)                                                         \
+  {                                                                    \
     OpalLogError("Function \""#fn"\" failed. Result = %d\n", oResult); \
     OpalLogError("    %s:%d\n", __FILE__, __LINE__);                   \
-    { __VA_ARGS__; }                                                 \
-    return Opal_Failure;                                             \
-  }                                                                  \
+    { __VA_ARGS__; }                                                   \
+    return Opal_Failure;                                               \
+  }                                                                    \
+  else {}                                                              \
 }
 
-#define OVK_ATTEMPT(fn, ...)                                                \
-{                                                                           \
-  VkResult vResult = (fn);                                                  \
-  if (vResult != VK_SUCCESS)                                                \
-  {                                                                         \
+#define OVK_ATTEMPT(fn, ...)                                                  \
+{                                                                             \
+  VkResult vResult = (fn);                                                    \
+  if (vResult != VK_SUCCESS)                                                  \
+  {                                                                           \
     OpalLogError("Vulkan function \""#fn"\" failed. Result = %d\n", vResult); \
     OpalLogError("    %s:%d\n", __FILE__, __LINE__);                          \
-    { __VA_ARGS__; }                                                        \
-    return Opal_Failure;                                                    \
-  }                                                                         \
+    { __VA_ARGS__; }                                                          \
+    return Opal_Failure;                                                      \
+  }                                                                           \
+  else {}                                                                     \
 }
 
 VkFormat OpalFormatToVkFormat_Ovk(OpalFormat _format);

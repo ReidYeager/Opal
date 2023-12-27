@@ -155,7 +155,7 @@ OpalResult OvkBufferPushDataSegment(OpalBuffer _buffer, void* _data, uint32_t si
 
   void* mappedMemory;
   OVK_ATTEMPT(vkMapMemory(oState.vk.device, _buffer->vk.memory, (VkDeviceSize)offset, (VkDeviceSize)size, 0, &mappedMemory));
-  LapisMemCopy(_data, mappedMemory, _buffer->size);
+  OpalMemCopy(_data, mappedMemory, _buffer->size);
   vkUnmapMemory(oState.vk.device, _buffer->vk.memory);
 
   //TransferBufferData_Ovk(transientBuffer, _buffer, _buffer->size);
@@ -172,8 +172,8 @@ uint32_t OvkBufferDumpData(OpalBuffer buffer, void** data)
 {
   void* mappedMemory;
   OVK_ATTEMPT(vkMapMemory(oState.vk.device, buffer->vk.memory, 0, (VkDeviceSize)buffer->size, 0, &mappedMemory));
-  *data = LapisMemAlloc(buffer->size);
-  LapisMemCopy(mappedMemory, *data, buffer->size);
+  *data = OpalMemAlloc(buffer->size);
+  OpalMemCopy(mappedMemory, *data, buffer->size);
   vkUnmapMemory(oState.vk.device, buffer->vk.memory);
   return buffer->size;
 }

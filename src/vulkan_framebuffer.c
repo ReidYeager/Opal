@@ -5,7 +5,7 @@ OpalResult OvkFramebufferInit(OpalFramebuffer_T* _framebuffer, OpalFramebufferIn
 {
   OpalExtent extent = _initInfo.pImages[0]->extents;
 
-  VkImageView* pViews = LapisMemAllocArray(VkImageView, _initInfo.imageCount);
+  VkImageView* pViews = OpalMemAllocArray(VkImageView, _initInfo.imageCount);
   for (uint32_t i = 0; i < _initInfo.imageCount; i++)
   {
     pViews[i] = _initInfo.pImages[i]->vk.view;
@@ -22,7 +22,7 @@ OpalResult OvkFramebufferInit(OpalFramebuffer_T* _framebuffer, OpalFramebufferIn
 
   OVK_ATTEMPT(
     vkCreateFramebuffer(oState.vk.device, &createInfo, oState.vk.allocator, &_framebuffer->vk.framebuffer),
-    LapisMemFree(pViews));
+    OpalMemFree(pViews));
 
   return Opal_Success;
 }

@@ -18,37 +18,37 @@ typedef struct RenderpassData_Ovk
 void FreeRenderpassData_Ovk(RenderpassData_Ovk* _data)
 {
   if (_data->pDescriptions)
-    LapisMemFree(_data->pDescriptions);
+    OpalMemFree(_data->pDescriptions);
 
   if (_data->pReferences)
-    LapisMemFree(_data->pReferences);
+    OpalMemFree(_data->pReferences);
 
   for (uint32_t i = 0; _data->pSubpasses != NULL && i < _data->subpassCount; i++)
   {
     if (_data->pSubpasses[i].pColorAttachments)
-      LapisMemFree((void*)_data->pSubpasses[i].pColorAttachments);
+      OpalMemFree((void*)_data->pSubpasses[i].pColorAttachments);
 
     if (_data->pSubpasses[i].pColorAttachments)
-      LapisMemFree((void*)_data->pSubpasses[i].pInputAttachments);
+      OpalMemFree((void*)_data->pSubpasses[i].pInputAttachments);
 
     if (_data->pSubpasses[i].pColorAttachments)
-      LapisMemFree((void*)_data->pSubpasses[i].pPreserveAttachments);
+      OpalMemFree((void*)_data->pSubpasses[i].pPreserveAttachments);
 
     if (_data->pSubpasses[i].pColorAttachments)
-      LapisMemFree((void*)_data->pSubpasses[i].pResolveAttachments);
+      OpalMemFree((void*)_data->pSubpasses[i].pResolveAttachments);
   }
   if (_data->pSubpasses)
-    LapisMemFree(_data->pSubpasses);
+    OpalMemFree(_data->pSubpasses);
 
   if (_data->pDependencies)
-  LapisMemFree(_data->pDependencies);
+  OpalMemFree(_data->pDependencies);
 }
 
 OpalResult BuildAttachmentArray_Ovk(OpalRenderpassInitInfo _initInfo, RenderpassData_Ovk* _data)
 {
-  _data->pDescriptions = LapisMemAllocZeroArray(VkAttachmentDescription, _data->attachmentCount);
-  _data->pReferences = LapisMemAllocZeroArray(VkAttachmentReference, _data->attachmentCount);
-  _data->pClearValues = LapisMemAllocArray(VkClearValue, _data->attachmentCount);
+  _data->pDescriptions = OpalMemAllocZeroArray(VkAttachmentDescription, _data->attachmentCount);
+  _data->pReferences = OpalMemAllocZeroArray(VkAttachmentReference, _data->attachmentCount);
+  _data->pClearValues = OpalMemAllocArray(VkClearValue, _data->attachmentCount);
 
   for (uint32_t i = 0; i < _initInfo.imageCount; i++)
   {
@@ -126,7 +126,7 @@ OpalResult BuildAttachmentArray_Ovk(OpalRenderpassInitInfo _initInfo, Renderpass
 OpalResult BuildSubpasses_Ovk(OpalRenderpassInitInfo _initInfo, RenderpassData_Ovk* _data)
 {
   _data->subpassCount = _initInfo.subpassCount;
-  _data->pSubpasses = LapisMemAllocZeroArray(VkSubpassDescription, _data->subpassCount);
+  _data->pSubpasses = OpalMemAllocZeroArray(VkSubpassDescription, _data->subpassCount);
 
   for (uint32_t i = 0; i < _initInfo.subpassCount; i++)
   {
@@ -141,7 +141,7 @@ OpalResult BuildSubpasses_Ovk(OpalRenderpassInitInfo _initInfo, RenderpassData_O
 
     // Color =====
 
-    VkAttachmentReference* pColorAttachments = LapisMemAllocZeroArray(VkAttachmentReference, _initInfo.pSubpasses[i].colorAttachmentCount);
+    VkAttachmentReference* pColorAttachments = OpalMemAllocZeroArray(VkAttachmentReference, _initInfo.pSubpasses[i].colorAttachmentCount);
     for (uint32_t c = 0; c < _initInfo.pSubpasses[i].colorAttachmentCount; c++)
     {
       pColorAttachments[c] = _data->pReferences[_initInfo.pSubpasses[i].pColorAttachmentIndices[c]];
@@ -151,7 +151,7 @@ OpalResult BuildSubpasses_Ovk(OpalRenderpassInitInfo _initInfo, RenderpassData_O
 
     // Input =====
 
-    VkAttachmentReference* pInputAttachments = LapisMemAllocZeroArray(VkAttachmentReference, _initInfo.pSubpasses[i].inputAttachmentCount);
+    VkAttachmentReference* pInputAttachments = OpalMemAllocZeroArray(VkAttachmentReference, _initInfo.pSubpasses[i].inputAttachmentCount);
     for (uint32_t c = 0; c < _initInfo.pSubpasses[i].inputAttachmentCount; c++)
     {
       pInputAttachments[c] = _data->pReferences[_initInfo.pSubpasses[i].pInputColorAttachmentIndices[c]];
@@ -162,7 +162,7 @@ OpalResult BuildSubpasses_Ovk(OpalRenderpassInitInfo _initInfo, RenderpassData_O
 
   // Dependencies =====
 
-  VkSubpassDependency* pDependencies = LapisMemAllocZeroArray(VkSubpassDependency, _initInfo.dependencyCount);
+  VkSubpassDependency* pDependencies = OpalMemAllocZeroArray(VkSubpassDependency, _initInfo.dependencyCount);
   for (uint32_t i = 0; i < _initInfo.dependencyCount; i++)
   {
     pDependencies[i].srcSubpass = _initInfo.pDependencies[i].srcIndex;

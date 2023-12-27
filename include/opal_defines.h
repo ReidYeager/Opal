@@ -6,6 +6,8 @@
 extern "C" {
 #endif // __cplusplus
 
+#include <stdint.h>
+
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32__)
 #define OPAL_PLATFORM_WIN32 1
 #ifndef _WIN64
@@ -17,7 +19,20 @@ extern "C" {
 
 #define OPAL_NULL_HANDLE NULL
 
-#include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
+#define OpalMemAlloc(size)                           malloc(size)
+#define OpalMemAllocZero(size)                       memset(malloc(size), 0, size)
+#define OpalMemRealloc(data, size)                   realloc(data, size)
+#define OpalMemSet(data, value, size)                memset(data, value, size)
+#define OpalMemCopy(src, dst, size)                  memcpy(dst, src, size)
+#define OpalMemFree(data)                            free(data)
+#define OpalMemAllocSingle(type)                    (type*)OpalMemAlloc(sizeof(type))
+#define OpalMemAllocZeroSingle(type)                (type*)OpalMemAllocZero(sizeof(type))
+#define OpalMemReallocSingle(source, type)          (type*)OpalMemRealloc(source, sizeof(type))
+#define OpalMemAllocArray(type, count)              (type*)OpalMemAlloc(sizeof(type) * count)
+#define OpalMemAllocZeroArray(type, count)          (type*)OpalMemAllocZero(sizeof(type) * count)
+#define OpalMemReallocArray(source, type, newCount) (type*)OpalMemRealloc(source, sizeof(type) * newCount)
 
 typedef uint32_t OpalFlags;
 
@@ -114,6 +129,18 @@ typedef enum OpalBufferUsageBits
   Opal_Buffer_Usage_Cpu_Read = 0x20
 } OpalBufferUsageBits;
 typedef OpalFlags OpalBufferUsageFlags;
+
+typedef struct OpalVec2U
+{
+  union { uint32_t x, r, width; };
+  union { uint32_t y, g, height; };
+} OpalVec2U;
+
+typedef struct OpalVec2I
+{
+  union { int32_t x, r, width; };
+  union { int32_t y, g, height; };
+} OpalVec2I;
 
 #ifdef __cplusplus
 }

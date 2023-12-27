@@ -9,7 +9,7 @@ find_package(Vulkan REQUIRED)
 #file(GLOB_RECURSE HeaderFiles CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/**/*.h")
 #file(GLOB_RECURSE CSourceFiles CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/**/*.c")
 
-add_library (Opal STATIC
+add_library (opal STATIC
   "include/opal_defines.h"
   "include/opal_define_buffer.h"
   "include/opal_define_framebuffer.h"
@@ -35,16 +35,14 @@ add_library (Opal STATIC
   "src/vulkan_window.c"
 )
 
-set_target_properties(Opal PROPERTIES LINKER_LANGUAGE C)
-target_compile_definitions(Opal PUBLIC OPAL_MODE=1)
+set_target_properties(opal PROPERTIES LINKER_LANGUAGE C)
+target_compile_definitions(opal PUBLIC "GEM_OPAL")
 
-target_include_directories (Opal PUBLIC
+target_include_directories (opal PUBLIC
   ./
-  ../Lapis/include/
   ${Vulkan_INCLUDE_DIRS}
 )
 
-target_link_libraries(Opal
-  Lapis
+target_link_libraries(opal
   ${Vulkan_LIBRARIES}/../../Lib/vulkan-1.lib
 )

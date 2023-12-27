@@ -4,8 +4,6 @@
 
 #include "include/opal_define_image.h"
 
-#include <lapis.h>
-
 #include <vulkan/vulkan.h>
 
 typedef struct OpalWindow_T* OpalWindow;
@@ -65,8 +63,8 @@ typedef struct OpalWindowInitInfo
 {
   OpalWindowPlatformInfo_T platformInfo;
 
-  Vec2U extents;
-  //Vec2I position;
+  OpalVec2U extents;
+  //OpalVec2I position;
 } OpalWindowInitInfo;
 
 #endif // !GEM_OPAL_WINDOW_H_

@@ -10,7 +10,7 @@ OpalResult OpalImageInit(OpalImage* _image, OpalImageInitInfo _initInfo)
     return Opal_Failure;
   }
 
-  OpalImage_T* newImage = LapisMemAllocZeroSingle(OpalImage_T);
+  OpalImage_T* newImage = OpalMemAllocZeroSingle(OpalImage_T);
 
   newImage->extents = _initInfo.extent;
   newImage->format = _initInfo.format;
@@ -31,7 +31,7 @@ OpalResult OpalImageInit(OpalImage* _image, OpalImageInitInfo _initInfo)
 void OpalImageShutdown(OpalImage* _image)
 {
   OvkImageShutdown(*_image);
-  LapisMemFree(*_image);
+  OpalMemFree(*_image);
   *_image = OPAL_NULL_HANDLE;
 }
 

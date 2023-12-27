@@ -69,7 +69,7 @@ VkFormat OpalFormatToVkFormat_Ovk(OpalFormat _format)
 
 OpalResult OvkWaitIdle()
 {
-  if (vkDeviceWaitIdle(oState.vk.device) != VK_SUCCESS);
+  if (vkDeviceWaitIdle(oState.vk.device) != VK_SUCCESS)
     return Opal_Failure;
 
   return Opal_Success;
@@ -86,16 +86,17 @@ OpalResult CreateInstance_Ovk(bool _debug)
   appInfo.pEngineName = "Opal test engine";
 
   uint32_t extensionCount = 0;
-  LapisWindowVulkanGetRequiredExtensions(&extensionCount, NULL);
+
+  OpalPlatformGetRequiredExtensions(&extensionCount, NULL);
 
   if (_debug)
     extensionCount++;
-  const char** aExtensions = LapisMemAllocZeroArray(const char*, extensionCount);
+  const char** aExtensions = OpalMemAllocZeroArray(const char*, extensionCount);
 
   if (_debug)
     aExtensions[0] = VK_EXT_DEBUG_UTILS_EXTENSION_NAME;
 
-  LapisWindowVulkanGetRequiredExtensions(NULL, &aExtensions[_debug]);
+  OpalPlatformGetRequiredExtensions(NULL, &aExtensions[_debug]);
 
   uint32_t layerCount = 0;
   const char** aLayers = NULL;
@@ -103,7 +104,7 @@ OpalResult CreateInstance_Ovk(bool _debug)
   if (_debug)
   {
     layerCount = 1;
-    aLayers = LapisMemAllocZeroArray(const char*, layerCount);
+    aLayers = OpalMemAllocZeroArray(const char*, layerCount);
     aLayers[0] = "VK_LAYER_KHRONOS_validation";
   }
 
@@ -117,11 +118,11 @@ OpalResult CreateInstance_Ovk(bool _debug)
 
   OVK_ATTEMPT(vkCreateInstance(&createInfo, oState.vk.allocator, &oState.vk.instance));
 
-  LapisMemFree(aExtensions);
+  OpalMemFree(aExtensions);
 
   if (_debug)
   {
-    LapisMemFree(aLayers);
+    OpalMemFree(aLayers);
   }
 
   return Opal_Success;
@@ -197,7 +198,7 @@ OpalVkGpu_T CreateGpuInfo_Ovk(VkPhysicalDevice _device, VkSurfaceKHR _surface)
   vkGetPhysicalDeviceMemoryProperties(_device, &gpu.memoryProperties);
 
   vkGetPhysicalDeviceQueueFamilyProperties(_device, &gpu.queueFamilyPropertiesCount, NULL);
-  gpu.queueFamilyProperties = LapisMemAllocArray(VkQueueFamilyProperties, gpu.queueFamilyPropertiesCount);
+  gpu.queueFamilyProperties = OpalMemAllocArray(VkQueueFamilyProperties, gpu.queueFamilyPropertiesCount);
   vkGetPhysicalDeviceQueueFamilyProperties(_device, &gpu.queueFamilyPropertiesCount, gpu.queueFamilyProperties);
 
   gpu.queueIndexGraphics = GetFamilyIndexForQueue_Ovk(&gpu, VK_QUEUE_GRAPHICS_BIT);
@@ -209,7 +210,7 @@ OpalVkGpu_T CreateGpuInfo_Ovk(VkPhysicalDevice _device, VkSurfaceKHR _surface)
 
 void DestroyGpuInfo_Ovk(OpalVkGpu_T _gpu)
 {
-  LapisMemFree(_gpu.queueFamilyProperties);
+  OpalMemFree(_gpu.queueFamilyProperties);
 }
 
 bool DetermineDeviceSuitability_Ovk(VkPhysicalDevice _device, VkSurfaceKHR _surface)
@@ -230,7 +231,7 @@ OpalResult ChoosePhysicalDevice_Ovk(VkSurfaceKHR _surface)
 {
   uint32_t deviceCount = 0;
   vkEnumeratePhysicalDevices(oState.vk.instance, &deviceCount, NULL);
-  VkPhysicalDevice* aDevices = LapisMemAllocArray(VkPhysicalDevice, deviceCount);
+  VkPhysicalDevice* aDevices = OpalMemAllocArray(VkPhysicalDevice, deviceCount);
   vkEnumeratePhysicalDevices(oState.vk.instance, &deviceCount, aDevices);
 
   for (uint32_t i = 0; i < deviceCount; i++)
@@ -254,11 +255,11 @@ OpalResult CreateDevice_Ovk(bool _debug)
   // Queues =====
   uint32_t queueCount = 3;
   const float queuePriority = 1.0f;
-  uint32_t* queueIndices = LapisMemAllocZeroArray(uint32_t, queueCount);
+  uint32_t* queueIndices = OpalMemAllocZeroArray(uint32_t, queueCount);
   queueIndices[0] = oState.vk.gpuInfo.queueIndexGraphics;
   queueIndices[1] = oState.vk.gpuInfo.queueIndexTransfer;
   queueIndices[2] = oState.vk.gpuInfo.queueIndexPresent;
-  VkDeviceQueueCreateInfo* queueCreateInfos = LapisMemAllocZeroArray(VkDeviceQueueCreateInfo, queueCount);
+  VkDeviceQueueCreateInfo* queueCreateInfos = OpalMemAllocZeroArray(VkDeviceQueueCreateInfo, queueCount);
 
   for (uint32_t i = 0; i < queueCount; i++)
   {
@@ -272,7 +273,7 @@ OpalResult CreateDevice_Ovk(bool _debug)
 
   // Extensions =====
   uint32_t extensionCount = 1;
-  const char** aExtensions = LapisMemAllocZeroArray(const char*, extensionCount);
+  const char** aExtensions = OpalMemAllocZeroArray(const char*, extensionCount);
   aExtensions[0] = VK_KHR_SWAPCHAIN_EXTENSION_NAME;
 
   // Layers =====
@@ -282,7 +283,7 @@ OpalResult CreateDevice_Ovk(bool _debug)
   if (_debug)
   {
     layerCount = 1;
-    aLayers = LapisMemAllocZeroArray(const char*, layerCount);
+    aLayers = OpalMemAllocZeroArray(const char*, layerCount);
     aLayers[0] = "VK_LAYER_KHRONOS_validation";
   }
 
@@ -305,13 +306,13 @@ OpalResult CreateDevice_Ovk(bool _debug)
   vkGetDeviceQueue(oState.vk.device, oState.vk.gpuInfo.queueIndexTransfer, 0, &oState.vk.queueTransfer);
   vkGetDeviceQueue(oState.vk.device, oState.vk.gpuInfo.queueIndexPresent, 0, &oState.vk.queuePresent);
 
-  LapisMemFree(queueIndices);
-  LapisMemFree(queueCreateInfos);
-  LapisMemFree(aExtensions);
+  OpalMemFree(queueIndices);
+  OpalMemFree(queueCreateInfos);
+  OpalMemFree(aExtensions);
 
   if (_debug)
   {
-    LapisMemFree(aLayers);
+    OpalMemFree(aLayers);
   }
 
   return Opal_Success;
@@ -372,7 +373,7 @@ OpalResult CreateVertexFormat_Ovk(uint32_t _count, OpalFormat* _pFormats)
     return Opal_Failure;
   }
 
-  VkVertexInputAttributeDescription* pAttribs = LapisMemAllocZeroArray(VkVertexInputAttributeDescription, _count);
+  VkVertexInputAttributeDescription* pAttribs = OpalMemAllocZeroArray(VkVertexInputAttributeDescription, _count);
   VkVertexInputBindingDescription binding = { 0 };
 
   uint32_t offsetSum = 0;
@@ -428,7 +429,7 @@ void OvkShutdown()
   vkDestroyCommandPool(oState.vk.device, oState.vk.graphicsCommandPool, oState.vk.allocator);
   vkDestroyCommandPool(oState.vk.device, oState.vk.transientCommandPool, oState.vk.allocator);
 
-  LapisMemFree(oState.vertexFormat.vk.pAttribDescriptions);
+  OpalMemFree(oState.vertexFormat.vk.pAttribDescriptions);
 
   vkDestroyDevice(oState.vk.device, oState.vk.allocator);
   vkDestroyInstance(oState.vk.instance, oState.vk.allocator);

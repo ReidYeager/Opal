@@ -74,8 +74,8 @@ OpalResult OpalInit(OpalInitInfo _initInfo)
     oState.vertexFormat.structSize += OpalFormatToSize(_initInfo.vertexStruct.pFormats[i]);
   }
   oState.vertexFormat.attribCount = _initInfo.vertexStruct.count;
-  oState.vertexFormat.pFormats = LapisMemAllocZeroArray(OpalFormat, _initInfo.vertexStruct.count);
-  LapisMemCopy(_initInfo.vertexStruct.pFormats, oState.vertexFormat.pFormats, sizeof(OpalFormat) * _initInfo.vertexStruct.count);
+  oState.vertexFormat.pFormats = OpalMemAllocZeroArray(OpalFormat, _initInfo.vertexStruct.count);
+  OpalMemCopy(_initInfo.vertexStruct.pFormats, oState.vertexFormat.pFormats, sizeof(OpalFormat) * _initInfo.vertexStruct.count);
 
   OPAL_ATTEMPT(OvkInit(_initInfo));
 
@@ -95,11 +95,11 @@ OpalResult OpalWaitIdle()
 OpalResult OpalWindowInit(OpalWindow* _outWindow, OpalWindowInitInfo _initInfo)
 {
   OpalLog("Creating new window\n");
-  OpalWindow_T* newWindow = LapisMemAllocZeroSingle(OpalWindow_T);
+  OpalWindow_T* newWindow = OpalMemAllocZeroSingle(OpalWindow_T);
 
   newWindow->platform = _initInfo.platformInfo;
 
-  OPAL_ATTEMPT(OvkWindowInit(newWindow, _initInfo), LapisMemFree(newWindow));
+  OPAL_ATTEMPT(OvkWindowInit(newWindow, _initInfo), OpalMemFree(newWindow));
 
   *_outWindow = newWindow;
   return Opal_Success;
@@ -108,7 +108,7 @@ OpalResult OpalWindowInit(OpalWindow* _outWindow, OpalWindowInitInfo _initInfo)
 void OpalWindowShutdown(OpalWindow* _window)
 {
   OvkWindowShutdown(*_window);
-  LapisMemFree(*_window);
+  OpalMemFree(*_window);
   *_window = NULL;
 }
 
@@ -127,15 +127,15 @@ OpalResult OpalWindowReinit(OpalWindow _window)
 
 OpalResult OpalRenderpassInit(OpalRenderpass* _renderpass, OpalRenderpassInitInfo _initInfo)
 {
-  OpalRenderpass_T* newRenderpass = LapisMemAllocZeroSingle(OpalRenderpass_T);
+  OpalRenderpass_T* newRenderpass = OpalMemAllocZeroSingle(OpalRenderpass_T);
 
-  OPAL_ATTEMPT(OvkRenderpassInit(newRenderpass, _initInfo), LapisMemFree(newRenderpass););
+  OPAL_ATTEMPT(OvkRenderpassInit(newRenderpass, _initInfo), OpalMemFree(newRenderpass););
 
   newRenderpass->imageCount = _initInfo.imageCount;
-  newRenderpass->pAttachments = LapisMemAllocZeroArray(OpalAttachmentInfo, _initInfo.imageCount);
-  LapisMemCopy(_initInfo.pAttachments, newRenderpass->pAttachments, sizeof(OpalAttachmentInfo) * _initInfo.imageCount);
-  newRenderpass->pSubpasses = LapisMemAllocZeroArray(OpalSubpassInfo, _initInfo.imageCount);
-  LapisMemCopy(_initInfo.pSubpasses, newRenderpass->pSubpasses, sizeof(OpalSubpassInfo) * _initInfo.imageCount);
+  newRenderpass->pAttachments = OpalMemAllocZeroArray(OpalAttachmentInfo, _initInfo.imageCount);
+  OpalMemCopy(_initInfo.pAttachments, newRenderpass->pAttachments, sizeof(OpalAttachmentInfo) * _initInfo.imageCount);
+  newRenderpass->pSubpasses = OpalMemAllocZeroArray(OpalSubpassInfo, _initInfo.imageCount);
+  OpalMemCopy(_initInfo.pSubpasses, newRenderpass->pSubpasses, sizeof(OpalSubpassInfo) * _initInfo.imageCount);
 
   OpalLog("Renderpass init complete\n");
   *_renderpass = newRenderpass;
@@ -145,7 +145,7 @@ OpalResult OpalRenderpassInit(OpalRenderpass* _renderpass, OpalRenderpassInitInf
 void OpalRenderpassShutdown(OpalRenderpass* _renderpass)
 {
   OvkRenderpassShutdown(*_renderpass);
-  LapisMemFree(*_renderpass);
+  OpalMemFree(*_renderpass);
   *_renderpass = OPAL_NULL_HANDLE;
   OpalLog("Renderpass shutdown complete\n");
 }
@@ -159,14 +159,14 @@ bool CompareExtents_Opal(OpalExtent _a, OpalExtent _b)
 
 OpalResult OpalFramebufferInit(OpalFramebuffer* _framebuffer, OpalFramebufferInitInfo _initInfo)
 {
-  OpalFramebuffer_T* newFramebuffer = LapisMemAllocZeroSingle(OpalFramebuffer_T);
+  OpalFramebuffer_T* newFramebuffer = OpalMemAllocZeroSingle(OpalFramebuffer_T);
 
   OPAL_ATTEMPT(OvkFramebufferInit(newFramebuffer, _initInfo));
 
   newFramebuffer->ownerRenderpass = _initInfo.renderpass;
   newFramebuffer->extent = _initInfo.pImages[0]->extents;
   newFramebuffer->imageCount = _initInfo.imageCount;
-  newFramebuffer->ppImages = LapisMemAllocArray(OpalImage_T*, _initInfo.imageCount);
+  newFramebuffer->ppImages = OpalMemAllocArray(OpalImage_T*, _initInfo.imageCount);
   for (uint32_t i = 0; i < _initInfo.imageCount; i++)
   {
     if (!CompareExtents_Opal(newFramebuffer->extent, _initInfo.pImages[i]->extents))
@@ -190,8 +190,8 @@ OpalResult OpalFramebufferInit(OpalFramebuffer* _framebuffer, OpalFramebufferIni
 void OpalFramebufferShutdown(OpalFramebuffer* _framebuffer)
 {
   OvkFramebufferShutdown(*_framebuffer);
-  LapisMemFree((*_framebuffer)->ppImages);
-  LapisMemFree(*_framebuffer);
+  OpalMemFree((*_framebuffer)->ppImages);
+  OpalMemFree(*_framebuffer);
   *_framebuffer = OPAL_NULL_HANDLE;
   OpalLog("Framebuffer shutdown complete\n");
 }
@@ -216,10 +216,10 @@ OpalResult OpalShaderInit(OpalShader* _shader, OpalShaderInitInfo _initInfo)
 
   if (newShader == NULL)
   {
-    newShader = LapisMemAllocZeroSingle(OpalShader_T);
+    newShader = OpalMemAllocZeroSingle(OpalShader_T);
   }
 
-  OPAL_ATTEMPT(OvkShaderInit(newShader, _initInfo), LapisMemFree(newShader));
+  OPAL_ATTEMPT(OvkShaderInit(newShader, _initInfo), OpalMemFree(newShader));
 
   newShader->type = _initInfo.type;
 
@@ -231,20 +231,20 @@ OpalResult OpalShaderInit(OpalShader* _shader, OpalShaderInitInfo _initInfo)
 void OpalShaderShutdown(OpalShader* _shader)
 {
   OvkShaderShutdown(*_shader);
-  LapisMemFree(*_shader);
+  OpalMemFree(*_shader);
   *_shader = OPAL_NULL_HANDLE;
   OpalLog("Shader shutdown complete\n");
 }
 
 OpalResult OpalInputLayoutInit(OpalInputLayout* _layout, OpalInputLayoutInitInfo _initInfo)
 {
-  OpalInputLayout_T* newLayout = LapisMemAllocZeroSingle(OpalInputLayout_T);
+  OpalInputLayout_T* newLayout = OpalMemAllocZeroSingle(OpalInputLayout_T);
 
-  OPAL_ATTEMPT(OvkInputLayoutInit(newLayout, _initInfo), LapisMemFree(newLayout));
+  OPAL_ATTEMPT(OvkInputLayoutInit(newLayout, _initInfo), OpalMemFree(newLayout));
 
   newLayout->count = _initInfo.count;
-  newLayout->pTypes = LapisMemAllocZeroArray(OpalInputType, _initInfo.count);
-  LapisMemCopy(_initInfo.pTypes, newLayout->pTypes, sizeof(OpalInputType) * _initInfo.count);
+  newLayout->pTypes = OpalMemAllocZeroArray(OpalInputType, _initInfo.count);
+  OpalMemCopy(_initInfo.pTypes, newLayout->pTypes, sizeof(OpalInputType) * _initInfo.count);
 
   *_layout = newLayout;
   return Opal_Success;
@@ -252,9 +252,9 @@ OpalResult OpalInputLayoutInit(OpalInputLayout* _layout, OpalInputLayoutInitInfo
 
 OpalResult OpalInputSetInit(OpalInputSet* _set, OpalInputSetInitInfo _initInfo)
 {
-  OpalInputSet_T* newSet = LapisMemAllocZeroSingle(OpalInputSet_T);
+  OpalInputSet_T* newSet = OpalMemAllocZeroSingle(OpalInputSet_T);
 
-  OPAL_ATTEMPT(OvkInputSetInit(newSet, _initInfo), LapisMemFree(newSet));
+  OPAL_ATTEMPT(OvkInputSetInit(newSet, _initInfo), OpalMemFree(newSet));
 
   *_set = newSet;
   return Opal_Success;
@@ -263,14 +263,14 @@ OpalResult OpalInputSetInit(OpalInputSet* _set, OpalInputSetInitInfo _initInfo)
 void OpalInputLayoutShutdown(OpalInputLayout* _layout)
 {
   OvkInputLayoutShutdown(*_layout);
-  LapisMemFree(*_layout);
+  OpalMemFree(*_layout);
   *_layout = OPAL_NULL_HANDLE;
 }
 
 void OpalInputSetShutdown(OpalInputSet* _set)
 {
   OvkInputSetShutdown(*_set);
-  LapisMemFree(*_set);
+  OpalMemFree(*_set);
   *_set = OPAL_NULL_HANDLE;
 }
 
@@ -282,15 +282,15 @@ OpalResult OpalInputSetUpdate(OpalInputSet _set, uint32_t _count, OpalInputInfo*
 
 OpalResult OpalMaterialInit(OpalMaterial* _material, OpalMaterialInitInfo _initInfo)
 {
-  OpalMaterial_T* newMaterial = LapisMemAllocZeroSingle(OpalMaterial_T);
+  OpalMaterial_T* newMaterial = OpalMemAllocZeroSingle(OpalMaterial_T);
 
-  OPAL_ATTEMPT(OvkMaterialInit(newMaterial, _initInfo), LapisMemFree(newMaterial));
+  OPAL_ATTEMPT(OvkMaterialInit(newMaterial, _initInfo), OpalMemFree(newMaterial));
 
   newMaterial->ownerRenderpass = _initInfo.renderpass;
   newMaterial->subpassIndex = _initInfo.subpassIndex;
   newMaterial->shaderCount = _initInfo.shaderCount;
-  newMaterial->pShaders = LapisMemAllocZeroArray(OpalShader, _initInfo.shaderCount);
-  LapisMemCopy(_initInfo.pShaders, newMaterial->pShaders, sizeof(OpalShader) * _initInfo.shaderCount);
+  newMaterial->pShaders = OpalMemAllocZeroArray(OpalShader, _initInfo.shaderCount);
+  OpalMemCopy(_initInfo.pShaders, newMaterial->pShaders, sizeof(OpalShader) * _initInfo.shaderCount);
 
   newMaterial->pushConstantSize = _initInfo.pushConstantSize;
 
@@ -302,7 +302,7 @@ OpalResult OpalMaterialInit(OpalMaterial* _material, OpalMaterialInitInfo _initI
 void OpalMaterialShutdown(OpalMaterial* _material)
 {
   OvkMaterialShutdown(*_material);
-  LapisMemFree(*_material);
+  OpalMemFree(*_material);
   *_material = OPAL_NULL_HANDLE;
   OpalLog("Material shutdown complete\n");
 }
@@ -362,9 +362,9 @@ void OpalRenderSetPushConstant(void* _data)
 
 OpalResult OpalBufferInit(OpalBuffer* _buffer, OpalBufferInitInfo _initInfo)
 {
-  OpalBuffer_T* newBuffer = LapisMemAllocSingle(OpalBuffer_T);
+  OpalBuffer_T* newBuffer = OpalMemAllocSingle(OpalBuffer_T);
 
-  OPAL_ATTEMPT(OvkBufferInit(newBuffer, _initInfo), LapisMemFree(newBuffer));
+  OPAL_ATTEMPT(OvkBufferInit(newBuffer, _initInfo), OpalMemFree(newBuffer));
 
   newBuffer->size = _initInfo.size;
 
@@ -376,7 +376,7 @@ OpalResult OpalBufferInit(OpalBuffer* _buffer, OpalBufferInitInfo _initInfo)
 void OpalBufferShutdown(OpalBuffer* _buffer)
 {
   OvkBufferShutdown(*_buffer);
-  LapisMemFree(*_buffer);
+  OpalMemFree(*_buffer);
   *_buffer = OPAL_NULL_HANDLE;
   OpalLog("Buffer shutdown complete\n");
 }
@@ -400,21 +400,21 @@ uint32_t OpalBufferDumpData(OpalBuffer buffer, void** data)
 
 OpalResult OpalMeshInit(OpalMesh* _mesh, OpalMeshInitInfo _initInfo)
 {
-  OpalMesh_T* newMesh = LapisMemAllocZeroSingle(OpalMesh_T);
+  OpalMesh_T* newMesh = OpalMemAllocZeroSingle(OpalMesh_T);
 
   OpalBufferInitInfo info = { 0 };
   info.size = _initInfo.vertexCount * oState.vertexFormat.structSize;
   info.usage = Opal_Buffer_Usage_Vertex;
 
-  OPAL_ATTEMPT(OpalBufferInit(&newMesh->vertBuffer, info), LapisMemFree(newMesh));
+  OPAL_ATTEMPT(OpalBufferInit(&newMesh->vertBuffer, info), OpalMemFree(newMesh));
 
   info.size = _initInfo.indexCount * sizeof(_initInfo.pIndices[0]);
   info.usage = Opal_Buffer_Usage_Index;
 
-  OPAL_ATTEMPT(OpalBufferInit(&newMesh->indexBuffer, info), LapisMemFree(newMesh));
+  OPAL_ATTEMPT(OpalBufferInit(&newMesh->indexBuffer, info), OpalMemFree(newMesh));
 
-  OPAL_ATTEMPT(OpalBufferPushData(newMesh->vertBuffer, _initInfo.pVertices), LapisMemFree(newMesh));
-  OPAL_ATTEMPT(OpalBufferPushData(newMesh->indexBuffer, _initInfo.pIndices), LapisMemFree(newMesh));
+  OPAL_ATTEMPT(OpalBufferPushData(newMesh->vertBuffer, _initInfo.pVertices), OpalMemFree(newMesh));
+  OPAL_ATTEMPT(OpalBufferPushData(newMesh->indexBuffer, _initInfo.pIndices), OpalMemFree(newMesh));
 
   newMesh->vertCount = _initInfo.vertexCount;
   newMesh->indexCount = _initInfo.indexCount;
@@ -428,6 +428,6 @@ void OpalMeshShutdown(OpalMesh* _mesh)
   OpalBufferShutdown(&(*_mesh)->vertBuffer);
   OpalBufferShutdown(&(*_mesh)->indexBuffer);
 
-  LapisMemFree(*_mesh);
+  OpalMemFree(*_mesh);
   *_mesh = OPAL_NULL_HANDLE;
 }

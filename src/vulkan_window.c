@@ -40,7 +40,7 @@ void ChooseSwapchainFormat_Ovk(const OpalWindow_T* const _window, VkSurfaceForma
   uint32_t formatCount = 0;
   VkSurfaceFormatKHR* formats;
   vkGetPhysicalDeviceSurfaceFormatsKHR(oState.vk.gpu, _window->vk.surface, &formatCount, NULL);
-  formats = LapisMemAllocArray(VkSurfaceFormatKHR, formatCount);
+  formats = OpalMemAllocArray(VkSurfaceFormatKHR, formatCount);
   vkGetPhysicalDeviceSurfaceFormatsKHR(oState.vk.gpu, _window->vk.surface, &formatCount, formats);
 
   *_format = formats[0];
@@ -54,7 +54,7 @@ void ChooseSwapchainFormat_Ovk(const OpalWindow_T* const _window, VkSurfaceForma
     }
   }
 
-  LapisMemFree(formats);
+  OpalMemFree(formats);
 }
 
 void ChooseSwapchainPresentMode_Ovk(const OpalWindow_T* const _window, VkPresentModeKHR* _mode)
@@ -62,7 +62,7 @@ void ChooseSwapchainPresentMode_Ovk(const OpalWindow_T* const _window, VkPresent
   uint32_t presentModeCount = 0;
   VkPresentModeKHR* presentModes;
   vkGetPhysicalDeviceSurfacePresentModesKHR(oState.vk.gpu, _window->vk.surface, &presentModeCount, NULL);
-  presentModes = LapisMemAllocArray(VkPresentModeKHR, presentModeCount);
+  presentModes = OpalMemAllocArray(VkPresentModeKHR, presentModeCount);
   vkGetPhysicalDeviceSurfacePresentModesKHR(oState.vk.gpu, _window->vk.surface, &presentModeCount, presentModes);
 
   *_mode = presentModes[0];
@@ -75,7 +75,7 @@ void ChooseSwapchainPresentMode_Ovk(const OpalWindow_T* const _window, VkPresent
     }
   }
 
-  LapisMemFree(presentModes);
+  OpalMemFree(presentModes);
 }
 
 OpalResult CreateSwapchain_Ovk(OpalWindow_T* _window)
@@ -137,13 +137,13 @@ OpalResult CreateSwapchainImages_Ovk(OpalWindow_T* _window)
   if (_window->imageCount != createdImageCount)
   {
     if (_window->vk.swapchain.pImages != NULL)
-      LapisMemFree(_window->vk.swapchain.pImages);
+      OpalMemFree(_window->vk.swapchain.pImages);
     if (_window->vk.swapchain.pViews != NULL)
-      LapisMemFree(_window->vk.swapchain.pViews);
+      OpalMemFree(_window->vk.swapchain.pViews);
 
     _window->imageCount = createdImageCount;
-    _window->vk.swapchain.pImages = LapisMemAllocArray(VkImage, createdImageCount);
-    _window->vk.swapchain.pViews = LapisMemAllocArray(VkImageView, createdImageCount);
+    _window->vk.swapchain.pImages = OpalMemAllocArray(VkImage, createdImageCount);
+    _window->vk.swapchain.pViews = OpalMemAllocArray(VkImageView, createdImageCount);
   }
   vkGetSwapchainImagesKHR(oState.vk.device, _window->vk.swapchain.swapchain, &createdImageCount, _window->vk.swapchain.pImages);
 
@@ -173,7 +173,7 @@ OpalResult CreateSwapchainImages_Ovk(OpalWindow_T* _window)
 
 OpalResult CreateSync_Ovk(OpalWindow_T* _window)
 {
-  _window->vk.pSync = LapisMemAllocArray(OvkSync_T, _window->imageCount);
+  _window->vk.pSync = OpalMemAllocArray(OvkSync_T, _window->imageCount);
 
   VkSemaphoreCreateInfo semCreateInfo = { 0 };
   semCreateInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
@@ -251,8 +251,8 @@ OpalResult OvkWindowReinit(OpalWindow_T* _window)
   {
     vkDestroyImageView(oState.vk.device, _window->vk.swapchain.pViews[i], oState.vk.allocator);
   }
-  //LapisMemFree(_window->vk.swapchain.pViews);
-  //LapisMemFree(_window->vk.swapchain.pImages);
+  //OpalMemFree(_window->vk.swapchain.pViews);
+  //OpalMemFree(_window->vk.swapchain.pImages);
 
   vkDestroySwapchainKHR(oState.vk.device, _window->vk.swapchain.swapchain, oState.vk.allocator);
   vkDestroySurfaceKHR(oState.vk.instance, _window->vk.surface, oState.vk.allocator);
@@ -282,9 +282,9 @@ OpalResult OvkWindowShutdown(OpalWindow_T* _window)
     vkDestroyImageView(oState.vk.device, _window->vk.swapchain.pViews[i], oState.vk.allocator);
     // Image destruction handled by vkDestroySwapchain
   }
-  LapisMemFree(_window->vk.pSync);
-  LapisMemFree(_window->vk.swapchain.pViews);
-  LapisMemFree(_window->vk.swapchain.pImages);
+  OpalMemFree(_window->vk.pSync);
+  OpalMemFree(_window->vk.swapchain.pViews);
+  OpalMemFree(_window->vk.swapchain.pImages);
 
   vkDestroySwapchainKHR(oState.vk.device, _window->vk.swapchain.swapchain, oState.vk.allocator);
 
