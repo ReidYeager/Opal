@@ -39,7 +39,8 @@ typedef uint32_t OpalFlags;
 typedef enum OpalResult
 {
   Opal_Success = 0,
-  Opal_Failure
+  Opal_Failure = 1,
+  Opal_Window_Minimized
 } OpalResult;
 
 typedef enum OpalFormat

@@ -119,7 +119,21 @@ void OpalWindowGetBufferImage(OpalWindow _window, OpalImage* _outImage)
 
 OpalResult OpalWindowReinit(OpalWindow _window)
 {
-  OPAL_ATTEMPT(OvkWindowReinit(_window));
+  OpalResult result = OvkWindowReinit(_window);
+  if (result != Opal_Success)
+  {
+    if (result == Opal_Window_Minimized)
+    {
+      OpalLog("Window reinit pseudo failed due to minimization\n");
+      return Opal_Window_Minimized;
+    }
+    else
+    {
+      OPAL_ATTEMPT_FAIL_LOG("OvkWindowReinit failed with result %d\n", result);
+      return Opal_Failure;
+    }
+
+  }
 
   OpalLog("Window resized to %04u, %04u\r", _window->extents.width, _window->extents.height);
   return Opal_Success;
@@ -315,6 +329,11 @@ OpalResult OpalMaterialReinit(OpalMaterial _material)
 
 OpalResult OpalRenderBegin(OpalWindow _window)
 {
+  if (_window->minimized)
+  {
+    return Opal_Window_Minimized;
+  }
+
   OPAL_ATTEMPT(OvkRenderBegin(_window));
   return Opal_Success;
 }

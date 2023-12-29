@@ -24,11 +24,17 @@
   if (oResult)                                                         \
   {                                                                    \
     OpalLogError("Function \""#fn"\" failed. Result = %d\n", oResult); \
-    OpalLogError("    %s:%d\n", __FILE__, __LINE__);                   \
+    OpalLogError("\t%s:%d\n", __FILE__, __LINE__);                     \
     { __VA_ARGS__; }                                                   \
     return Opal_Failure;                                               \
   }                                                                    \
   else {}                                                              \
+}
+
+#define OPAL_ATTEMPT_FAIL_LOG(message, ...)      \
+{                                                \
+  OpalLogError(message, __VA_ARGS__);            \
+  OpalLogError("\t%s:%d\n", __FILE__, __LINE__); \
 }
 
 #define OVK_ATTEMPT(fn, ...)                                                  \
@@ -37,11 +43,17 @@
   if (vResult != VK_SUCCESS)                                                  \
   {                                                                           \
     OpalLogError("Vulkan function \""#fn"\" failed. Result = %d\n", vResult); \
-    OpalLogError("    %s:%d\n", __FILE__, __LINE__);                          \
+    OpalLogError("\t%s:%d\n", __FILE__, __LINE__);                            \
     { __VA_ARGS__; }                                                          \
     return Opal_Failure;                                                      \
   }                                                                           \
   else {}                                                                     \
+}
+
+#define OVK_ATTEMPT_FAIL_LOG(message, ...)         \
+{                                                  \
+  OpalLogError("Vulkan :: " message, __VA_ARGS__); \
+  OpalLogError("\t%s:%d\n", __FILE__, __LINE__);   \
 }
 
 VkFormat OpalFormatToVkFormat_Ovk(OpalFormat _format);

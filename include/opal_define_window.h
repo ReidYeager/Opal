@@ -52,6 +52,7 @@ typedef struct OpalWindow_T
 
   uint32_t imageCount;
   OpalExtent extents;
+  bool minimized;
 
   // Used for framebuffers, contents copied to appropriate swapchain image during SwapBuffers
   OpalImage_T* renderBufferImage;

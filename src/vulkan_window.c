@@ -24,7 +24,7 @@ void ChooseSwapchainImageCount_Ovk(const OpalWindow_T* const _window, uint32_t* 
   }
 }
 
-void ChooseSwapchainImageExtents_Ovk(const OpalWindow_T* const _window, VkExtent2D* _extents)
+void ChooseSurfaceExtents_Ovk(const OpalWindow_T* const _window, VkExtent2D* _extents)
 {
   VkSurfaceCapabilitiesKHR surfCapabilities;
   vkGetPhysicalDeviceSurfaceCapabilitiesKHR(oState.vk.gpu, _window->vk.surface, &surfCapabilities);
@@ -86,7 +86,7 @@ OpalResult CreateSwapchain_Ovk(OpalWindow_T* _window)
   VkSurfaceFormatKHR format;
 
   ChooseSwapchainImageCount_Ovk(_window, &imageCount);
-  ChooseSwapchainImageExtents_Ovk(_window, &extents);
+  ChooseSurfaceExtents_Ovk(_window, &extents);
   ChooseSwapchainPresentMode_Ovk(_window, &presentMode);
   ChooseSwapchainFormat_Ovk(_window, &format);
 
@@ -237,14 +237,17 @@ OpalResult OvkWindowInit(OpalWindow_T* _window, OpalWindowInitInfo _initInfo)
 
 OpalResult OvkWindowReinit(OpalWindow_T* _window)
 {
-  uint32_t newWidth = _window->extents.width;
-  uint32_t newHeight = _window->extents.height;
+  VkExtent2D newExtent;
+  ChooseSurfaceExtents_Ovk(_window, &newExtent);
 
-  if (!newWidth || !newHeight)
-    return Opal_Success;
+  _window->minimized = (!newExtent.height || !newExtent.width);
+  if (_window->minimized)
+  {
+    return Opal_Window_Minimized;
+  }
 
-  _window->extents.width = newWidth;
-  _window->extents.height = newHeight;
+  _window->extents.width = newExtent.width;
+  _window->extents.height = newExtent.height;
   _window->extents.depth = 1;
 
   for (uint32_t i = 0; i < _window->imageCount; i++)
