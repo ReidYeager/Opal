@@ -65,8 +65,8 @@ OpalResult OvkWaitIdle();
 
 OpalResult OvkBufferInit(OpalBuffer _buffer, OpalBufferInitInfo _initInfo);
 void OvkBufferShutdown(OpalBuffer _buffer);
-OpalResult OvkBufferPushData(OpalBuffer _buffer, void* _data);
-OpalResult OvkBufferPushDataSegment(OpalBuffer _buffer, void* _data, uint32_t size, uint32_t offset);
+OpalResult OvkBufferPushData(OpalBuffer _buffer, const void* _data);
+OpalResult OvkBufferPushDataSegment(OpalBuffer _buffer, const void* _data, uint32_t size, uint32_t offset);
 uint32_t OvkBufferDumpData(OpalBuffer buffer, void** data);
 
 OpalResult OvkWindowInit(OpalWindow_T* _window, OpalWindowInitInfo _initInfo);

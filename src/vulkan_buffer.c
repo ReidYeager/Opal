@@ -135,7 +135,7 @@ OpalResult TransferBufferData_Ovk(OpalBuffer _src, OpalBuffer _dst, uint64_t _si
 }
 
 // NOTE : Will eventually want to separate quick cpu-visible buffer updates
-OpalResult OvkBufferPushDataSegment(OpalBuffer _buffer, void* _data, uint32_t size, uint32_t offset)
+OpalResult OvkBufferPushDataSegment(OpalBuffer _buffer, const void* _data, uint32_t size, uint32_t offset)
 {
   //static uint64_t maxSize = 0;
   //static OpalBuffer transientBuffer;
@@ -163,7 +163,7 @@ OpalResult OvkBufferPushDataSegment(OpalBuffer _buffer, void* _data, uint32_t si
   return Opal_Success;
 }
 
-OpalResult OvkBufferPushData(OpalBuffer _buffer, void* _data)
+OpalResult OvkBufferPushData(OpalBuffer _buffer, const void* _data)
 {
   return OvkBufferPushDataSegment(_buffer, _data, _buffer->size, 0);
 }

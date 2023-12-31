@@ -400,7 +400,7 @@ void OpalBufferShutdown(OpalBuffer* _buffer)
   OpalLog("Buffer shutdown complete\n");
 }
 
-OpalResult OpalBufferPushData(OpalBuffer _buffer, void* _data)
+OpalResult OpalBufferPushData(OpalBuffer _buffer, const void* _data)
 {
   OPAL_ATTEMPT(OvkBufferPushData(_buffer, _data));
   return Opal_Success;

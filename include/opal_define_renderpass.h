@@ -50,13 +50,13 @@ typedef struct OpalDependencyInfo
 typedef struct OpalRenderpassInitInfo
 {
   uint32_t imageCount;
-  OpalAttachmentInfo* pAttachments;
+  const OpalAttachmentInfo* pAttachments;
 
   uint32_t subpassCount;
-  OpalSubpassInfo* pSubpasses;
+  const OpalSubpassInfo* pSubpasses;
 
   uint32_t dependencyCount;
-  OpalDependencyInfo* pDependencies;
+  const OpalDependencyInfo* pDependencies;
 } OpalRenderpassInitInfo;
 
 typedef struct OvkRenderpass_T

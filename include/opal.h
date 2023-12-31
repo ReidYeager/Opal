@@ -24,7 +24,7 @@ typedef struct OpalInitInfo
   struct
   {
     uint32_t count;
-    OpalFormat* pFormats;
+    const OpalFormat* pFormats;
   } vertexStruct;
 } OpalInitInfo;
 
@@ -135,7 +135,7 @@ void OpalRenderSetPushConstant(void* _data);
 
 OpalResult OpalBufferInit(OpalBuffer* _buffer, OpalBufferInitInfo _initInfo);
 void OpalBufferShutdown(OpalBuffer* _buffer);
-OpalResult OpalBufferPushData(OpalBuffer _buffer, void* _data);
+OpalResult OpalBufferPushData(OpalBuffer _buffer, const void* _data);
 OpalResult OpalBufferPushDataSegment(OpalBuffer _buffer, void* _data, uint32_t size, uint32_t offset);
 uint32_t OpalBufferDumpData(OpalBuffer buffer, void** data);
 

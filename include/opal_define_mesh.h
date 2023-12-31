@@ -24,9 +24,9 @@ typedef struct OpalMesh_T
 typedef struct OpalMeshInitInfo
 {
   uint32_t vertexCount;
-  void* pVertices;
+  const void* pVertices;
   uint32_t indexCount;
-  uint32_t* pIndices;
+  const uint32_t* pIndices;
 } OpalMeshInitInfo;
 
 #endif // !GEM_OPAL_DEFINE_MESH_H_

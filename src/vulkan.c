@@ -365,7 +365,7 @@ OpalResult CreateDescriptorPool_Ovk()
   return Opal_Success;
 }
 
-OpalResult CreateVertexFormat_Ovk(uint32_t _count, OpalFormat* _pFormats)
+OpalResult CreateVertexFormat_Ovk(uint32_t _count, const OpalFormat* _pFormats)
 {
   if (_count == 0 || _pFormats == NULL)
   {

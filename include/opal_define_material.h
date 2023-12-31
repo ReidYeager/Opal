@@ -89,7 +89,7 @@ typedef struct OpalMaterial_T
 
 typedef struct OpalShaderInitInfo
 {
-  char* pSource;
+  const char* pSource;
   uint32_t size;
   OpalShaderType type;
 } OpalShaderInitInfo;
@@ -107,13 +107,13 @@ typedef union OpalMaterialInputValue
 typedef struct OpalInputLayoutInitInfo
 {
   uint32_t count;
-  OpalInputType* pTypes;
+  const OpalInputType* pTypes;
 } OpalInputLayoutInitInfo;
 
 typedef struct OpalInputSetInitInfo
 {
   OpalInputLayout layout;
-  OpalMaterialInputValue* pInputValues;
+  const OpalMaterialInputValue* pInputValues;
 } OpalInputSetInitInfo;
 
 typedef struct OpalInputInfo
@@ -129,10 +129,10 @@ typedef struct OpalMaterialInitInfo
   uint32_t subpassIndex;
 
   uint32_t shaderCount;
-  OpalShader* pShaders;
+  const OpalShader* pShaders;
 
   uint32_t inputLayoutCount;
-  OpalInputLayout* pInputLayouts;
+  const OpalInputLayout* pInputLayouts;
 
   uint32_t pushConstantSize;
 } OpalMaterialInitInfo;
