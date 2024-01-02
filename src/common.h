@@ -7,15 +7,25 @@
 #include <stdio.h>
 
 #ifdef GEM_LAPIS
-#define OpalLog(message, ...) LapisConsolePrintMessage(Lapis_Console_Info, "Opal :: " message, __VA_ARGS__)
+#define OpalLog(...) LapisConsolePrintMessage(Lapis_Console_Info, "Opal :: " __VA_ARGS__)
 #else
+#ifdef _MSC_VER
+#define OpalLog(...) printf("Opal :: " __VA_ARGS__)
+#else
+// Safer but msvc doesn't support
 #define OpalLog(message, ...) printf("Opal :: " message, __VA_ARGS__)
+#endif
 #endif // GEM_LAPIS
 
 #ifdef GEM_LAPIS
-#define OpalLogError(message, ...) LapisConsolePrintMessage(Lapis_Console_Error, "Opal :: Err :: " message, __VA_ARGS__)
+#define OpalLogError(...) LapisConsolePrintMessage(Lapis_Console_Error, "Opal :: Err :: " __VA_ARGS__)
 #else
+#ifdef _MSC_VER
+#define OpalLogError(...) printf("Opal :: Err :: " __VA_ARGS__)
+#else
+// Safer but msvc doesn't support
 #define OpalLogError(message, ...) printf("Opal :: Err :: " message, __VA_ARGS__)
+#endif
 #endif // GEM_LAPIS
 
 #define OPAL_ATTEMPT(fn, ...)                                          \
