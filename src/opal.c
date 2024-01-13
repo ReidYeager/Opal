@@ -257,8 +257,8 @@ OpalResult OpalInputLayoutInit(OpalInputLayout* _layout, OpalInputLayoutInitInfo
   OPAL_ATTEMPT(OvkInputLayoutInit(newLayout, _initInfo), OpalMemFree(newLayout));
 
   newLayout->count = _initInfo.count;
-  newLayout->pTypes = OpalMemAllocZeroArray(OpalInputType, _initInfo.count);
-  OpalMemCopy(_initInfo.pTypes, newLayout->pTypes, sizeof(OpalInputType) * _initInfo.count);
+  newLayout->pInputs = OpalMemAllocZeroArray(OpalInputAccessInfo, _initInfo.count);
+  OpalMemCopy(_initInfo.pInputs, newLayout->pInputs, sizeof(OpalInputAccessInfo) * _initInfo.count);
 
   *_layout = newLayout;
   return Opal_Success;

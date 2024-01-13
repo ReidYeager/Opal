@@ -37,22 +37,21 @@ OpalResult CreateDescriptorSetLayout_Ovk(OpalInputLayout_T* _layout, OpalInputLa
     pBindings[i].descriptorCount = 1;
     pBindings[i].pImmutableSamplers = NULL;
 
-    switch (_initInfo.pTypes[i])
+    pBindings[i].stageFlags = OpalStagesToVkStages_Ovk(_initInfo.pInputs[i].stages);
+
+    switch (_initInfo.pInputs[i].type)
     {
     case Opal_Input_Type_Uniform_Buffer:
     {
       pBindings[i].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-      pBindings[i].stageFlags = VK_SHADER_STAGE_ALL_GRAPHICS;
     } break;
     case Opal_Input_Type_Samped_Image:
     {
       pBindings[i].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-      pBindings[i].stageFlags = VK_SHADER_STAGE_ALL_GRAPHICS;
     } break;
     case Opal_Input_Type_Subpass_Input:
     {
       pBindings[i].descriptorType = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT;
-      pBindings[i].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
     } break;
     default:
     {
@@ -177,7 +176,7 @@ OpalResult OvkInputSetInit(OpalInputSet_T* _set, OpalInputSetInitInfo _initInfo)
   for (uint32_t i = 0; i < _initInfo.layout->count; i++)
   {
     pInputs[i].index = i;
-    pInputs[i].type = _initInfo.layout->pTypes[i];
+    pInputs[i].type = _initInfo.layout->pInputs[i].type;
     pInputs[i].value = _initInfo.pInputValues[i];
   }
 

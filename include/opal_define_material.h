@@ -59,10 +59,16 @@ typedef struct OvkMaterial_T
   OpalInputSet* pInputSets;
 } OvkMaterial_T;
 
+typedef struct OpalInputAccessInfo
+{
+  OpalInputType type;
+  OpalStageFlags stages;
+} OpalInputAccessInfo;
+
 typedef struct OpalInputLayout_T
 {
   uint32_t count;
-  OpalInputType* pTypes;
+  OpalInputAccessInfo* pInputs;
   OvkInputLayout_T vk;
 } OpalInputLayout_T;
 
@@ -94,7 +100,7 @@ typedef struct OpalShaderInitInfo
   OpalShaderType type;
 } OpalShaderInitInfo;
 
-typedef union OpalMaterialInputValue
+typedef union OpalInputValue
 {
   OpalBuffer buffer;
   OpalImage image;
@@ -102,25 +108,25 @@ typedef union OpalMaterialInputValue
     uint32_t attachmentIndex;
     OpalImage image;
   } inputAttachment;
-} OpalMaterialInputValue;
+} OpalInputValue;
 
 typedef struct OpalInputLayoutInitInfo
 {
   uint32_t count;
-  const OpalInputType* pTypes;
+  const OpalInputAccessInfo* pInputs;
 } OpalInputLayoutInitInfo;
 
 typedef struct OpalInputSetInitInfo
 {
   OpalInputLayout layout;
-  const OpalMaterialInputValue* pInputValues;
+  const OpalInputValue* pInputValues;
 } OpalInputSetInitInfo;
 
 typedef struct OpalInputInfo
 {
   uint32_t index;
   OpalInputType type;
-  OpalMaterialInputValue value;
+  OpalInputValue value;
 } OpalInputInfo;
 
 typedef struct OpalMaterialInitInfo

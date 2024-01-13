@@ -67,6 +67,7 @@
 }
 
 VkFormat OpalFormatToVkFormat_Ovk(OpalFormat _format);
+VkShaderStageFlags OpalStagesToVkStages_Ovk(OpalStageFlags stages);
 
 OpalResult OvkInit(OpalInitInfo _initInfo);
 void OvkShutdown();
