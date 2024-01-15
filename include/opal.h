@@ -88,6 +88,7 @@ OpalResult OpalInit(OpalInitInfo _createInfo);
 void OpalShutdown();
 
 uint32_t OpalFormatToSize(OpalFormat _format);
+uint32_t OpalBufferElementSize(OpalBufferElement element);
 OpalResult OpalWaitIdle();
 
 OpalResult OpalWindowInit(OpalWindow* _outWindow, OpalWindowInitInfo _initInfo);
@@ -134,8 +135,10 @@ void OpalRenderMesh(OpalMesh _mesh);
 void OpalRenderSetPushConstant(void* _data);
 
 OpalResult OpalBufferInit(OpalBuffer* _buffer, OpalBufferInitInfo _initInfo);
+OpalResult OpalBufferInitAligned(OpalBuffer* buffer, OpalBufferInitAlignedInfo initInfo);
 void OpalBufferShutdown(OpalBuffer* _buffer);
 OpalResult OpalBufferPushData(OpalBuffer _buffer, const void* _data);
+OpalResult OpalBufferAlignAndPushData(OpalBuffer buffer, uint32_t elementCount, const OpalBufferElement* elements, const void* data);
 OpalResult OpalBufferPushDataSegment(OpalBuffer _buffer, void* _data, uint32_t size, uint32_t offset);
 uint32_t OpalBufferDumpData(OpalBuffer buffer, void** data);
 

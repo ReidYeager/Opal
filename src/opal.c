@@ -12,52 +12,104 @@ uint32_t OpalFormatToSize(OpalFormat _format)
 {
   switch (_format)
   {
-    // R G B A variants
-  case Opal_Format_R8:     case Opal_Format_R8I:     case Opal_Format_R8U:     case Opal_Format_R8_Nonlinear:
-    return 1;
-  case Opal_Format_RG8:    case Opal_Format_RG8I:    case Opal_Format_RG8U:    case Opal_Format_RG8_Nonlinear:
-    return 2;
-  case Opal_Format_RGB8:   case Opal_Format_RGB8I:   case Opal_Format_RGB8U:   case Opal_Format_RGB8_Nonlinear:
-    return 3;
-  case Opal_Format_RGBA8:  case Opal_Format_RGBA8I:  case Opal_Format_RGBA8U:  case Opal_Format_RGBA8_Nonlinear:
+  // R G B A variants
+  case Opal_Format_R8:    case Opal_Format_R8I:    case Opal_Format_R8U:    case Opal_Format_R8_Nonlinear:    return 1;
+  case Opal_Format_RG8:   case Opal_Format_RG8I:   case Opal_Format_RG8U:   case Opal_Format_RG8_Nonlinear:   return 2;
+  case Opal_Format_RGB8:  case Opal_Format_RGB8I:  case Opal_Format_RGB8U:  case Opal_Format_RGB8_Nonlinear:  return 3;
+  case Opal_Format_RGBA8: case Opal_Format_RGBA8I: case Opal_Format_RGBA8U: case Opal_Format_RGBA8_Nonlinear: return 4;
+  case Opal_Format_R32:   case Opal_Format_R32I:   case Opal_Format_R32U:                                     return 4;
+  case Opal_Format_RG32:  case Opal_Format_RG32I:  case Opal_Format_RG32U:                                    return 8;
+  case Opal_Format_RGB32: case Opal_Format_RGB32I: case Opal_Format_RGB32U:                                   return 12;
+  case Opal_Format_RGBA32:case Opal_Format_RGBA32I:case Opal_Format_RGBA32U:                                  return 16;
+  case Opal_Format_R64:   case Opal_Format_R64I:   case Opal_Format_R64U:                                     return 8;
+  case Opal_Format_RG64:  case Opal_Format_RG64I:  case Opal_Format_RG64U:                                    return 16;
+  case Opal_Format_RGB64: case Opal_Format_RGB64I: case Opal_Format_RGB64U:                                   return 24;
+  case Opal_Format_RGBA64:case Opal_Format_RGBA64I:case Opal_Format_RGBA64U:                                  return 32;
+
+  // B G R A variants
+  case Opal_Format_BGR8:   return 3;
+  case Opal_Format_BGRA8:  return 4;
+  case Opal_Format_BGR32:  return 12;
+  case Opal_Format_BGRA32: return 16;
+
+  // Depth stencils
+  case Opal_Format_D24_S8: case Opal_Format_D16_S8: case Opal_Format_D32: return 4;
+
+  // Other
+  case Opal_Format_Mat4x4: return 64;
+
+  default: return 0;
+  }
+}
+
+uint32_t OpalBufferElementSize(OpalBufferElement element)
+{
+  switch (element)
+  {
+  case Opal_Buffer_Int: case Opal_Buffer_Uint: case Opal_Buffer_Float:
     return 4;
-  case Opal_Format_R32:    case Opal_Format_R32I:    case Opal_Format_R32U:
-    return 4;
-  case Opal_Format_RG32:   case Opal_Format_RG32I:   case Opal_Format_RG32U:
+
+  case Opal_Buffer_Int2: case Opal_Buffer_Uint2: case Opal_Buffer_Float2:
     return 8;
-  case Opal_Format_RGB32:  case Opal_Format_RGB32I:  case Opal_Format_RGB32U:
+
+  case Opal_Buffer_Int3: case Opal_Buffer_Uint3: case Opal_Buffer_Float3:
     return 12;
-  case Opal_Format_RGBA32: case Opal_Format_RGBA32I: case Opal_Format_RGBA32U:
+
+  case Opal_Buffer_Int4: case Opal_Buffer_Uint4: case Opal_Buffer_Float4:
     return 16;
-  case Opal_Format_R64:    case Opal_Format_R64I:    case Opal_Format_R64U:
+
+  case Opal_Buffer_Double:
     return 8;
-  case Opal_Format_RG64:   case Opal_Format_RG64I:   case Opal_Format_RG64U:
+  case Opal_Buffer_Double2:
     return 16;
-  case Opal_Format_RGB64:  case Opal_Format_RGB64I:  case Opal_Format_RGB64U:
+  case Opal_Buffer_Double3:
     return 24;
-  case Opal_Format_RGBA64: case Opal_Format_RGBA64I: case Opal_Format_RGBA64U:
+  case Opal_Buffer_Double4:
     return 32;
 
-    // B G R A variants
-  case Opal_Format_BGR8:
-    return 3;
-  case Opal_Format_BGRA8:
+  case Opal_Buffer_Mat4:
+    return 64;
+
+  default: return 0;
+  }
+}
+
+uint32_t BufferElementAlignment_Opal(OpalBufferElement element)
+{
+  switch (element)
+  {
+    case Opal_Buffer_Int: case Opal_Buffer_Uint: case Opal_Buffer_Float:
     return 4;
-  case Opal_Format_BGR32:
-    return 12;
-  case Opal_Format_BGRA32:
+
+    case Opal_Buffer_Int2: case Opal_Buffer_Uint2: case Opal_Buffer_Float2:
+    return 8;
+
+    case Opal_Buffer_Int3: case Opal_Buffer_Uint3: case Opal_Buffer_Float3:
+    case Opal_Buffer_Int4: case Opal_Buffer_Uint4: case Opal_Buffer_Float4: 
     return 16;
 
-    // Depth stencils
-  case Opal_Format_D24_S8: case Opal_Format_D16_S8: case Opal_Format_D32:
+    case Opal_Buffer_Double:
+    return 8;
+    case Opal_Buffer_Double2:
+    return 16;
+    case Opal_Buffer_Double3: case Opal_Buffer_Double4:
+    return 32;
+
+    case Opal_Buffer_Mat4:
     return 4;
 
-    // Other
-  case Opal_Format_Mat4x4:
-    return 64;
-  default:
-    return 0;
+  default: return 1;
   }
+}
+
+uint32_t BufferAlignOffset_Opal(uint32_t offset, OpalBufferElement nextElement)
+{
+  uint32_t align = BufferElementAlignment_Opal(nextElement);
+  if (align == 1)
+    return offset;
+
+  align -= 1;
+  return (offset + align) & ~align;
 }
 
 OpalResult OpalInit(OpalInitInfo _initInfo)
@@ -392,6 +444,30 @@ OpalResult OpalBufferInit(OpalBuffer* _buffer, OpalBufferInitInfo _initInfo)
   return Opal_Success;
 }
 
+OpalResult OpalBufferInitAligned(OpalBuffer* buffer, OpalBufferInitAlignedInfo initInfo)
+{
+  OpalBuffer_T* newBuffer = OpalMemAllocSingle(OpalBuffer_T);
+
+  uint32_t size = 0;
+  for (uint32_t i = 0; i < initInfo.elementCount; i++)
+  {
+    size = BufferAlignOffset_Opal(size, initInfo.pElements[i]);
+    size += OpalBufferElementSize(initInfo.pElements[i]);
+  }
+
+  OpalBufferInitInfo newInfo;
+  newInfo.size = size;
+  newInfo.usage = initInfo.usage;
+
+  OPAL_ATTEMPT(OvkBufferInit(newBuffer, newInfo), OpalMemFree(newBuffer));
+
+  newBuffer->size = size;
+
+  OpalLog("Buffer init aligned complete : %llu (%llu) bytes\n", newBuffer->size, newBuffer->paddedSize);
+  *buffer = newBuffer;
+  return Opal_Success;
+}
+
 void OpalBufferShutdown(OpalBuffer* _buffer)
 {
   OvkBufferShutdown(*_buffer);
@@ -403,6 +479,26 @@ void OpalBufferShutdown(OpalBuffer* _buffer)
 OpalResult OpalBufferPushData(OpalBuffer _buffer, const void* _data)
 {
   OPAL_ATTEMPT(OvkBufferPushData(_buffer, _data));
+  return Opal_Success;
+}
+
+OpalResult OpalBufferAlignAndPushData(OpalBuffer buffer, uint32_t elementCount, const OpalBufferElement* elements, const void* data)
+{
+  uint32_t bufferOffset = 0, dataOffset = 0;
+  uint32_t elementSize = 0;
+  const unsigned char* dataBytes = (const unsigned char*)data;
+
+  for (uint32_t i = 0; i < elementCount; i++)
+  {
+    elementSize = OpalBufferElementSize(elements[i]);
+    bufferOffset = BufferAlignOffset_Opal(bufferOffset, elements[i]);
+
+    OvkBufferPushDataSegment(buffer, dataBytes + dataOffset, elementSize, bufferOffset);
+
+    bufferOffset += elementSize;
+    dataOffset += elementSize;
+  }
+
   return Opal_Success;
 }
 
