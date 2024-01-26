@@ -70,6 +70,9 @@ uint32_t OpalBufferElementSize(OpalBufferElement element)
   case Opal_Buffer_Mat4:
     return 64;
 
+  case Opal_Buffer_Structure_End:
+    return 0;
+
   default: return 0;
   }
 }
@@ -97,6 +100,9 @@ uint32_t BufferElementAlignment_Opal(OpalBufferElement element)
 
     case Opal_Buffer_Mat4:
     return 4;
+
+    case Opal_Buffer_Structure_End:
+    return 16;
 
   default: return 1;
   }
@@ -492,6 +498,10 @@ OpalResult OpalBufferAlignAndPushData(OpalBuffer buffer, uint32_t elementCount, 
   {
     elementSize = OpalBufferElementSize(elements[i]);
     bufferOffset = BufferAlignOffset_Opal(bufferOffset, elements[i]);
+
+    // Should only occur at structure ends
+    if (elementSize == 0)
+      continue;
 
     OvkBufferPushDataSegment(buffer, dataBytes + dataOffset, elementSize, bufferOffset);
 

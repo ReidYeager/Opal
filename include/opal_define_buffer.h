@@ -11,6 +11,8 @@ typedef enum OpalBufferElement
   Opal_Buffer_Float,  Opal_Buffer_Float2,  Opal_Buffer_Float3,  Opal_Buffer_Float4,
   Opal_Buffer_Double, Opal_Buffer_Double2, Opal_Buffer_Double3, Opal_Buffer_Double4,
   Opal_Buffer_Mat4,
+
+  Opal_Buffer_Structure_End
 } OpalBufferElement;
 
 typedef struct OpalBuffer_T* OpalBuffer;

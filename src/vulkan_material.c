@@ -282,8 +282,8 @@ OpalResult CreatePipeline_Ovk(OpalMaterial_T* _material, OpalMaterialInitInfo _i
   rasterStateInfo.pNext = NULL;
   rasterStateInfo.flags = 0;
 
-  //rasterStateInfo.cullMode = VK_CULL_MODE_BACK_BIT;
-  rasterStateInfo.cullMode = VK_CULL_MODE_NONE;
+  rasterStateInfo.cullMode = VK_CULL_MODE_BACK_BIT;
+  //rasterStateInfo.cullMode = VK_CULL_MODE_NONE;
   rasterStateInfo.polygonMode = VK_POLYGON_MODE_FILL;
 
   rasterStateInfo.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
