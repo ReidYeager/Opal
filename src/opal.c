@@ -7,6 +7,21 @@
 
 OpalState_T oState = { 0 };
 
+void OpalPrintMessage(OpalMessageType type, const char* message, ...)
+{
+  if (oState.messageCallback != NULL)
+  {
+    char messageBuffer[1024];
+
+    va_list args;
+    va_start(args, type);
+    vsnprintf(messageBuffer, 1024, message, args);
+    va_end(args);
+
+    oState.messageCallback(type, messageBuffer);
+  }
+}
+
 // Size in bytes
 uint32_t OpalFormatToSize(OpalFormat _format)
 {
@@ -120,9 +135,11 @@ uint32_t BufferAlignOffset_Opal(uint32_t offset, OpalBufferElement nextElement)
 
 OpalResult OpalInit(OpalInitInfo _initInfo)
 {
+  oState.messageCallback = _initInfo.messageCallback;
+
   if (oState.vertexFormat.pFormats)
   {
-    OpalLog("Failed to init Opal. Already in use.\n");
+    OpalLog("Failed to init Opal. Already in use.");
     return Opal_Failure;
   }
 
@@ -152,7 +169,7 @@ OpalResult OpalWaitIdle()
 
 OpalResult OpalWindowInit(OpalWindow* _outWindow, OpalWindowInitInfo _initInfo)
 {
-  OpalLog("Creating new window\n");
+  OpalLog("Creating new window");
   OpalWindow_T* newWindow = OpalMemAllocZeroSingle(OpalWindow_T);
 
   newWindow->platform = _initInfo.platformInfo;
@@ -182,18 +199,18 @@ OpalResult OpalWindowReinit(OpalWindow _window)
   {
     if (result == Opal_Window_Minimized)
     {
-      OpalLog("Window reinit pseudo failed due to minimization\n");
+      OpalLog("Window reinit pseudo failed due to minimization");
       return Opal_Window_Minimized;
     }
     else
     {
-      OPAL_ATTEMPT_FAIL_LOG("OvkWindowReinit failed with result %d\n", result);
+      OPAL_ATTEMPT_FAIL_LOG("OvkWindowReinit failed with result %d", result);
       return Opal_Failure;
     }
 
   }
 
-  OpalLog("Window resized to %04u, %04u\r", _window->extents.width, _window->extents.height);
+  OpalLog("Window resized to %04u, %04u", _window->extents.width, _window->extents.height);
   return Opal_Success;
 }
 
@@ -209,7 +226,7 @@ OpalResult OpalRenderpassInit(OpalRenderpass* _renderpass, OpalRenderpassInitInf
   newRenderpass->pSubpasses = OpalMemAllocZeroArray(OpalSubpassInfo, _initInfo.imageCount);
   OpalMemCopy(_initInfo.pSubpasses, newRenderpass->pSubpasses, sizeof(OpalSubpassInfo) * _initInfo.imageCount);
 
-  OpalLog("Renderpass init complete\n");
+  OpalLog("Renderpass init complete");
   *_renderpass = newRenderpass;
   return Opal_Success;
 }
@@ -219,7 +236,7 @@ void OpalRenderpassShutdown(OpalRenderpass* _renderpass)
   OvkRenderpassShutdown(*_renderpass);
   OpalMemFree(*_renderpass);
   *_renderpass = OPAL_NULL_HANDLE;
-  OpalLog("Renderpass shutdown complete\n");
+  OpalLog("Renderpass shutdown complete");
 }
 
 bool CompareExtents_Opal(OpalExtent _a, OpalExtent _b)
@@ -244,7 +261,7 @@ OpalResult OpalFramebufferInit(OpalFramebuffer* _framebuffer, OpalFramebufferIni
     if (!CompareExtents_Opal(newFramebuffer->extent, _initInfo.pImages[i]->extents))
     {
       OpalLogError(
-        "All framebuffer input images must have matching extents : (%u, %u, %u)\n",
+        "All framebuffer input images must have matching extents : (%u, %u, %u)",
         newFramebuffer->extent.width,
         newFramebuffer->extent.height,
         newFramebuffer->extent.depth);
@@ -254,7 +271,7 @@ OpalResult OpalFramebufferInit(OpalFramebuffer* _framebuffer, OpalFramebufferIni
     newFramebuffer->ppImages[i] = _initInfo.pImages[i];
   }
 
-  OpalLog("Framebuffer init complete\n");
+  OpalLog("Framebuffer init complete");
   *_framebuffer = newFramebuffer;
   return Opal_Success;
 }
@@ -265,7 +282,7 @@ void OpalFramebufferShutdown(OpalFramebuffer* _framebuffer)
   OpalMemFree((*_framebuffer)->ppImages);
   OpalMemFree(*_framebuffer);
   *_framebuffer = OPAL_NULL_HANDLE;
-  OpalLog("Framebuffer shutdown complete\n");
+  OpalLog("Framebuffer shutdown complete");
 }
 
 OpalResult OpalFramebufferReinit(OpalFramebuffer _framebuffer)
@@ -295,7 +312,7 @@ OpalResult OpalShaderInit(OpalShader* _shader, OpalShaderInitInfo _initInfo)
 
   newShader->type = _initInfo.type;
 
-  OpalLog("Shader init complete\n");
+  OpalLog("Shader init complete");
   *_shader = newShader;
   return Opal_Success;
 }
@@ -305,7 +322,7 @@ void OpalShaderShutdown(OpalShader* _shader)
   OvkShaderShutdown(*_shader);
   OpalMemFree(*_shader);
   *_shader = OPAL_NULL_HANDLE;
-  OpalLog("Shader shutdown complete\n");
+  OpalLog("Shader shutdown complete");
 }
 
 OpalResult OpalInputLayoutInit(OpalInputLayout* _layout, OpalInputLayoutInitInfo _initInfo)
@@ -366,7 +383,7 @@ OpalResult OpalMaterialInit(OpalMaterial* _material, OpalMaterialInitInfo _initI
 
   newMaterial->pushConstantSize = _initInfo.pushConstantSize;
 
-  OpalLog("Material init complete\n");
+  OpalLog("Material init complete");
   *_material = newMaterial;
   return Opal_Success;
 }
@@ -376,7 +393,7 @@ void OpalMaterialShutdown(OpalMaterial* _material)
   OvkMaterialShutdown(*_material);
   OpalMemFree(*_material);
   *_material = OPAL_NULL_HANDLE;
-  OpalLog("Material shutdown complete\n");
+  OpalLog("Material shutdown complete");
 }
 
 OpalResult OpalMaterialReinit(OpalMaterial _material)
@@ -445,7 +462,7 @@ OpalResult OpalBufferInit(OpalBuffer* _buffer, OpalBufferInitInfo _initInfo)
 
   newBuffer->size = _initInfo.size;
 
-  OpalLog("Buffer init complete : %llu (%llu) bytes\n", newBuffer->size, newBuffer->paddedSize);
+  OpalLog("Buffer init complete : %llu (%llu) bytes", newBuffer->size, newBuffer->paddedSize);
   *_buffer = newBuffer;
   return Opal_Success;
 }
@@ -469,7 +486,7 @@ OpalResult OpalBufferInitAligned(OpalBuffer* buffer, OpalBufferInitAlignedInfo i
 
   newBuffer->size = size;
 
-  OpalLog("Buffer init aligned complete : %llu (%llu) bytes\n", newBuffer->size, newBuffer->paddedSize);
+  OpalLog("Buffer init aligned complete : %llu (%llu) bytes", newBuffer->size, newBuffer->paddedSize);
   *buffer = newBuffer;
   return Opal_Success;
 }
@@ -479,7 +496,7 @@ void OpalBufferShutdown(OpalBuffer* _buffer)
   OvkBufferShutdown(*_buffer);
   OpalMemFree(*_buffer);
   *_buffer = OPAL_NULL_HANDLE;
-  OpalLog("Buffer shutdown complete\n");
+  OpalLog("Buffer shutdown complete");
 }
 
 OpalResult OpalBufferPushData(OpalBuffer _buffer, const void* _data)

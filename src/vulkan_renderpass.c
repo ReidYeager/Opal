@@ -85,7 +85,7 @@ OpalResult BuildAttachmentArray_Ovk(OpalRenderpassInitInfo _initInfo, Renderpass
       default:
       {
         FreeRenderpassData_Ovk(_data);
-        OpalLogError("Unknown renderpass attachment usage : %u\n", _initInfo.pAttachments[i].usage);
+        OpalLogError("Unknown renderpass attachment usage : %u", _initInfo.pAttachments[i].usage);
         return Opal_Failure;
       }
     } // switch (_initInfo.pAttachments[i].usage)
@@ -108,7 +108,7 @@ OpalResult BuildAttachmentArray_Ovk(OpalRenderpassInitInfo _initInfo, Renderpass
       default:
       {
         FreeRenderpassData_Ovk(_data);
-        OpalLogError("Unknown renderpass attachment load op : %u\n", _initInfo.pAttachments[i].loadOp);
+        OpalLogError("Unknown renderpass attachment load op : %u", _initInfo.pAttachments[i].loadOp);
         return Opal_Failure;
       }
     } // switch (_initInfo.pAttachments[i].loadOp)

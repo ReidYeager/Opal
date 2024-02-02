@@ -36,7 +36,7 @@ OpalResult OpalPlatformCreateSurface(OpalWindowPlatformInfo_T _window, VkInstanc
 
   if (result != VK_SUCCESS)
   {
-    OpalLogError("Failed to create vulkan window surface\n");
+    OpalLogError("Failed to create vulkan window surface");
     return Opal_Failure;
   }
 

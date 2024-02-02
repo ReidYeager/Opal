@@ -43,6 +43,16 @@ typedef enum OpalResult
   Opal_Window_Minimized
 } OpalResult;
 
+typedef enum OpalMessageType
+{
+  Opal_Message_Info,
+  Opal_Message_Debug,
+  Opal_Message_Warning,
+  Opal_Message_Error,
+  Opal_Message_Fatal
+} OpalMessageType;
+typedef void (*OpalMessageCallbackFunction)(OpalMessageType type, const char* message);
+
 typedef enum OpalFormat
 {
   Opal_Format_Undefined,

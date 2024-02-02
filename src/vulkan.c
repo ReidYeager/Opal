@@ -63,7 +63,7 @@ VkFormat OpalFormatToVkFormat_Ovk(OpalFormat _format)
   case Opal_Format_D24_S8 : return VK_FORMAT_D24_UNORM_S8_UINT;
   case Opal_Format_D32 : return VK_FORMAT_D32_SFLOAT;
 
-  default: OpalLog("Vulkan unkown or unsupported opal format %d\n", _format); return VK_FORMAT_UNDEFINED;
+  default: OpalLog("Vulkan unkown or unsupported opal format %d", _format); return VK_FORMAT_UNDEFINED;
   }
 }
 
@@ -168,7 +168,7 @@ uint32_t GetFamilyIndexForQueue_Ovk(const OpalVkGpu_T* const _gpu, VkQueueFlags 
 
   if (bestFit == ~0U)
   {
-    OpalLog("Failed to find a queue family with the flag %u\n", _flags);
+    OpalLog("Failed to find a queue family with the flag %u", _flags);
   }
   return bestFit;
 }
@@ -197,7 +197,7 @@ uint32_t GetFamilyIndexForPresent_Ovk(const OpalVkGpu_T* const _gpu, VkSurfaceKH
 
   if (bestFit == ~0u)
   {
-    OpalLog("Failed to find a queue family for presentation\n");
+    OpalLog("Failed to find a queue family for presentation");
   }
 
   return bestFit;
@@ -260,7 +260,7 @@ OpalResult ChoosePhysicalDevice_Ovk(VkSurfaceKHR _surface)
     }
   }
 
-  OpalLog("Failed to find a valid physical device\n");
+  OpalLog("Failed to find a valid physical device");
   return Opal_Failure;
 }
 
@@ -385,7 +385,7 @@ OpalResult CreateVertexFormat_Ovk(uint32_t _count, const OpalFormat* _pFormats)
 {
   if (_count == 0 || _pFormats == NULL)
   {
-    OpalLogError("No vertex format input\n");
+    OpalLogError("No vertex format input");
     return Opal_Failure;
   }
 
@@ -420,7 +420,7 @@ OpalResult OvkInit(OpalInitInfo _initInfo)
   VkSurfaceKHR tmpInitSurface;
   if (OpalPlatformCreateSurface(_initInfo.windowPlatformInfo, oState.vk.instance, &tmpInitSurface))
   {
-    OpalLog("Failed to create surface for lapis window\n");
+    OpalLog("Failed to create surface for lapis window");
     return Opal_Failure;
   }
 
@@ -434,7 +434,7 @@ OpalResult OvkInit(OpalInitInfo _initInfo)
 
   vkDestroySurfaceKHR(oState.vk.instance, tmpInitSurface, oState.vk.allocator);
 
-  OpalLog("Vk init complete : %s\n", oState.vk.gpuInfo.properties.deviceName);
+  OpalLog("Vk init complete : %s", oState.vk.gpuInfo.properties.deviceName);
   return Opal_Success;
 }
 
@@ -450,5 +450,5 @@ void OvkShutdown()
   vkDestroyDevice(oState.vk.device, oState.vk.allocator);
   vkDestroyInstance(oState.vk.instance, oState.vk.allocator);
 
-  OpalLog("Vk shutdown complete\n");
+  OpalLog("Vk shutdown complete");
 }

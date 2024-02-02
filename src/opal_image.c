@@ -5,8 +5,8 @@ OpalResult OpalImageInit(OpalImage* _image, OpalImageInitInfo _initInfo)
 {
   if (!_initInfo.extent.width || !_initInfo.extent.height || !_initInfo.extent.depth)
   {
-    OpalLogError("Image extents must all be greater than zero\n");
-    OpalLogError("    Current extents : (%u, %u, %u)\n", _initInfo.extent.width, _initInfo.extent.height, _initInfo.extent.depth);
+    OpalLogError("Image extents must all be greater than zero");
+    OpalLogError("    Current extents : (%u, %u, %u)", _initInfo.extent.width, _initInfo.extent.height, _initInfo.extent.depth);
     return Opal_Failure;
   }
 

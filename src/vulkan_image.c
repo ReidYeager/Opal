@@ -49,7 +49,7 @@ uint32_t GetMemoryTypeIndex_Ovk(uint32_t _mask, VkMemoryPropertyFlags _flags)
     }
   }
 
-  OpalLog("Vulkan image failed to find a suitable memory type index\n");
+  OpalLog("Vulkan image failed to find a suitable memory type index");
   return ~0u;
 }
 
@@ -344,7 +344,7 @@ OpalResult OvkTransitionImageLayout(VkImage _image, VkImageLayout _layout, VkIma
     }
     default:
     {
-      OpalLogError("Unknown new image layout %d\n", _newLayout);
+      OpalLogError("Unknown new image layout %d", _newLayout);
       return Opal_Failure;
     }
   }

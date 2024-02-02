@@ -5,35 +5,19 @@
 #include "include/opal.h"
 #include <vulkan/vulkan.h>
 #include <stdio.h>
+#include <varargs.h>
 
-#ifdef GEM_LAPIS
-#define OpalLog(...) LapisConsolePrintMessage(Lapis_Console_Info, "Opal :: " __VA_ARGS__)
-#else
-#ifdef _MSC_VER
-#define OpalLog(...) printf("Opal :: " __VA_ARGS__)
-#else
-// Safer but msvc doesn't support
-#define OpalLog(message, ...) printf("Opal :: " message, __VA_ARGS__)
-#endif
-#endif // GEM_LAPIS
+void OpalPrintMessage(OpalMessageType type, ...);
 
-#ifdef GEM_LAPIS
-#define OpalLogError(...) LapisConsolePrintMessage(Lapis_Console_Error, "Opal :: Err :: " __VA_ARGS__)
-#else
-#ifdef _MSC_VER
-#define OpalLogError(...) printf("Opal :: Err :: " __VA_ARGS__)
-#else
-// Safer but msvc doesn't support
-#define OpalLogError(message, ...) printf("Opal :: Err :: " message, __VA_ARGS__)
-#endif
-#endif // GEM_LAPIS
+#define OpalLog(...) OpalPrintMessage(Opal_Message_Info, __VA_ARGS__)
+#define OpalLogError(...) OpalPrintMessage(Opal_Message_Error, __VA_ARGS__)
 
 #define OPAL_ATTEMPT(fn, ...)                                          \
 {                                                                      \
   OpalResult oResult = (fn);                                           \
   if (oResult)                                                         \
   {                                                                    \
-    OpalLogError("Function \""#fn"\" failed. Result = %d\n", oResult); \
+    OpalLogError("Function \""#fn"\" failed. Result = %d", oResult); \
     OpalLogError("\t%s:%d\n", __FILE__, __LINE__);                     \
     { __VA_ARGS__; }                                                   \
     return Opal_Failure;                                               \
@@ -52,7 +36,7 @@
   VkResult vResult = (fn);                                                    \
   if (vResult != VK_SUCCESS)                                                  \
   {                                                                           \
-    OpalLogError("Vulkan function \""#fn"\" failed. Result = %d\n", vResult); \
+    OpalLogError("Vulkan function \""#fn"\" failed. Result = %d", vResult); \
     OpalLogError("\t%s:%d\n", __FILE__, __LINE__);                            \
     { __VA_ARGS__; }                                                          \
     return Opal_Failure;                                                      \

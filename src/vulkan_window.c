@@ -5,7 +5,7 @@ OpalResult CreateSurface_Ovk(OpalWindow_T* _window)
 {
   if (OpalPlatformCreateSurface(_window->platform, oState.vk.instance, &_window->vk.surface))
   {
-    OpalLog("Failed to create Vk surface for Lapis window\n");
+    OpalLog("Failed to create Vk surface for Lapis window");
     return Opal_Failure;
   }
 
@@ -230,7 +230,7 @@ OpalResult OvkWindowInit(OpalWindow_T* _window, OpalWindowInitInfo _initInfo)
   iInitInfo.usage = Opal_Image_Usage_Color | Opal_Image_Usage_Copy_Src;
   OPAL_ATTEMPT(OpalImageInit(&_window->renderBufferImage, iInitInfo));
 
-  OpalLog("Vk window init complete\n");
+  OpalLog("Vk window init complete");
 
   return Opal_Success;
 }
@@ -293,7 +293,7 @@ OpalResult OvkWindowShutdown(OpalWindow_T* _window)
 
   vkDestroySurfaceKHR(oState.vk.instance, _window->vk.surface, oState.vk.allocator);
 
-  OpalLog("Vk window shutdown complete\n");
+  OpalLog("Vk window shutdown complete");
 
   return Opal_Success;
 }

@@ -64,7 +64,7 @@ uint32_t GetMemTypeIndex_Ovk(uint32_t _supportedTypes, VkMemoryPropertyFlags _fl
     }
   }
 
-  OpalLog("Failed to find a suitable memory type for the buffer\n");
+  OpalLog("Failed to find a suitable memory type for the buffer");
   return ~0u;
 }
 

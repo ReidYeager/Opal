@@ -20,6 +20,7 @@ typedef struct OpalInitInfo
 {
   OpalWindowPlatformInfo_T windowPlatformInfo;
   bool debug;
+  OpalMessageCallbackFunction messageCallback;
 
   struct
   {
@@ -69,6 +70,8 @@ typedef struct OpalVkVertexInfo_T
 
 typedef struct OpalState_T
 {
+  OpalMessageCallbackFunction messageCallback;
+
   //OpalWindow_T window;
   OpalVkState_T vk;
 
