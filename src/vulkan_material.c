@@ -282,8 +282,13 @@ OpalResult CreatePipeline_Ovk(OpalMaterial_T* _material, OpalMaterialInitInfo _i
   rasterStateInfo.pNext = NULL;
   rasterStateInfo.flags = 0;
 
-  rasterStateInfo.cullMode = VK_CULL_MODE_BACK_BIT;
-  //rasterStateInfo.cullMode = VK_CULL_MODE_NONE;
+  switch (_initInfo.pipelineSettings & Opal_Pipeline_Cull_BITS)
+  {
+  case Opal_Pipeline_Cull_None: rasterStateInfo.cullMode = VK_CULL_MODE_NONE; break;
+  case Opal_Pipeline_Cull_Front: rasterStateInfo.cullMode = VK_CULL_MODE_FRONT_BIT; break;
+  case Opal_Pipeline_Cull_Back: rasterStateInfo.cullMode = VK_CULL_MODE_BACK_BIT; break;
+  case Opal_Pipeline_Cull_Both: rasterStateInfo.cullMode = VK_CULL_MODE_FRONT_AND_BACK; break;
+  }
   rasterStateInfo.polygonMode = VK_POLYGON_MODE_FILL;
 
   rasterStateInfo.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
@@ -308,7 +313,11 @@ OpalResult CreatePipeline_Ovk(OpalMaterial_T* _material, OpalMaterialInitInfo _i
   depthStateInfo.flags = 0;
   depthStateInfo.depthTestEnable = VK_TRUE;
   depthStateInfo.depthWriteEnable = VK_TRUE;
-  depthStateInfo.depthCompareOp = VK_COMPARE_OP_LESS;
+  switch (_initInfo.pipelineSettings & Opal_Pipeline_Depth_Compare_BITS)
+  {
+  case Opal_Pipeline_Depth_Compare_Less: depthStateInfo.depthCompareOp = VK_COMPARE_OP_LESS; break;
+  case Opal_Pipeline_Depth_Compare_LessEqual: depthStateInfo.depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL; break;
+  }
   depthStateInfo.back.compareOp = VK_COMPARE_OP_ALWAYS;
   depthStateInfo.depthBoundsTestEnable = VK_FALSE;
 

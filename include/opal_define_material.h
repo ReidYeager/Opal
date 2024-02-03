@@ -129,6 +129,21 @@ typedef struct OpalInputInfo
   OpalInputValue value;
 } OpalInputInfo;
 
+typedef enum OpalPipelineSettingFlagBits
+{
+  Opal_Pipeline_Cull_Back  = (0 << 0),
+  Opal_Pipeline_Cull_Front = (1 << 0),
+  Opal_Pipeline_Cull_Both  = (2 << 0),
+  Opal_Pipeline_Cull_None  = (3 << 0),
+  Opal_Pipeline_Cull_BITS  = (3 << 0), // 2 bits - 2 total
+
+  Opal_Pipeline_Depth_Compare_Less      = (0 << 2),
+  Opal_Pipeline_Depth_Compare_LessEqual = (1 << 2),
+  Opal_Pipeline_Depth_Compare_BITS      = (1 << 2), // 1 bit - 3 total
+
+} OpalPipelineSettingFlagBits;
+typedef uint64_t OpalPipelineSettingFlags;
+
 typedef struct OpalMaterialInitInfo
 {
   OpalRenderpass renderpass;
@@ -141,6 +156,7 @@ typedef struct OpalMaterialInitInfo
   const OpalInputLayout* pInputLayouts;
 
   uint32_t pushConstantSize;
+  OpalPipelineSettingFlags pipelineSettings;
 } OpalMaterialInitInfo;
 
 #endif // !GEM_OPAL_DEFINE_MATERIAL_H_
