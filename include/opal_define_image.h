@@ -61,6 +61,7 @@ typedef struct OpalImageInitInfo
   OpalFormat format;
   OpalImageUsageFlags usage;
   OpalImageSampleType sampleType;
+  uint32_t mipLevels;
 } OpalImageInitInfo;
 
 typedef struct OvkImage_T
@@ -79,6 +80,8 @@ typedef struct OpalImage_T
   OpalExtent extents;
   OpalFormat format;
   OpalImageUsageFlags usage;
+
+  uint32_t mipLevels;
 
   OvkImage_T vk;
 } OpalImage_T;

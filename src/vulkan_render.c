@@ -44,7 +44,7 @@ OpalResult CopyRenderBufferToSwapchain_Ovk()
   imageCopy.dstOffset = (VkOffset3D){ 0, 0, 0 };
   imageCopy.dstSubresource = subres;
 
-  OPAL_ATTEMPT(OvkTransitionImageLayout(currentRenderWindow_Ovk->vk.swapchain.pImages[swapchainImageIndex], VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL));
+  OPAL_ATTEMPT(OvkTransitionImageLayout(currentRenderWindow_Ovk->vk.swapchain.pImages[swapchainImageIndex], VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1));
 
   VkCommandBuffer tmpcmd;
   OPAL_ATTEMPT(OpalBeginSingleUseCommand(oState.vk.transientCommandPool, &tmpcmd));
@@ -58,7 +58,7 @@ OpalResult CopyRenderBufferToSwapchain_Ovk()
     &imageCopy);
   OPAL_ATTEMPT(OpalEndSingleUseCommand(oState.vk.transientCommandPool, oState.vk.queueTransfer, tmpcmd));
 
-  OPAL_ATTEMPT(OvkTransitionImageLayout(currentRenderWindow_Ovk->vk.swapchain.pImages[swapchainImageIndex], VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR));
+  OPAL_ATTEMPT(OvkTransitionImageLayout(currentRenderWindow_Ovk->vk.swapchain.pImages[swapchainImageIndex], VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, 1));
 
   return Opal_Success;
 }

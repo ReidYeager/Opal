@@ -10,11 +10,24 @@ OpalResult OpalImageInit(OpalImage* _image, OpalImageInitInfo _initInfo)
     return Opal_Failure;
   }
 
+  _initInfo.mipLevels = (_initInfo.mipLevels == 0) ? 1 : _initInfo.mipLevels;
+
   OpalImage_T* newImage = OpalMemAllocZeroSingle(OpalImage_T);
 
   newImage->extents = _initInfo.extent;
   newImage->format = _initInfo.format;
   newImage->usage = _initInfo.usage;
+  newImage->mipLevels = _initInfo.mipLevels;
+
+  if ((_initInfo.usage & Opal_Image_Usage_Uniform) != 0 && _initInfo.mipLevels > 1)
+  {
+    _initInfo.usage |= Opal_Image_Usage_Copy_Src;
+  }
+  else
+  {
+    _initInfo.mipLevels = 1;
+  }
+  newImage->mipLevels = _initInfo.mipLevels;
 
   OPAL_ATTEMPT(OvkImageInit(newImage, _initInfo));
 

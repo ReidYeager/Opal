@@ -24,7 +24,7 @@ OpalResult CreateImage_Ovk(OpalImage_T* _image, OpalImageInitInfo _initInfo)
   createInfo.extent.depth = _initInfo.extent.depth == 0 ? 1 : _initInfo.extent.depth;
   createInfo.format = OpalFormatToVkFormat_Ovk(_initInfo.format);
   createInfo.usage = OpalUsageToVkUsage_Ovk(_initInfo.usage);
-  createInfo.mipLevels = 1;
+  createInfo.mipLevels = _initInfo.mipLevels;
   createInfo.arrayLayers = 1;
   createInfo.imageType = _initInfo.extent.depth <= 1 ? VK_IMAGE_TYPE_2D : VK_IMAGE_TYPE_3D;
   createInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
@@ -83,7 +83,7 @@ OpalResult CreateView_Ovk(OpalImage_T* _image)
     vCreateInfo.subresourceRange.aspectMask |= VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
   if (_image->usage & Opal_Image_Usage_Uniform)
     vCreateInfo.subresourceRange.aspectMask |= VK_IMAGE_ASPECT_COLOR_BIT;
-  vCreateInfo.subresourceRange.levelCount = 1;
+  vCreateInfo.subresourceRange.levelCount = _image->mipLevels;
   vCreateInfo.subresourceRange.baseMipLevel = 0;
   vCreateInfo.subresourceRange.layerCount = 1;
   vCreateInfo.subresourceRange.baseArrayLayer = 0;
@@ -123,11 +123,98 @@ OpalResult CreateSampler_Ovk(OpalImage_T* _image, OpalImageInitInfo _initInfo)
   createInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
   createInfo.mipLodBias = 0.0f;
   createInfo.minLod = 0.0f;
-  createInfo.maxLod = 1.0f;
+  createInfo.maxLod = (float)_initInfo.mipLevels;
   createInfo.maxAnisotropy = 1.0f;
 
   OVK_ATTEMPT(vkCreateSampler(oState.vk.device, &createInfo, oState.vk.allocator, &_image->vk.sampler));
 
+  return Opal_Success;
+}
+
+OpalResult FillMipmaps_Ovk(OpalImage_T* image)
+{
+  OPAL_ATTEMPT(OvkTransitionImageLayout(image->vk.image, image->vk.layout, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, image->mipLevels));
+
+  VkCommandBuffer cmd;
+  OPAL_ATTEMPT(OpalBeginSingleUseCommand(oState.vk.graphicsCommandPool, &cmd));
+
+  VkImageMemoryBarrier barrier = {0};
+  barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+  barrier.image = image->vk.image;
+  barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+  barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+  barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+  barrier.subresourceRange.baseArrayLayer = 0;
+  barrier.subresourceRange.layerCount = 1;
+  barrier.subresourceRange.levelCount = 1;
+
+  uint32_t mipWidth = image->extents.width;
+  uint32_t mipHeight = image->extents.height;
+  for (uint32_t i = 1; i < image->mipLevels; i++)
+  {
+    barrier.subresourceRange.baseMipLevel = i - 1;
+    barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+    barrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+    barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+    barrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+    vkCmdPipelineBarrier(
+      cmd,
+      VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0,
+      0, NULL,
+      0, NULL,
+      1, &barrier);
+
+    VkImageBlit blit = {0};
+    blit.srcOffsets[0] = (VkOffset3D){ 0, 0, 0 };
+    blit.srcOffsets[1] = (VkOffset3D){ mipWidth, mipHeight, 1 };
+    blit.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    blit.srcSubresource.mipLevel = i - 1;
+    blit.srcSubresource.baseArrayLayer = 0;
+    blit.srcSubresource.layerCount = 1;
+    blit.dstOffsets[0] = (VkOffset3D){ 0, 0, 0 };
+    blit.dstOffsets[1] = (VkOffset3D){ (mipWidth > 1) ? (mipWidth / 2) : 1, (mipHeight > 1) ? (mipHeight / 2) : 1, 1 };
+    blit.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    blit.dstSubresource.mipLevel = i;
+    blit.dstSubresource.baseArrayLayer = 0;
+    blit.dstSubresource.layerCount = 1;
+    vkCmdBlitImage(
+      cmd,
+      image->vk.image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+      image->vk.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+      1, &blit, VK_FILTER_LINEAR);
+
+    barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+    barrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+    barrier.srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+    barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+    vkCmdPipelineBarrier(
+      cmd,
+      VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0,
+      0, NULL,
+      0, NULL,
+      1, &barrier);
+
+    if (mipWidth > 1)
+      mipWidth /= 2;
+    if (mipHeight > 1)
+      mipHeight /= 2;
+  }
+
+  barrier.subresourceRange.baseMipLevel = image->mipLevels - 1;
+  barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+  barrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+  barrier.srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+  barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+  vkCmdPipelineBarrier(
+    cmd,
+    VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0,
+    0, NULL,
+    0, NULL,
+    1, &barrier);
+
+  image->vk.layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+  OPAL_ATTEMPT(OpalEndSingleUseCommand(oState.vk.graphicsCommandPool, oState.vk.queueGraphics, cmd));
   return Opal_Success;
 }
 
@@ -136,6 +223,8 @@ OpalResult OvkImageInit(OpalImage_T* _image, OpalImageInitInfo _initInfo)
   OPAL_ATTEMPT(CreateImage_Ovk(_image, _initInfo));
   OPAL_ATTEMPT(AllocAndBindMemory_Ovk(_image));
   OPAL_ATTEMPT(CreateView_Ovk(_image));
+
+  _image->vk.layout = VK_IMAGE_LAYOUT_UNDEFINED;
 
   if (_image->usage & Opal_Image_Usage_Uniform)
   {
@@ -154,7 +243,7 @@ OpalResult OvkImageInit(OpalImage_T* _image, OpalImageInitInfo _initInfo)
   else
     newlayout = VK_IMAGE_LAYOUT_UNDEFINED;
 
-  OPAL_ATTEMPT(OvkTransitionImageLayout(_image->vk.image, VK_IMAGE_LAYOUT_UNDEFINED, newlayout));
+  OPAL_ATTEMPT(OvkTransitionImageLayout(_image->vk.image, _image->vk.layout, newlayout, _image->mipLevels));
   _image->vk.layout = newlayout;
 
   return Opal_Success;
@@ -181,12 +270,11 @@ OpalResult OvkImageResize(OpalImage_T* _image, OpalExtent _extents)
   newInitInfo.extent = _extents;
   newInitInfo.format = _image->format;
   newInitInfo.usage = _image->usage;
-
-  _image->extents = newInitInfo.extent;
-  _image->format = newInitInfo.format;
-  _image->usage = newInitInfo.usage;
+  newInitInfo.mipLevels = _image->mipLevels;
 
   OPAL_ATTEMPT(OvkImageInit(_image, newInitInfo));
+
+  _image->extents = newInitInfo.extent;
 
   return Opal_Success;
 }
@@ -247,11 +335,16 @@ OpalResult OvkImageFill(OpalImage_T* _image, void* _data)
   OPAL_ATTEMPT(OpalBufferPushData(buffer, _data));
 
   VkImageLayout ogLayout = _image->vk.layout;
-  OPAL_ATTEMPT(OvkTransitionImageLayout(_image->vk.image, _image->vk.layout, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL));
+  OPAL_ATTEMPT(OvkTransitionImageLayout(_image->vk.image, _image->vk.layout, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, _image->mipLevels));
   OPAL_ATTEMPT(CopyBufferToImage_Ovk(_image, buffer));
-  OPAL_ATTEMPT(OvkTransitionImageLayout(_image->vk.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, ogLayout));
+  OPAL_ATTEMPT(OvkTransitionImageLayout(_image->vk.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, ogLayout, _image->mipLevels));
 
   OpalBufferShutdown(&buffer);
+
+  if (_image->mipLevels > 1)
+  {
+    OPAL_ATTEMPT(FillMipmaps_Ovk(_image));
+  }
 
   return Opal_Success;
 }
@@ -265,9 +358,9 @@ uint32_t OvkImageDumpData(OpalImage image, void** data)
   OPAL_ATTEMPT(OpalBufferInit(&buffer, bufferInfo));
 
   VkImageLayout ogLayout = image->vk.layout;
-  OPAL_ATTEMPT(OvkTransitionImageLayout(image->vk.image, image->vk.layout, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL));
+  OPAL_ATTEMPT(OvkTransitionImageLayout(image->vk.image, image->vk.layout, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, image->mipLevels));
   OPAL_ATTEMPT(CopyImageToBuffer_Ovk(image, buffer));
-  OPAL_ATTEMPT(OvkTransitionImageLayout(image->vk.image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, ogLayout));
+  OPAL_ATTEMPT(OvkTransitionImageLayout(image->vk.image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, ogLayout, image->mipLevels));
 
   uint32_t outSize = 0;
   outSize = OpalBufferDumpData(buffer, data);
@@ -278,7 +371,7 @@ uint32_t OvkImageDumpData(OpalImage image, void** data)
 }
 
 // TODO : Change this to (OpalImage_T*, vkImageLayout) when swapchain buffer image is transitioned to OpalImage
-OpalResult OvkTransitionImageLayout(VkImage _image, VkImageLayout _layout, VkImageLayout _newLayout)
+OpalResult OvkTransitionImageLayout(VkImage _image, VkImageLayout _layout, VkImageLayout _newLayout, uint32_t mipCount)
 {
   VkImageMemoryBarrier memBarrier = { 0 };
   memBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
@@ -286,7 +379,7 @@ OpalResult OvkTransitionImageLayout(VkImage _image, VkImageLayout _layout, VkIma
   memBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
   memBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
   memBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-  memBarrier.subresourceRange.levelCount = 1;
+  memBarrier.subresourceRange.levelCount = mipCount;
   memBarrier.subresourceRange.baseMipLevel = 0;
   memBarrier.subresourceRange.layerCount = 1;
   memBarrier.subresourceRange.baseArrayLayer = 0;

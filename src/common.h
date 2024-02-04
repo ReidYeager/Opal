@@ -5,9 +5,9 @@
 #include "include/opal.h"
 #include <vulkan/vulkan.h>
 #include <stdio.h>
-#include <varargs.h>
+#include <stdarg.h>
 
-void OpalPrintMessage(OpalMessageType type, ...);
+void OpalPrintMessage(OpalMessageType type, const char* message, ...);
 
 #define OpalLog(...) OpalPrintMessage(Opal_Message_Info, __VA_ARGS__)
 #define OpalLogError(...) OpalPrintMessage(Opal_Message_Error, __VA_ARGS__)
@@ -76,7 +76,7 @@ void OvkImageShutdown(OpalImage_T* _image);
 OpalResult OvkImageResize(OpalImage_T* _image, OpalExtent _extents);
 OpalResult OvkImageFill(OpalImage_T* _image, void* _data);
 uint32_t OvkImageDumpData(OpalImage image, void** data);
-OpalResult OvkTransitionImageLayout(VkImage _image, VkImageLayout _layout, VkImageLayout _newLayout);
+OpalResult OvkTransitionImageLayout(VkImage _image, VkImageLayout _layout, VkImageLayout _newLayout, uint32_t mipCount);
 
 OpalResult OvkRenderpassInit(OpalRenderpass_T* _renderpass, OpalRenderpassInitInfo _initInfo);
 void OvkRenderpassShutdown(OpalRenderpass_T* _renderpass);

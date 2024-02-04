@@ -14,7 +14,7 @@ void OpalPrintMessage(OpalMessageType type, const char* message, ...)
     char messageBuffer[1024];
 
     va_list args;
-    va_start(args, type);
+    va_start(args, message);
     vsnprintf(messageBuffer, 1024, message, args);
     va_end(args);
 
