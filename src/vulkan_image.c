@@ -99,23 +99,40 @@ OpalResult CreateSampler_Ovk(OpalImage_T* _image, OpalImageInitInfo _initInfo)
   createInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
   createInfo.pNext = NULL;
   createInfo.flags = 0;
-  switch (_initInfo.sampleType)
+  switch (_initInfo.filterType)
   {
-  case Opal_Sample_Bilinear:
+  case Opal_Image_Filter_Bilinear:
   {
     createInfo.magFilter = VK_FILTER_LINEAR;
     createInfo.minFilter = VK_FILTER_LINEAR;
   } break;
-  case Opal_Sample_Point:
+  case Opal_Image_Filter_Point:
   default:
   {
     createInfo.magFilter = VK_FILTER_NEAREST;
     createInfo.minFilter = VK_FILTER_NEAREST;
   } break;
   }
-  createInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT; // VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-  createInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT; // VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-  createInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT; // VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+
+  VkSamplerAddressMode sampleMode;
+  switch (_initInfo.sampleMode)
+  {
+  case Opal_Image_Sample_Reflect:
+  {
+    sampleMode = VK_SAMPLER_ADDRESS_MODE_MIRRORED_REPEAT;
+  } break;
+  case Opal_Image_Sample_Clamp:
+  {
+    sampleMode = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+  } break;
+  case Opal_Image_Sample_Wrap:
+  default:
+  {
+    sampleMode = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+  } break;
+  }
+
+  createInfo.addressModeU = createInfo.addressModeV = createInfo.addressModeW = sampleMode;
   createInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_WHITE;
   createInfo.unnormalizedCoordinates = VK_FALSE;
   createInfo.compareEnable = VK_FALSE;
@@ -123,7 +140,7 @@ OpalResult CreateSampler_Ovk(OpalImage_T* _image, OpalImageInitInfo _initInfo)
   createInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
   createInfo.mipLodBias = 0.0f;
   createInfo.minLod = 0.0f;
-  createInfo.maxLod = (float)_initInfo.mipLevels;
+  createInfo.maxLod = (float)_initInfo.mipLevels - 1.0f;
   createInfo.maxAnisotropy = 1.0f;
 
   OVK_ATTEMPT(vkCreateSampler(oState.vk.device, &createInfo, oState.vk.allocator, &_image->vk.sampler));

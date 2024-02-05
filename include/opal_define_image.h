@@ -48,19 +48,28 @@ typedef enum OpalImageUsageBits
 } OpalImageUsageBits;
 typedef OpalFlags OpalImageUsageFlags;
 
-typedef enum OpalImageSampleType
+typedef enum OpalImageFilterType
 {
-  Opal_Sample_Point,
-  Opal_Sample_Bilinear,
-  Opal_Sample_COUNT
-} OpalImageSampleType;
+  Opal_Image_Filter_Point,
+  Opal_Image_Filter_Bilinear,
+  Opal_Image_Filter_COUNT
+} OpalImageFilterType;
+
+typedef enum OpalImageSampleMode
+{
+  Opal_Image_Sample_Wrap,
+  Opal_Image_Sample_Clamp,
+  Opal_Image_Sample_Reflect,
+  Opal_Image_Sample_COUNT,
+} OpalImageSampleMode;
 
 typedef struct OpalImageInitInfo
 {
   OpalExtent extent;
   OpalFormat format;
   OpalImageUsageFlags usage;
-  OpalImageSampleType sampleType;
+  OpalImageFilterType filterType;
+  OpalImageSampleMode sampleMode;
   uint32_t mipLevels;
 } OpalImageInitInfo;
 
