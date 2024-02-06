@@ -10,7 +10,7 @@ uint32_t syncIndex = 0;
 uint32_t swapchainImageIndex = 0;
 OvkSync_T* curSync = NULL;
 
-OpalResult OvkRenderBegin(OpalWindow _window)
+OpalResult OvkRenderBeginWindow(OpalWindow _window)
 {
   curSync = &_window->vk.pSync[syncIndex];
 
@@ -25,6 +25,38 @@ OpalResult OvkRenderBegin(OpalWindow _window)
   currentRenderWindow_Ovk = _window;
 
   OVK_ATTEMPT(vkBeginCommandBuffer(currentRenderCmd_Ovk, &beginInfo));
+
+  return Opal_Success;
+}
+
+OpalResult OvkRenderBeginSingle()
+{
+  OVK_ATTEMPT(vkWaitForFences(oState.vk.device, 1, &oState.vk.renderSingleAvailableFence, VK_TRUE, UINT64_MAX));
+
+  VkCommandBufferBeginInfo beginInfo = { 0 };
+  beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+  beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+  beginInfo.pInheritanceInfo = NULL;
+
+  OVK_ATTEMPT(vkBeginCommandBuffer(oState.vk.renderSingleCommandBuffer, &beginInfo));
+
+  currentRenderCmd_Ovk = oState.vk.renderSingleCommandBuffer;
+
+  return Opal_Success;
+}
+
+OpalResult OvkRenderEndSingle()
+{
+  OVK_ATTEMPT(vkEndCommandBuffer(oState.vk.renderSingleCommandBuffer));
+
+  VkSubmitInfo submitInfo = { 0 };
+  submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+  submitInfo.commandBufferCount = 1;
+  submitInfo.pCommandBuffers = &oState.vk.renderSingleCommandBuffer;
+
+  //OVK_ATTEMPT(vkResetFences(oState.vk.device, 1, &oState.vk.renderSingleAvailableFence));
+  OVK_ATTEMPT(vkQueueSubmit(oState.vk.queueGraphics, 1, &submitInfo, VK_NULL_HANDLE));
+  OVK_ATTEMPT(vkQueueWaitIdle(oState.vk.queueGraphics));
 
   return Opal_Success;
 }
@@ -63,7 +95,7 @@ OpalResult CopyRenderBufferToSwapchain_Ovk()
   return Opal_Success;
 }
 
-OpalResult OvkRenderEnd()
+OpalResult OvkRenderEndWindow()
 {
   OVK_ATTEMPT(vkEndCommandBuffer(currentRenderCmd_Ovk));
 

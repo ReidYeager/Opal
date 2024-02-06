@@ -60,6 +60,9 @@ typedef struct OpalVkState_T
   VkCommandPool graphicsCommandPool;
 
   VkDescriptorPool descriptorPool;
+
+  VkCommandBuffer renderSingleCommandBuffer;
+  VkFence renderSingleAvailableFence;
 } OpalVkState_T;
 
 typedef struct OpalVkVertexInfo_T
@@ -127,8 +130,10 @@ OpalResult OpalMaterialInit(OpalMaterial* _material, OpalMaterialInitInfo _initI
 void OpalMaterialShutdown(OpalMaterial* _material);
 OpalResult OpalMaterialReinit(OpalMaterial _material);
 
-OpalResult OpalRenderBegin(OpalWindow _window);
-OpalResult OpalRenderEnd();
+OpalResult OpalRenderBeginWindow(OpalWindow _window);
+OpalResult OpalRenderEndWindow();
+OpalResult OpalRenderBeginSingle();
+OpalResult OpalRenderEndSingle();
 VkCommandBuffer OpalRenderGetCommandBuffer();
 void OpalRenderBeginRenderpass(OpalRenderpass _renderpass, OpalFramebuffer _framebuffer);
 void OpalRenderEndRenderpass(OpalRenderpass _renderpass);

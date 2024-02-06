@@ -98,8 +98,10 @@ OpalResult OvkMaterialInit(OpalMaterial_T* _material, OpalMaterialInitInfo _init
 void OvkMaterialShutdown(OpalMaterial_T* _material);
 OpalResult OvkMaterialReinit(OpalMaterial_T* _material);
 
-OpalResult OvkRenderBegin(OpalWindow _window);
-OpalResult OvkRenderEnd();
+OpalResult OvkRenderBeginWindow(OpalWindow _window);
+OpalResult OvkRenderEndWindow();
+OpalResult OvkRenderBeginSingle();
+OpalResult OvkRenderEndSingle();
 VkCommandBuffer OvkRenderGetCommandBuffer();
 void OvkRenderBeginRenderpass(OpalRenderpass _renderpass, OpalFramebuffer _framebuffer);
 void OvkRenderEndRenderpass(OpalRenderpass _renderpass);

@@ -402,20 +402,32 @@ OpalResult OpalMaterialReinit(OpalMaterial _material)
   return Opal_Success;
 }
 
-OpalResult OpalRenderBegin(OpalWindow _window)
+OpalResult OpalRenderBeginWindow(OpalWindow _window)
 {
   if (_window->minimized)
   {
     return Opal_Window_Minimized;
   }
 
-  OPAL_ATTEMPT(OvkRenderBegin(_window));
+  OPAL_ATTEMPT(OvkRenderBeginWindow(_window));
   return Opal_Success;
 }
 
-OpalResult OpalRenderEnd()
+OpalResult OpalRenderEndWindow()
 {
-  OPAL_ATTEMPT(OvkRenderEnd());
+  OPAL_ATTEMPT(OvkRenderEndWindow());
+  return Opal_Success;
+}
+
+OpalResult OpalRenderBeginSingle()
+{
+  OPAL_ATTEMPT(OvkRenderBeginSingle());
+  return Opal_Success;
+}
+
+OpalResult OpalRenderEndSingle()
+{
+  OPAL_ATTEMPT(OvkRenderEndSingle());
   return Opal_Success;
 }
 

@@ -412,6 +412,28 @@ OpalResult CreateVertexFormat_Ovk(uint32_t _count, const OpalFormat* _pFormats)
   return Opal_Success;
 }
 
+OpalResult CreateSingleRenderComponents_Ovk()
+{
+  //VkCommandBuffer renderSingleCommandBuffer;
+  //VkFence renderSingleAvailable;
+
+  VkCommandBufferAllocateInfo allocInfo = { 0 };
+  allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+  allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+  allocInfo.commandPool = oState.vk.graphicsCommandPool;
+  allocInfo.commandBufferCount = 1;
+
+  OVK_ATTEMPT(vkAllocateCommandBuffers(oState.vk.device, &allocInfo, &oState.vk.renderSingleCommandBuffer));
+
+  VkFenceCreateInfo fenceCreateInfo = { 0 };
+  fenceCreateInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+  fenceCreateInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
+
+  OVK_ATTEMPT(vkCreateFence(oState.vk.device, &fenceCreateInfo, oState.vk.allocator, &oState.vk.renderSingleAvailableFence));
+
+  return Opal_Success;
+}
+
 OpalResult OvkInit(OpalInitInfo _initInfo)
 {
   oState.vk.allocator = NULL;
@@ -434,12 +456,17 @@ OpalResult OvkInit(OpalInitInfo _initInfo)
 
   vkDestroySurfaceKHR(oState.vk.instance, tmpInitSurface, oState.vk.allocator);
 
+  OPAL_ATTEMPT(CreateSingleRenderComponents_Ovk());
+
   OpalLog("Vk init complete : %s", oState.vk.gpuInfo.properties.deviceName);
   return Opal_Success;
 }
 
 void OvkShutdown()
 {
+  vkFreeCommandBuffers(oState.vk.device, oState.vk.graphicsCommandPool, 1, &oState.vk.renderSingleCommandBuffer);
+  vkDestroyFence(oState.vk.device, oState.vk.renderSingleAvailableFence, oState.vk.allocator);
+
   vkDeviceWaitIdle(oState.vk.device);
   vkDestroyDescriptorPool(oState.vk.device, oState.vk.descriptorPool, oState.vk.allocator);
   vkDestroyCommandPool(oState.vk.device, oState.vk.graphicsCommandPool, oState.vk.allocator);
