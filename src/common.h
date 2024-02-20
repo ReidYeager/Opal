@@ -1,113 +1,102 @@
+#ifndef OPAL_COMMON_H
+#define OPAL_COMMON_H 1
 
-#ifndef GEM_OPAL_LOCAL_COMMON_H_
-#define GEM_OPAL_LOCAL_COMMON_H_ 1
+#include "include/defines.h"
 
-#include "include/opal.h"
-#include <vulkan/vulkan.h>
+// ============================================================
+// ============================================================
+//
+// Global variables ==========
+// g_OpalState
+//
+// Preprocessor ==========
+// OPAL_PLATFORM_*
+// OpalMem*
+// OpalLog
+// OpalLogError
+// OPAL_ATTEMPT
+// OPAL_ATTEMPT_FAIL_LOG
+//
+// Logging ==========
+// OpalOutputMessage()
+//
+// Core ==========
+// OpalVulkanInit()
+//
+// ============================================================
+// ============================================================
+
+
+// Global variables
+// ===========================================================
+
+extern OpalState g_OpalState;
+
+// Preprocessor
+// ============================================================
+
+// Platform
+
+#if defined(WIN32) || defined(_WIN32) || defined(__WIN32__)
+#define OPAL_PLATFORM_WIN32 1
+#ifndef _WIN64
+#error "Must have 64-bit windows"
+#endif
+#else
+#error "Unsupported platform"
+#endif // OPAL_PLATFORM_*
+
+// Memory
+
+#include <stdlib.h>
+#include <string.h>
 #include <stdio.h>
-#include <stdarg.h>
+#define OpalMemAlloc(size)                           malloc(size)
+#define OpalMemAllocZeroed(size)                     memset(malloc(size), 0, size)
+#define OpalMemRealloc(data, size)                   realloc(data, size)
+#define OpalMemSet(data, value, size)                memset(data, value, size)
+#define OpalMemCopy(src, dst, size)                  memcpy(dst, src, size)
+#define OpalMemFree(data)                            free((void*)data)
+#define OpalMemAllocSingle(type)                    (type*)OpalMemAlloc(sizeof(type))
+#define OpalMemAllocSingleZeroed(type)              (type*)OpalMemAllocZeroed(sizeof(type))
+#define OpalMemReallocSingle(source, type)          (type*)OpalMemRealloc(source, sizeof(type))
+#define OpalMemAllocArray(type, count)              (type*)OpalMemAlloc(sizeof(type) * count)
+#define OpalMemAllocArrayZeroed(type, count)        (type*)OpalMemAllocZeroed(sizeof(type) * count)
+#define OpalMemReallocArray(source, type, newCount) (type*)OpalMemRealloc(source, sizeof(type) * newCount)
 
-void OpalPrintMessage(OpalMessageType type, const char* message, ...);
+// Logging
 
-#define OpalLog(...) OpalPrintMessage(Opal_Message_Info, __VA_ARGS__)
-#define OpalLogError(...) OpalPrintMessage(Opal_Message_Error, __VA_ARGS__)
+#define OpalLog(...) OpalOutputMessage(Opal_Message_Info, __VA_ARGS__)
+#define OpalLogError(...) OpalOutputMessage(Opal_Message_Error, __VA_ARGS__)
 
-#define OPAL_ATTEMPT(fn, ...)                                          \
-{                                                                      \
-  OpalResult oResult = (fn);                                           \
-  if (oResult)                                                         \
-  {                                                                    \
+#define OPAL_ATTEMPT(fn, ...)                                        \
+{                                                                    \
+  OpalResult oResult = (fn);                                         \
+  if (oResult)                                                       \
+  {                                                                  \
     OpalLogError("Function \""#fn"\" failed. Result = %d", oResult); \
-    OpalLogError("\t%s:%d\n", __FILE__, __LINE__);                     \
-    { __VA_ARGS__; }                                                   \
-    return Opal_Failure;                                               \
-  }                                                                    \
-  else {}                                                              \
+    OpalLogError("    %s:%d\n", __FILE__, __LINE__);                 \
+    { __VA_ARGS__; }                                                 \
+    return Opal_Failure_Unknown;                                     \
+  }                                                                  \
+  else {}                                                            \
 }
 
-#define OPAL_ATTEMPT_FAIL_LOG(message, ...)      \
-{                                                \
-  OpalLogError(message, __VA_ARGS__);            \
-  OpalLogError("\t%s:%d\n", __FILE__, __LINE__); \
-}
-
-#define OVK_ATTEMPT(fn, ...)                                                  \
-{                                                                             \
-  VkResult vResult = (fn);                                                    \
-  if (vResult != VK_SUCCESS)                                                  \
-  {                                                                           \
-    OpalLogError("Vulkan function \""#fn"\" failed. Result = %d", vResult); \
-    OpalLogError("\t%s:%d\n", __FILE__, __LINE__);                            \
-    { __VA_ARGS__; }                                                          \
-    return Opal_Failure;                                                      \
-  }                                                                           \
-  else {}                                                                     \
-}
-
-#define OVK_ATTEMPT_FAIL_LOG(message, ...)         \
+#define OPAL_ATTEMPT_FAIL_LOG(message, ...)        \
 {                                                  \
-  OpalLogError("Vulkan :: " message, __VA_ARGS__); \
-  OpalLogError("\t%s:%d\n", __FILE__, __LINE__);   \
+  OpalLogError(message, __VA_ARGS__);              \
+  OpalLogError("    %s:%d\n", __FILE__, __LINE__); \
 }
 
-VkFormat OpalFormatToVkFormat_Ovk(OpalFormat _format);
-VkShaderStageFlags OpalStagesToVkStages_Ovk(OpalStageFlags stages);
+// Logging
+// ============================================================
 
-OpalResult OvkInit(OpalInitInfo _initInfo);
-void OvkShutdown();
+void OpalOutputMessage(OpalMessageType type, const char* message, ...);
 
-OpalResult OvkWaitIdle();
+// Core
+// ============================================================
 
-OpalResult OvkBufferInit(OpalBuffer _buffer, OpalBufferInitInfo _initInfo);
-void OvkBufferShutdown(OpalBuffer _buffer);
-OpalResult OvkBufferPushData(OpalBuffer _buffer, const void* _data);
-OpalResult OvkBufferPushDataSegment(OpalBuffer _buffer, const void* _data, uint32_t size, uint32_t offset);
-uint32_t OvkBufferDumpData(OpalBuffer buffer, void** data);
+OpalResult OpalVulkanInit(OpalInitInfo initInfo); // Defined in vulkan_core.c
 
-OpalResult OvkWindowInit(OpalWindow_T* _window, OpalWindowInitInfo _initInfo);
-OpalResult OvkWindowReinit(OpalWindow_T* _window);
-OpalResult OvkWindowShutdown(OpalWindow_T* _window);
+#endif // !OPAL_COMMON_H
 
-void OpalPlatformGetRequiredExtensions(uint32_t* _extensionCount, const char** _extensionNames);
-OpalResult OpalPlatformCreateSurface(OpalWindowPlatformInfo_T _window, VkInstance _instance, VkSurfaceKHR* _surface);
-
-OpalResult OvkImageInit(OpalImage_T* _image, OpalImageInitInfo _initInfo);
-void OvkImageShutdown(OpalImage_T* _image);
-OpalResult OvkImageResize(OpalImage_T* _image, OpalExtent _extents);
-OpalResult OvkImageFill(OpalImage_T* _image, void* _data);
-uint32_t OvkImageDumpData(OpalImage image, void** data);
-OpalResult OvkTransitionImageLayout(VkImage _image, VkImageLayout _layout, VkImageLayout _newLayout, uint32_t mipCount);
-
-OpalResult OvkRenderpassInit(OpalRenderpass_T* _renderpass, OpalRenderpassInitInfo _initInfo);
-void OvkRenderpassShutdown(OpalRenderpass_T* _renderpass);
-
-OpalResult OvkFramebufferInit(OpalFramebuffer_T* _framebuffer, OpalFramebufferInitInfo _initInfo);
-OpalResult OvkFramebufferReinit(OpalFramebuffer_T* _framebuffer);
-void OvkFramebufferShutdown(OpalFramebuffer_T* _framebuffer);
-
-OpalResult OvkShaderInit(OpalShader_T* _shader, OpalShaderInitInfo _initInfo);
-void OvkShaderShutdown(OpalShader_T* _shader);
-
-OpalResult OvkInputLayoutInit(OpalInputLayout_T* _layout, OpalInputLayoutInitInfo _initInfo);
-void OvkInputLayoutShutdown(OpalInputLayout_T* _layout);
-OpalResult OvkInputSetInit(OpalInputSet_T* _set, OpalInputSetInitInfo _initInfo);
-void OvkInputSetShutdown(OpalInputSet_T* _set);
-OpalResult OvkInputSetUpdate(OpalInputSet _set, uint32_t _count, OpalInputInfo* _pInputs);
-
-OpalResult OvkMaterialInit(OpalMaterial_T* _material, OpalMaterialInitInfo _initInfo);
-void OvkMaterialShutdown(OpalMaterial_T* _material);
-OpalResult OvkMaterialReinit(OpalMaterial_T* _material);
-
-OpalResult OvkRenderBeginWindow(OpalWindow _window);
-OpalResult OvkRenderEndWindow();
-OpalResult OvkRenderBeginSingle();
-OpalResult OvkRenderEndSingle();
-VkCommandBuffer OvkRenderGetCommandBuffer();
-void OvkRenderBeginRenderpass(OpalRenderpass _renderpass, OpalFramebuffer _framebuffer);
-void OvkRenderEndRenderpass(OpalRenderpass _renderpass);
-void OvkRenderBindInputSet(OpalInputSet _set, uint32_t _setIndex);
-void OvkRenderBindMaterial(OpalMaterial _material);
-void OvkRenderMesh(OpalMesh _mesh);
-void OvkRenderSetPushConstant(void* _data);
-
-#endif // !GEM_OPAL_LOCAL_COMMON_H_
