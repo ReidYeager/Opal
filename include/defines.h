@@ -11,9 +11,10 @@
 
 typedef enum OpalResult
 {
-  Opal_Success,         // Normal execution
-  Opal_Failure_Unknown, // Unknown issue
-  Opal_Failure_Api      // Graphics Api function failure
+  Opal_Success,               // Normal execution
+  Opal_Failure_Unknown,       // Unknown issue
+  Opal_Failure_Api,           // Graphics Api function failure
+  Opal_Failure_Invalid_Input, // Invalid input from client
 } OpalResult;
 
 typedef enum OpalFormat
@@ -54,11 +55,11 @@ typedef enum OpalMessageType
 
 typedef enum OpalStageFlagBits
 {
-  Opal_Stage_Undefined = 0,
-  Opal_Stage_Vertex = 0x01,
-  Opal_Stage_Geometry = 0x02,
-  Opal_Stage_Tesselation = 0x04,
-  Opal_Stage_Fragment = 0x08,
+  Opal_Stage_Undefined    = 0,
+  Opal_Stage_Vertex       = 0x01,
+  Opal_Stage_Geometry     = 0x02,
+  Opal_Stage_Tesselation  = 0x04,
+  Opal_Stage_Fragment     = 0x08,
   Opal_Stage_All_Graphics = 0x0f,
 
   Opal_Stage_Compute = 0x10,
@@ -103,6 +104,7 @@ typedef struct OpalWindowInitInfo
 typedef struct OpalWindow
 {
   uint32_t width, height;
+  uint32_t imageCount;
 
   union
   {
@@ -215,6 +217,7 @@ typedef union OpalClearValue
 typedef enum OpalAttachmentUsage
 {
   Opal_Attachment_Usage_Unused,
+  Opal_Attachment_Usage_Preserved,
   Opal_Attachment_Usage_Input,
   Opal_Attachment_Usage_Output_Color,
   Opal_Attachment_Usage_Output_Depth,
@@ -240,6 +243,7 @@ typedef struct OpalAttachmentInfo
 
 typedef struct OpalRenderpassInitInfo
 {
+  uint32_t subpassCount;
   uint32_t attachmentCount;
   const OpalAttachmentInfo* pAttachments;
 } OpalRenderpassInitInfo;
@@ -248,7 +252,6 @@ typedef struct OpalRenderpass
 {
   uint32_t subpassCount;
   uint32_t attachmentCount;
-  OpalClearValue* pClearValues;
 
   union
   {
@@ -395,26 +398,52 @@ typedef struct OpalState
   {
     struct // Function pointers
     {
-      // Window ==========
-      OpalResult(*WindowInit)(OpalWindowInitInfo initInfo, OpalWindow* pWindow);
-      OpalResult(*WindowSwapBuffers)(const OpalWindow* pWindow);
-      //OpalResult(*WindowGetImage)(const OpalWindow* pWindow, OpalImage* pImage);
+      // ==============================
+      // Objects
+      // ==============================
 
-      // Image ==========
-      //OpalResult(*ImageInit)()
+      // Window ==========
+      OpalResult (*WindowInit)         (OpalWindow* pWindow, OpalWindowInitInfo initInfo);
+      void       (*WindowShutdown)     (OpalWindow* pWindow);
+      OpalResult (*WindowSwapBuffers)  (const OpalWindow* pWindow);
+      OpalResult (*WindowGetFrameImage)(const OpalWindow* pWindow, uint32_t frameIndex, OpalImage* pImage);
 
       // Buffer ==========
+      OpalResult (*BufferInit)         (OpalBuffer* pBuffer, OpalBufferInitInfo initInfo);
+      void       (*BufferShutdown)     (OpalBuffer* pBuffer);
 
-      // Framebuffer ==========
+      // Image ==========
+      OpalResult (*ImageInit)          (OpalImage* pImage, OpalImageInitInfo initInfo);
+      void       (*ImageShutdown)      (OpalImage* pImage);
 
       // Renderpass ==========
+      OpalResult (*RenderpassInit)     (OpalRenderpass* pRenderpass, OpalRenderpassInitInfo initInfo);
+      void       (*RenderpassShutdown) (OpalRenderpass* pRenderpass);
+
+      // Framebuffer ==========
+      OpalResult (*FramebufferInit)    (OpalFramebuffer* pFramebuffer, OpalFramebufferInitInfo initInfo);
+      void       (*FramebufferShutdown)(OpalFramebuffer* pFramebuffer);
 
       // Shader ==========
+      OpalResult (*ShaderInit)         (OpalShader* pShader, OpalShaderInitInfo initInfo);
+      void       (*ShaderShutdown)     (OpalShader* pShader);
 
-      // Shader group ==========
+      // ShaderGroup ==========
+      OpalResult (*ShaderGroupInit)    (OpalShaderGroup* pShaderGroup, OpalShaderGroupInitInfo initInfo);
+      void       (*ShaderGroupShutdown)(OpalShaderGroup* pShaderGroup);
 
-      // Shader input ==========
+      // ShaderInput ==========
+      OpalResult (*ShaderInputInit)    (OpalShaderInput* pShaderInput, OpalShaderInputInitInfo initInfo);
+      void       (*ShaderInputShutdown)(OpalShaderInput* pShaderInput);
 
+      // ==============================
+      // Rendering
+      // ==============================
+
+      OpalResult (*RenderBegin)          ();
+      OpalResult (*RenderEnd)            ();
+      void       (*RenderRenderpassBegin)(const OpalRenderpass* pRenderpass, const OpalFramebuffer* pFramebuffer);
+      void       (*RenderRenderpassEnd)  (const OpalRenderpass* pRenderpass);
 
     } functions;
 

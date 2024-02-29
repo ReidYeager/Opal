@@ -46,6 +46,7 @@ typedef struct OpalVulkanFramebuffer
 typedef struct OpalVulkanRenderpass
 {
   VkRenderPass renderpass;
+  VkClearValue* pClearValues;
 } OpalVulkanRenderpass;
 
 // Window

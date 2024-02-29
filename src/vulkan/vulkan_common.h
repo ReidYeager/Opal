@@ -6,24 +6,6 @@
 
 #include <vulkan/vulkan.h>
 
-// ============================================================
-// ============================================================
-//
-// Preprocessor ==========
-// ATTEMPT_VK
-// ATTEMPT_VK_FAIL_LOG
-//
-// Wrappers ==========
-// OpalVulkanInit()
-//
-// Core ==========
-// PlatformGetExtensions_Ovk()
-// PlatformCreateSurface_Ovk()
-//
-// ============================================================
-// ============================================================
-
-
 // Preprocessor
 // ============================================================
 
@@ -46,20 +28,61 @@
   OpalLogError("    %s:%d\n", __FILE__, __LINE__); \
 }
 
+// Tools
+// ============================================================
+
+VkFormat           OpalFormatToVkFormat_Ovk(OpalFormat _format);
+VkShaderStageFlags OpalStagesToVkStages_Ovk(OpalStageFlags stages);
+
 // Wrappers
 // ============================================================
 
 OpalResult OpalVulkanInit(OpalInitInfo initInfo);
+
 // Window ==========
-OpalResult OpalVulkanWindowInit       (OpalWindowInitInfo initInfo, OpalWindow* pWindow);
-void       OpalVulkanWindowShutdown   (OpalWindow* pWindow);
-OpalResult OpalVulkanWindowSwapBuffers(const OpalWindow* pWindow);
-//OpalResult         OpalVulkanWindowGetImage    (const OpalWindow* pWindow, OpalImage* pImage);
+OpalResult OpalVulkanWindowInit         (OpalWindow* pWindow, OpalWindowInitInfo initInfo);
+void       OpalVulkanWindowShutdown     (OpalWindow* pWindow);
+OpalResult OpalVulkanWindowSwapBuffers  (const OpalWindow* pWindow);
+OpalResult OpalVulkanWindowGetFrameImage(const OpalWindow* pWindow, uint32_t frameIndex, OpalImage* pImage);
+
+// Buffer ==========
+OpalResult OpalVulkanBufferInit    (OpalBuffer* pBuffer, OpalBufferInitInfo initInfo);
+void       OpalVulkanBufferShutdown(OpalBuffer* pBuffer);
+
+// Image ==========
+OpalResult OpalVulkanImageInit    (OpalImage* pImage, OpalImageInitInfo initInfo);
+void       OpalVulkanImageShutdown(OpalImage* pImage);
+
+// Renderpass ==========
+OpalResult OpalVulkanRenderpassInit    (OpalRenderpass* pRenderpass, OpalRenderpassInitInfo initInfo);
+void       OpalVulkanRenderpassShutdown(OpalRenderpass* pRenderpass);
+
+// Framebuffer ==========
+OpalResult OpalVulkanFramebufferInit    (OpalFramebuffer* pFramebuffer, OpalFramebufferInitInfo initInfo);
+void       OpalVulkanFramebufferShutdown(OpalFramebuffer* pFramebuffer);
+
+// Shader ==========
+OpalResult OpalVulkanShaderInit    (OpalShader* pShader, OpalShaderInitInfo initInfo);
+void       OpalVulkanShaderShutdown(OpalShader* pShader);
+
+// ShaderGroup ==========
+OpalResult OpalVulkanShaderGroupInit    (OpalShaderGroup* pShaderGroup, OpalShaderGroupInitInfo initInfo);
+void       OpalVulkanShaderGroupShutdown(OpalShaderGroup* pShaderGroup);
+
+// ShaderInput ==========
+OpalResult OpalVulkanShaderInputInit    (OpalShaderInput* pShaderInput, OpalShaderInputInitInfo initInfo);
+void       OpalVulkanShaderInputShutdown(OpalShaderInput* pShaderInput);
+
+// Rendering ==========
+OpalResult OpalVulkanRenderBegin          ();
+OpalResult OpalVulkanRenderEnd            ();
+void       OpalVulkanRenderRenderpassBegin(const OpalRenderpass* pRenderpass, const OpalFramebuffer* pFramebuffer);
+void       OpalVulkanRenderRenderpassEnd  (const OpalRenderpass* pRenderpass);
 
 // Core
 // ============================================================
 
-uint32_t PlatformGetExtensions_Ovk(const char*** pOutExtensions);
+uint32_t   PlatformGetExtensions_Ovk(const char*** pOutExtensions);
 OpalResult PlatformCreateSurface_Ovk(OpalPlatformWindowInfo windowInfo, VkSurfaceKHR* outSurface);
 
 

@@ -2,7 +2,7 @@
 #include "src/vulkan/vulkan_common.h"
 
 // Declarations
-// ============================================================s
+// ============================================================
 
 // Initialization ==========
 //OpalResult       OpalVulkanWindowInit       (OpalWindowInitInfo initInfo, OpalWindow* pWindow);
@@ -23,11 +23,13 @@ OpalResult         FramesInit_Ovk             (OpalWindow* pWindow);
 // Initialization
 // ============================================================
 
-OpalResult OpalVulkanWindowInit(OpalWindowInitInfo initInfo, OpalWindow* pWindow)
+OpalResult OpalVulkanWindowInit(OpalWindow* pWindow, OpalWindowInitInfo initInfo)
 {
   OPAL_ATTEMPT(PlatformCreateSurface_Ovk(initInfo.platform, &pWindow->api.vk.surface));
   OPAL_ATTEMPT(SwapchainInit_Ovk(pWindow));
   OPAL_ATTEMPT(FramesInit_Ovk(pWindow));
+
+  pWindow->imageCount = pWindow->api.vk.imageCount;
 
   return Opal_Success;
 }
@@ -252,8 +254,7 @@ OpalResult OpalVulkanWindowSwapBuffers(const OpalWindow* pWindow)
   return Opal_Success;
 }
 
-//OpalResult OpalVulkanWindowGetImage(const OpalWindow* pWindow, OpalImage* pImage)
-//{
-//  
-//  return Opal_Success;
-//}
+OpalResult OpalVulkanWindowGetFrameImage(const OpalWindow* pWindow, uint32_t frameIndex, OpalImage* pImage)
+{
+  return Opal_Success;
+}
