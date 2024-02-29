@@ -6,26 +6,6 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-// ============================================================
-// ============================================================
-//
-// Primitives ==========
-// Result
-// Format
-// MessageType
-//
-// Core ==========
-// OpalGraphicsApi
-// OpalPlatformWindowInfo
-// OpalInitInfo
-//
-// State ==========
-// OpalState
-//
-// ============================================================
-// ============================================================
-
-
 // Primitives
 // ============================================================
 
@@ -40,19 +20,19 @@ typedef enum OpalFormat
 {
   Opal_Format_Unknown,
 
-  // Float R-G-B-A variants
+  // Float variants
   Opal_Format_R8 , Opal_Format_RG8 , Opal_Format_RGB8 , Opal_Format_RGBA8 ,
   Opal_Format_R16, Opal_Format_RG16, Opal_Format_RGB16, Opal_Format_RGBA16,
   Opal_Format_R32, Opal_Format_RG32, Opal_Format_RGB32, Opal_Format_RGBA32,
   Opal_Format_R64, Opal_Format_RG64, Opal_Format_RGB64, Opal_Format_RGBA64,
 
-  // Int R-G-B-A variants
+  // Int variants
   Opal_Format_R8_I , Opal_Format_RG8_I , Opal_Format_RGB8_I , Opal_Format_RGBA8_I ,
   Opal_Format_R16_I, Opal_Format_RG16_I, Opal_Format_RGB16_I, Opal_Format_RGBA16_I,
   Opal_Format_R32_I, Opal_Format_RG32_I, Opal_Format_RGB32_I, Opal_Format_RGBA32_I,
   Opal_Format_R64_I, Opal_Format_RG64_I, Opal_Format_RGB64_I, Opal_Format_RGBA64_I,
 
-  // Uint R-G-B-A variants
+  // Uint variants
   Opal_Format_R8_U , Opal_Format_RG8_U , Opal_Format_RGB8_U , Opal_Format_RGBA8_U ,
   Opal_Format_R16_U, Opal_Format_RG16_U, Opal_Format_RGB16_U, Opal_Format_RGBA16_U,
   Opal_Format_R32_U, Opal_Format_RG32_U, Opal_Format_RGB32_U, Opal_Format_RGBA32_U,
@@ -71,6 +51,21 @@ typedef enum OpalMessageType
   Opal_Message_Info,
   Opal_Message_Error,
 } OpalMessageType;
+
+typedef enum OpalStageFlagBits
+{
+  Opal_Stage_Undefined = 0,
+  Opal_Stage_Vertex = 0x01,
+  Opal_Stage_Geometry = 0x02,
+  Opal_Stage_Tesselation = 0x04,
+  Opal_Stage_Fragment = 0x08,
+  Opal_Stage_All_Graphics = 0x0f,
+
+  Opal_Stage_Compute = 0x10,
+
+  Opal_Stage_All = 0xff,
+} OpalStageFlagBits;
+typedef uint32_t OpalStageFlags;
 
 // Core
 // ============================================================
@@ -95,6 +90,297 @@ typedef struct OpalPlatformWindowInfo
 } OpalPlatformWindowInfo;
 #endif // OPAL_PLATFORM_*
 
+// Window
+// ============================================================
+
+typedef struct OpalWindowInitInfo
+{
+  OpalPlatformWindowInfo platform;
+  uint32_t width;
+  uint32_t height;
+} OpalWindowInitInfo;
+
+typedef struct OpalWindow
+{
+  uint32_t width, height;
+
+  union
+  {
+    OpalVulkanWindow vk;
+  }api;
+} OpalWindow;
+
+// Buffer
+// ============================================================
+
+typedef enum OpalBufferUsageFlagBits
+{
+  Opal_Buffer_Usage_Undefined    = 0,
+  Opal_Buffer_Usage_Transfer_Src = 0x01,
+  Opal_Buffer_Usage_Transfer_Dst = 0x02,
+  Opal_Buffer_Usage_Uniform      = 0x04,
+  Opal_Buffer_Usage_Vertex       = 0x08,
+  Opal_Buffer_Usage_Index        = 0x10,
+  Opal_Buffer_Usage_Cpu_Read     = 0x20
+} OpalBufferUsageFlagBits;
+typedef uint32_t OpalBufferUsageFlags;
+
+typedef struct OpalBufferInitInfo
+{
+  uint64_t size;
+  OpalBufferUsageFlags usage;
+
+} OpalBufferInitInfo;
+
+typedef struct OpalBuffer
+{
+  uint64_t size;
+  uint64_t paddedSize;
+
+  union
+  {
+    OpalVulkanBuffer vk;
+  } api;
+} OpalBuffer;
+
+// Image
+// ============================================================
+
+typedef enum OpalImageUsageFlagBits
+{
+  Opal_Image_Usage_Color    = 0x01,
+  Opal_Image_Usage_Depth    = 0x02,
+  Opal_Image_Usage_Copy_Src = 0x04,
+  Opal_Image_Usage_Copy_Dst = 0x08,
+  Opal_Image_Usage_Uniform  = 0x10
+} OpalImageUsageFlagBits;
+typedef uint32_t OpalImageUsageFlags;
+
+typedef enum OpalImageFilterType
+{
+  Opal_Image_Filter_Point,
+  Opal_Image_Filter_Linear,
+} OpalImageFilterType;
+
+typedef enum OpalImageSampleMode
+{
+  Opal_Image_Sample_Wrap,
+  Opal_Image_Sample_Clamp,
+  Opal_Image_Sample_Reflect
+} OpalImageSampleMode;
+
+typedef struct OpalImageInitInfo
+{
+  uint32_t width, height;
+  uint32_t mipLevels;
+  OpalFormat format;
+  OpalImageUsageFlags usage;
+  OpalImageFilterType filter;
+  OpalImageSampleMode sampleMode;
+} OpalImageInitInfo;
+
+typedef struct OpalImage
+{
+  uint32_t width, height;
+  OpalFormat format;
+
+  union
+  {
+    OpalVulkanImage vk;
+  } api;
+} OpalImage;
+
+// Renderpass
+// ============================================================
+
+typedef union OpalColorValue
+{
+  float float32[4];
+  int32_t int32[4];
+  uint32_t uint32[4];
+} OpalColorValue;
+
+typedef struct OpalDepthStencilValue
+{
+  float depth;
+  uint32_t stencil;
+} OpalDepthStencilValue;
+
+typedef union OpalClearValue
+{
+  OpalColorValue color;
+  OpalDepthStencilValue depthStencil;
+} OpalClearValue;
+
+typedef enum OpalAttachmentUsage
+{
+  Opal_Attachment_Usage_Unused,
+  Opal_Attachment_Usage_Input,
+  Opal_Attachment_Usage_Output_Color,
+  Opal_Attachment_Usage_Output_Depth,
+  Opal_Attachment_Usage_Output_Presented,
+} OpalAttachmentUsage;
+
+typedef enum OpalAttachmentLoadOp
+{
+  Opal_Attachment_Load_Op_Dont_Care,
+  Opal_Attachment_Load_Op_Clear,
+  Opal_Attachment_Load_Op_Load
+} OpalAttachmentLoadOp;
+
+typedef struct OpalAttachmentInfo
+{
+  OpalFormat format;
+  OpalClearValue clearValue;
+  OpalAttachmentLoadOp loadOp;
+  bool shouldStore;
+
+  const OpalAttachmentUsage* pSubpassUsages;
+} OpalAttachmentInfo;
+
+typedef struct OpalRenderpassInitInfo
+{
+  uint32_t attachmentCount;
+  const OpalAttachmentInfo* pAttachments;
+} OpalRenderpassInitInfo;
+
+typedef struct OpalRenderpass
+{
+  uint32_t subpassCount;
+  uint32_t attachmentCount;
+  OpalClearValue* pClearValues;
+
+  union
+  {
+    OpalVulkanRenderpass vk;
+  } api;
+} OpalRenderpass;
+
+// Framebuffer
+// ============================================================
+
+typedef struct OpalFramebufferInitInfo
+{
+  uint32_t imageCount;
+  const OpalImage* images;
+
+  OpalRenderpass renderpass;
+
+} OpalFramebufferInitInfo;
+
+typedef struct OpalFramebuffer
+{
+  uint32_t width, height;
+
+  union
+  {
+    OpalVulkanFramebuffer vk;
+  } api;
+} OpalFramebuffer;
+
+// Shader
+// ============================================================
+
+typedef enum OpalShaderType
+{
+  Opal_Shader_Vertex,
+  Opal_Shader_Fragment,
+  Opal_Shader_Geometry,
+  Opal_Shader_Compute
+} OpalShaderType;
+
+typedef struct OpalShaderInitInfo
+{
+  uint32_t sourceSize;
+  void* pSource;
+  OpalShaderType type;
+} OpalShaderInitInfo;
+
+typedef struct OpalShader
+{
+  OpalShaderType type;
+
+  union
+  {
+    OpalVulkanShader vk;
+  } api;
+} OpalShader;
+
+// Shader group
+// ============================================================
+
+typedef enum OpalPipelineFlagBits
+{
+  Opal_Pipeline_Cull_Back  = (0 << 0),
+  Opal_Pipeline_Cull_Front = (1 << 0),
+  Opal_Pipeline_Cull_Both  = (2 << 0),
+  Opal_Pipeline_Cull_None  = (3 << 0),
+  Opal_Pipeline_Cull_BITS  = (3 << 0),
+
+  Opal_Pipeline_Depth_Compare_Less      = (0 << 2),
+  Opal_Pipeline_Depth_Compare_LessEqual = (1 << 2),
+  Opal_Pipeline_Depth_Compare_BITS      = (1 << 2),
+} OpalPipelineFlagBits;
+typedef uint64_t OpalPipelineFlags;
+
+typedef struct OpalShaderGroupInitInfo
+{
+  OpalRenderpass renderpass;
+  uint32_t subpassIndex;
+
+  uint32_t shaderCount;
+  OpalShader* pShaders;
+
+  OpalPipelineFlags flags;
+} OpalShaderGroupInitInfo;
+
+typedef struct OpalShaderGroup
+{
+  union
+  {
+    OpalVulkanShaderGroup vk;
+  } api;
+} OpalShaderGroup;
+
+// Shader input
+// ============================================================
+
+typedef enum OpalShaderInputType
+{
+  Opal_Shader_Input_Buffer,
+  Opal_Shader_Input_Image
+} OpalShaderInputType;
+
+typedef struct OpalShaderInputLayout
+{
+  uint32_t count;
+  OpalShaderInputType* pTypes;
+  OpalStageFlags* pStages;
+} OpalShaderInputLayout;
+
+typedef union OpalShaderInputValue
+{
+  OpalBuffer* buffer;
+  OpalImage* image;
+} OpalShaderInputValue;
+
+typedef struct OpalShaderInputInitInfo
+{
+  OpalShaderInputLayout layout;
+  OpalShaderInputValue* pValues;
+} OpalShaderInputInitInfo;
+
+typedef struct OpalShaderInput
+{
+  union
+  {
+    OpalVulkanShaderInput vk;
+  } api;
+} OpalShaderInput;
+
+// State
+// ============================================================
+
 typedef struct OpalInitInfo
 {
   OpalGraphicsApi api;
@@ -103,12 +389,44 @@ typedef struct OpalInitInfo
   OpalPlatformWindowInfo window;
 } OpalInitInfo;
 
-// State
-// ============================================================
-
 typedef struct OpalState
 {
-  OpalVulkanState vk;
+  struct // Backend
+  {
+    struct // Function pointers
+    {
+      // Window ==========
+      OpalResult(*WindowInit)(OpalWindowInitInfo initInfo, OpalWindow* pWindow);
+      OpalResult(*WindowSwapBuffers)(const OpalWindow* pWindow);
+      //OpalResult(*WindowGetImage)(const OpalWindow* pWindow, OpalImage* pImage);
+
+      // Image ==========
+      //OpalResult(*ImageInit)()
+
+      // Buffer ==========
+
+      // Framebuffer ==========
+
+      // Renderpass ==========
+
+      // Shader ==========
+
+      // Shader group ==========
+
+      // Shader input ==========
+
+
+    } functions;
+
+    union // Backend states
+    {
+      OpalVulkanState vk;
+      // Opengl state
+      // Directx state
+    };
+  } api;
+
+  void(*messageCallback)(OpalMessageType, const char*);
 } OpalState;
 
 #endif // !OPAL_DEFINES_H

@@ -3,29 +3,6 @@
 
 #include <vulkan/vulkan.h>
 
-// ============================================================
-// ============================================================
-//
-// Material ==========
-// OpalVulkanShader
-// OpalVulkanShaderGroup
-// OpalVulkanShaderInput
-//
-// Objects ==========
-// OpalVulkanBuffer
-// OpalVulkanImage
-//
-// Rendering ==========
-// OpalVulkanFramebuffer
-// OpalVulkanRenderpass
-//
-// State ==========
-// OpalVulkanState
-//
-// ============================================================
-// ============================================================
-
-
 // Material
 // ============================================================
 
@@ -70,6 +47,26 @@ typedef struct OpalVulkanRenderpass
 {
   VkRenderPass renderpass;
 } OpalVulkanRenderpass;
+
+// Window
+// ============================================================
+
+typedef struct OpalVulkanWindow
+{
+  VkSurfaceKHR surface;
+
+  VkFormat format;
+  VkPresentModeKHR presentMode;
+  VkSwapchainKHR swapchain;
+
+  uint8_t imageCount;
+  VkImage* images;
+  VkImageView* imageViews;
+
+  VkFence* fencesImageAvailable;
+  VkSemaphore* semaphoresImageAvailable;
+  VkSemaphore* semaphoresRenderComplete;
+} OpalVulkanWindow;
 
 // State
 // ============================================================

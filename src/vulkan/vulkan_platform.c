@@ -43,7 +43,7 @@ OpalResult PlatformCreateSurface_Ovk(OpalPlatformWindowInfo windowInfo, VkSurfac
   createInfo.hinstance = (HINSTANCE)windowInfo.hinstance;
   createInfo.hwnd = (HWND)windowInfo.hwnd;
 
-  OPAL_ATTEMPT_VK(vkCreateWin32SurfaceKHR(g_OpalState.vk.instance, &createInfo, NULL, outSurface));
+  OPAL_ATTEMPT_VK(vkCreateWin32SurfaceKHR(g_OpalState.api.vk.instance, &createInfo, NULL, outSurface));
 
   return Opal_Success;
 }

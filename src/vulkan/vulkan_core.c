@@ -37,6 +37,7 @@ OpalResult        InitDevice_Ovk              (bool useDebug);
 OpalResult        InitCommandPool_Ovk         (bool isTransient);
 OpalResult        InitDescriptorPool          ();
 
+
 // Initialization
 // ============================================================
 
@@ -50,7 +51,7 @@ OpalResult OpalVulkanInit(OpalInitInfo initInfo)
   OpalLog("Init Vulkan : Surface created");
 
   OPAL_ATTEMPT(ChoosePhysicalDevice_Ovk(tmpInitSurface));
-  OpalLog("Init Vulkan : Chose physical device (%s)", g_OpalState.vk.gpu.properties.deviceName);
+  OpalLog("Init Vulkan : Chose physical device (%s)", g_OpalState.api.vk.gpu.properties.deviceName);
 
   OPAL_ATTEMPT(InitDevice_Ovk(initInfo.useDebug));
   OpalLog("Init Vulkan : Device created");
@@ -62,7 +63,7 @@ OpalResult OpalVulkanInit(OpalInitInfo initInfo)
   OPAL_ATTEMPT(InitDescriptorPool());
   OpalLog("Init Vulkan : Descriptor pool created");
 
-  vkDestroySurfaceKHR(g_OpalState.vk.instance, tmpInitSurface, NULL);
+  vkDestroySurfaceKHR(g_OpalState.api.vk.instance, tmpInitSurface, NULL);
 
   OpalLog("Init Vulkan : complete");
   return Opal_Success;
@@ -125,7 +126,7 @@ OpalResult InitInstance_Ovk(bool useDebug)
   createInfo.enabledLayerCount = layerCount;
   createInfo.ppEnabledLayerNames = layers;
 
-  OPAL_ATTEMPT_VK(vkCreateInstance(&createInfo, NULL, &g_OpalState.vk.instance));
+  OPAL_ATTEMPT_VK(vkCreateInstance(&createInfo, NULL, &g_OpalState.api.vk.instance));
 
   // Shutdown ==============================
 
@@ -144,15 +145,15 @@ OpalResult InitInstance_Ovk(bool useDebug)
 OpalResult ChoosePhysicalDevice_Ovk(VkSurfaceKHR surface)
 {
   uint32_t deviceCount = 0;
-  OPAL_ATTEMPT_VK(vkEnumeratePhysicalDevices(g_OpalState.vk.instance, &deviceCount, NULL));
+  OPAL_ATTEMPT_VK(vkEnumeratePhysicalDevices(g_OpalState.api.vk.instance, &deviceCount, NULL));
   VkPhysicalDevice* devices = OpalMemAllocArray(VkPhysicalDevice, deviceCount);
-  OPAL_ATTEMPT_VK(vkEnumeratePhysicalDevices(g_OpalState.vk.instance, &deviceCount, devices));
+  OPAL_ATTEMPT_VK(vkEnumeratePhysicalDevices(g_OpalState.api.vk.instance, &deviceCount, devices));
 
   for (uint32_t i = 0; i < deviceCount; i++)
   {
     if (IsDeviceSuitable_Ovk(devices[i], surface))
     {
-      g_OpalState.vk.gpu = InitGpuInfo_Ovk(devices[i], surface);
+      g_OpalState.api.vk.gpu = InitGpuInfo_Ovk(devices[i], surface);
 
       OpalMemFree(devices);
       return Opal_Success;
@@ -273,9 +274,9 @@ OpalResult InitDevice_Ovk(bool useDebug)
   uint32_t queueCount = 3;
   const float queuePriority = 1.0f;
   uint32_t* queueIndices = OpalMemAllocArray(uint32_t, queueCount);
-  queueIndices[0] = g_OpalState.vk.gpu.queueIndexGraphics;
-  queueIndices[1] = g_OpalState.vk.gpu.queueIndexTransfer;
-  queueIndices[2] = g_OpalState.vk.gpu.queueIndexPresent;
+  queueIndices[0] = g_OpalState.api.vk.gpu.queueIndexGraphics;
+  queueIndices[1] = g_OpalState.api.vk.gpu.queueIndexTransfer;
+  queueIndices[2] = g_OpalState.api.vk.gpu.queueIndexPresent;
   VkDeviceQueueCreateInfo* queueCreateInfos = OpalMemAllocArray(VkDeviceQueueCreateInfo, queueCount);
 
   for (uint32_t i = 0; i < queueCount; i++)
@@ -322,11 +323,11 @@ OpalResult InitDevice_Ovk(bool useDebug)
   createInfo.enabledLayerCount = layerCount;
   createInfo.ppEnabledLayerNames = layers;
 
-  OPAL_ATTEMPT_VK(vkCreateDevice(g_OpalState.vk.gpu.device, &createInfo, NULL, &g_OpalState.vk.device));
+  OPAL_ATTEMPT_VK(vkCreateDevice(g_OpalState.api.vk.gpu.device, &createInfo, NULL, &g_OpalState.api.vk.device));
 
-  vkGetDeviceQueue(g_OpalState.vk.device, g_OpalState.vk.gpu.queueIndexGraphics, 0, &g_OpalState.vk.queueGraphics);
-  vkGetDeviceQueue(g_OpalState.vk.device, g_OpalState.vk.gpu.queueIndexTransfer, 0, &g_OpalState.vk.queueTransfer);
-  vkGetDeviceQueue(g_OpalState.vk.device, g_OpalState.vk.gpu.queueIndexPresent , 0, &g_OpalState.vk.queuePresent);
+  vkGetDeviceQueue(g_OpalState.api.vk.device, queueIndices[0], 0, &g_OpalState.api.vk.queueGraphics);
+  vkGetDeviceQueue(g_OpalState.api.vk.device, queueIndices[1], 0, &g_OpalState.api.vk.queueTransfer);
+  vkGetDeviceQueue(g_OpalState.api.vk.device, queueIndices[2], 0, &g_OpalState.api.vk.queuePresent);
 
   // Shutdown ==============================
 
@@ -357,17 +358,17 @@ OpalResult InitCommandPool_Ovk(bool isTransient)
   if (isTransient)
   {
     createInfo.flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT;
-    createInfo.queueFamilyIndex = g_OpalState.vk.gpu.queueIndexTransfer;
-    outPool = &g_OpalState.vk.transientCommandPool;
+    createInfo.queueFamilyIndex = g_OpalState.api.vk.gpu.queueIndexTransfer;
+    outPool = &g_OpalState.api.vk.transientCommandPool;
   }
   else
   {
     createInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-    createInfo.queueFamilyIndex = g_OpalState.vk.gpu.queueIndexGraphics;
-    outPool = &g_OpalState.vk.graphicsCommandPool;
+    createInfo.queueFamilyIndex = g_OpalState.api.vk.gpu.queueIndexGraphics;
+    outPool = &g_OpalState.api.vk.graphicsCommandPool;
   }
 
-  OPAL_ATTEMPT_VK(vkCreateCommandPool(g_OpalState.vk.device, &createInfo, NULL, outPool));
+  OPAL_ATTEMPT_VK(vkCreateCommandPool(g_OpalState.api.vk.device, &createInfo, NULL, outPool));
 
   return Opal_Success;
 }
@@ -390,7 +391,8 @@ OpalResult InitDescriptorPool()
   createInfo.poolSizeCount = 2;
   createInfo.pPoolSizes = sizes;
 
-  OPAL_ATTEMPT_VK(vkCreateDescriptorPool(g_OpalState.vk.device, &createInfo, NULL, &g_OpalState.vk.descriptorPool));
+  OPAL_ATTEMPT_VK(
+    vkCreateDescriptorPool(g_OpalState.api.vk.device, &createInfo, NULL, &g_OpalState.api.vk.descriptorPool));
 
   return Opal_Success;
 }

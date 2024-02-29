@@ -13,6 +13,9 @@
 // ATTEMPT_VK
 // ATTEMPT_VK_FAIL_LOG
 //
+// Wrappers ==========
+// OpalVulkanInit()
+//
 // Core ==========
 // PlatformGetExtensions_Ovk()
 // PlatformCreateSurface_Ovk()
@@ -42,6 +45,16 @@
   OpalLogError("Vulkan :: " message, __VA_ARGS__); \
   OpalLogError("    %s:%d\n", __FILE__, __LINE__); \
 }
+
+// Wrappers
+// ============================================================
+
+OpalResult OpalVulkanInit(OpalInitInfo initInfo);
+// Window ==========
+OpalResult OpalVulkanWindowInit       (OpalWindowInitInfo initInfo, OpalWindow* pWindow);
+void       OpalVulkanWindowShutdown   (OpalWindow* pWindow);
+OpalResult OpalVulkanWindowSwapBuffers(const OpalWindow* pWindow);
+//OpalResult         OpalVulkanWindowGetImage    (const OpalWindow* pWindow, OpalImage* pImage);
 
 // Core
 // ============================================================

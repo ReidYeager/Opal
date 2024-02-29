@@ -3,30 +3,6 @@
 
 #include "include/defines.h"
 
-// ============================================================
-// ============================================================
-//
-// Global variables ==========
-// g_OpalState
-//
-// Preprocessor ==========
-// OPAL_PLATFORM_*
-// OpalMem*
-// OpalLog
-// OpalLogError
-// OPAL_ATTEMPT
-// OPAL_ATTEMPT_FAIL_LOG
-//
-// Logging ==========
-// OpalOutputMessage()
-//
-// Core ==========
-// OpalVulkanInit()
-//
-// ============================================================
-// ============================================================
-
-
 // Global variables
 // ===========================================================
 
@@ -96,7 +72,7 @@ void OpalOutputMessage(OpalMessageType type, const char* message, ...);
 // Core
 // ============================================================
 
-OpalResult OpalVulkanInit(OpalInitInfo initInfo); // Defined in vulkan_core.c
+
 
 #endif // !OPAL_COMMON_H
 
