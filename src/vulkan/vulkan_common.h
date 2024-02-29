@@ -32,6 +32,7 @@
 // ============================================================
 
 VkFormat           OpalFormatToVkFormat_Ovk(OpalFormat _format);
+OpalFormat         VkFormatToOpalFormat_Ovk(VkFormat _format);
 VkShaderStageFlags OpalStagesToVkStages_Ovk(OpalStageFlags stages);
 
 // Wrappers

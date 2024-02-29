@@ -4,10 +4,6 @@
 // Declarations
 // ============================================================
 
-// Tools ==========
-// VkFormat OpalFormatToVkFormat_Ovk(OpalFormat _format);
-// VkShaderStageFlags OpalStagesToVkStages_Ovk(OpalStageFlags stages);
-
 // Initialization ==========
 // OpalResult     OpalVulkanInit              (OpalInitInfo initInfo)
 OpalResult        InitInstance_Ovk            (bool useDebug);
@@ -20,88 +16,6 @@ uint32_t          GetFamilyIndexForPresent_Ovk(const OpalVulkanGpuInfo* const gp
 OpalResult        InitDevice_Ovk              (bool useDebug);
 OpalResult        InitCommandPool_Ovk         (bool isTransient);
 OpalResult        InitDescriptorPool          ();
-
-// Tools
-// ============================================================
-
-VkFormat OpalFormatToVkFormat_Ovk(OpalFormat _format)
-{
-  switch (_format)
-  {
-  case Opal_Format_R8:       return VK_FORMAT_R8_UNORM;
-  case Opal_Format_RG8:      return VK_FORMAT_R8G8_UNORM;
-  case Opal_Format_RGB8:     return VK_FORMAT_R8G8B8_UNORM;
-  case Opal_Format_RGBA8:    return VK_FORMAT_R8G8B8A8_UNORM;
-  case Opal_Format_R16:      return VK_FORMAT_R16_UNORM;
-  case Opal_Format_RG16:     return VK_FORMAT_R16G16_UNORM;
-  case Opal_Format_RGB16:    return VK_FORMAT_R16G16B16_UNORM;
-  case Opal_Format_RGBA16:   return VK_FORMAT_R16G16B16A16_UNORM;
-  case Opal_Format_R32:      return VK_FORMAT_R32_SFLOAT;
-  case Opal_Format_RG32:     return VK_FORMAT_R32G32_SFLOAT;
-  case Opal_Format_RGB32:    return VK_FORMAT_R32G32B32_SFLOAT;
-  case Opal_Format_RGBA32:   return VK_FORMAT_R32G32B32A32_SFLOAT;
-  case Opal_Format_R64:      return VK_FORMAT_R64_SFLOAT;
-  case Opal_Format_RG64:     return VK_FORMAT_R64G64_SFLOAT;
-  case Opal_Format_RGB64:    return VK_FORMAT_R64G64B64_SFLOAT;
-  case Opal_Format_RGBA64:   return VK_FORMAT_R64G64B64A64_SFLOAT;
-
-  case Opal_Format_R8_I:     return VK_FORMAT_R8_SINT;
-  case Opal_Format_RG8_I:    return VK_FORMAT_R8G8_SINT;
-  case Opal_Format_RGB8_I:   return VK_FORMAT_R8G8B8_SINT;
-  case Opal_Format_RGBA8_I:  return VK_FORMAT_R8G8B8A8_SINT;
-  case Opal_Format_R16_I:    return VK_FORMAT_R16_SINT;
-  case Opal_Format_RG16_I:   return VK_FORMAT_R16G16_SINT;
-  case Opal_Format_RGB16_I:  return VK_FORMAT_R16G16B16_SINT;
-  case Opal_Format_RGBA16_I: return VK_FORMAT_R16G16B16A16_SINT;
-  case Opal_Format_R32_I:    return VK_FORMAT_R32_SINT;
-  case Opal_Format_RG32_I:   return VK_FORMAT_R32G32_SINT;
-  case Opal_Format_RGB32_I:  return VK_FORMAT_R32G32B32_SINT;
-  case Opal_Format_RGBA32_I: return VK_FORMAT_R32G32B32A32_SINT;
-  case Opal_Format_R64_I:    return VK_FORMAT_R64_SINT;
-  case Opal_Format_RG64_I:   return VK_FORMAT_R64G64_SINT;
-  case Opal_Format_RGB64_I:  return VK_FORMAT_R64G64B64_SINT;
-  case Opal_Format_RGBA64_I: return VK_FORMAT_R64G64B64A64_SINT;
-
-  case Opal_Format_R8_U:     return VK_FORMAT_R8_UINT;
-  case Opal_Format_RG8_U:    return VK_FORMAT_R8G8_UINT;
-  case Opal_Format_RGB8_U:   return VK_FORMAT_R8G8B8_UINT;
-  case Opal_Format_RGBA8_U:  return VK_FORMAT_R8G8B8A8_UINT;
-  case Opal_Format_R16_U:    return VK_FORMAT_R16_UINT;
-  case Opal_Format_RG16_U:   return VK_FORMAT_R16G16_UINT;
-  case Opal_Format_RGB16_U:  return VK_FORMAT_R16G16B16_UINT;
-  case Opal_Format_RGBA16_U: return VK_FORMAT_R16G16B16A16_UINT;
-  case Opal_Format_R32_U:    return VK_FORMAT_R32_UINT;
-  case Opal_Format_RG32_U:   return VK_FORMAT_R32G32_UINT;
-  case Opal_Format_RGB32_U:  return VK_FORMAT_R32G32B32_UINT;
-  case Opal_Format_RGBA32_U: return VK_FORMAT_R32G32B32A32_UINT;
-  case Opal_Format_R64_U:    return VK_FORMAT_R64_UINT;
-  case Opal_Format_RG64_U:   return VK_FORMAT_R64G64_UINT;
-  case Opal_Format_RGB64_U:  return VK_FORMAT_R64G64B64_UINT;
-  case Opal_Format_RGBA64_U: return VK_FORMAT_R64G64B64A64_UINT;
-
-    // Depth stencils
-  case Opal_Format_D24_S8:   return VK_FORMAT_D24_UNORM_S8_UINT;
-  case Opal_Format_D32:      return VK_FORMAT_D32_SFLOAT;
-
-  default: OpalLog("Vulkan unkown or unsupported opal format %d", _format); return VK_FORMAT_UNDEFINED;
-  }
-}
-
-VkShaderStageFlags OpalStagesToVkStages_Ovk(OpalStageFlags stages)
-{
-  VkShaderStageFlags flags = 0;
-
-  flags |= VK_SHADER_STAGE_VERTEX_BIT                  * ((stages & Opal_Stage_Vertex)       == Opal_Stage_Vertex);
-  flags |= VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT    * ((stages & Opal_Stage_Tesselation)  == Opal_Stage_Tesselation);
-  flags |= VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT * ((stages & Opal_Stage_Tesselation)  == Opal_Stage_Tesselation);
-  flags |= VK_SHADER_STAGE_GEOMETRY_BIT                * ((stages & Opal_Stage_Geometry)     == Opal_Stage_Geometry);
-  flags |= VK_SHADER_STAGE_FRAGMENT_BIT                * ((stages & Opal_Stage_Fragment)     == Opal_Stage_Fragment);
-  flags |= VK_SHADER_STAGE_COMPUTE_BIT                 * ((stages & Opal_Stage_Compute)      == Opal_Stage_Compute);
-  flags |= VK_SHADER_STAGE_ALL_GRAPHICS                * ((stages & Opal_Stage_All_Graphics) == Opal_Stage_All_Graphics);
-  flags |= VK_SHADER_STAGE_ALL                         * ((stages & Opal_Stage_All)          == Opal_Stage_All);
-
-  return flags;
-}
 
 // Initialization
 // ============================================================
@@ -258,8 +172,8 @@ OpalVulkanGpuInfo InitGpuInfo_Ovk(VkPhysicalDevice gpu, VkSurfaceKHR surface)
   vkGetPhysicalDeviceMemoryProperties(gpu, &info.memoryProperties);
 
   vkGetPhysicalDeviceQueueFamilyProperties(gpu, &info.queueFamilyPropertiesCount, NULL);
-  info.queueFamilyProperties = OpalMemAllocArray(VkQueueFamilyProperties, info.queueFamilyPropertiesCount);
-  vkGetPhysicalDeviceQueueFamilyProperties(gpu, &info.queueFamilyPropertiesCount, info.queueFamilyProperties);
+  info.pQueueFamilyProperties = OpalMemAllocArray(VkQueueFamilyProperties, info.queueFamilyPropertiesCount);
+  vkGetPhysicalDeviceQueueFamilyProperties(gpu, &info.queueFamilyPropertiesCount, info.pQueueFamilyProperties);
 
   info.queueIndexGraphics = GetFamilyIndexForQueue_Ovk(&info, VK_QUEUE_GRAPHICS_BIT);
   info.queueIndexTransfer = GetFamilyIndexForQueue_Ovk(&info, VK_QUEUE_TRANSFER_BIT);
@@ -270,7 +184,7 @@ OpalVulkanGpuInfo InitGpuInfo_Ovk(VkPhysicalDevice gpu, VkSurfaceKHR surface)
 
 void ShutdownGpuInfo_Ovk(OpalVulkanGpuInfo* info)
 {
-  OpalMemFree(info->queueFamilyProperties);
+  OpalMemFree(info->pQueueFamilyProperties);
 }
 
 uint32_t GetFamilyIndexForQueue_Ovk(const OpalVulkanGpuInfo* const gpu, VkQueueFlags flags)
@@ -279,7 +193,7 @@ uint32_t GetFamilyIndexForQueue_Ovk(const OpalVulkanGpuInfo* const gpu, VkQueueF
 
   for (uint32_t i = 0; i < gpu->queueFamilyPropertiesCount; i++)
   {
-    uint32_t queueFlag = gpu->queueFamilyProperties[i].queueFlags;
+    uint32_t queueFlag = gpu->pQueueFamilyProperties[i].queueFlags;
 
     if ((queueFlag & flags) == flags)
     {

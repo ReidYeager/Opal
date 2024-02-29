@@ -39,6 +39,9 @@ typedef enum OpalFormat
   Opal_Format_R32_U, Opal_Format_RG32_U, Opal_Format_RGB32_U, Opal_Format_RGBA32_U,
   Opal_Format_R64_U, Opal_Format_RG64_U, Opal_Format_RGB64_U, Opal_Format_RGBA64_U,
 
+  // Presented B-G-R-A srgb
+  Opal_Format_Presented_BGRA8,
+
   // Depth
   Opal_Format_D24_S8,
   Opal_Format_D32,
@@ -105,6 +108,7 @@ typedef struct OpalWindow
 {
   uint32_t width, height;
   uint32_t imageCount;
+  OpalFormat imageFormat;
 
   union
   {
@@ -265,7 +269,7 @@ typedef struct OpalRenderpass
 typedef struct OpalFramebufferInitInfo
 {
   uint32_t imageCount;
-  const OpalImage* images;
+  const OpalImage* pImages;
 
   OpalRenderpass renderpass;
 

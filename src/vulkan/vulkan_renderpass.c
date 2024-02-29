@@ -29,9 +29,9 @@ OpalResult OpalVulkanRenderpassInit(OpalRenderpass* pRenderpass, OpalRenderpassI
 {
   RenderpassData_Ovk data;
 
-  OPAL_ATTEMPT(BuildAttachments_Ovk (initInfo, &data));
-  OPAL_ATTEMPT(BuildSubpasses_Ovk   (initInfo, &data));
-  OPAL_ATTEMPT(BuildDependencies_Ovk(initInfo, &data));
+  OPAL_ATTEMPT(BuildAttachments_Ovk (initInfo, &data), DestroyRenderpassData_Ovk(&data));
+  OPAL_ATTEMPT(BuildSubpasses_Ovk   (initInfo, &data), DestroyRenderpassData_Ovk(&data));
+  OPAL_ATTEMPT(BuildDependencies_Ovk(initInfo, &data), DestroyRenderpassData_Ovk(&data));
 
   VkRenderPassCreateInfo createInfo;
   createInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
@@ -44,7 +44,9 @@ OpalResult OpalVulkanRenderpassInit(OpalRenderpass* pRenderpass, OpalRenderpassI
   createInfo.subpassCount    = data.subpassCount;
   createInfo.pSubpasses      = data.pSubpasses;
 
-  OPAL_ATTEMPT_VK(vkCreateRenderPass(g_OpalState.api.vk.device, &createInfo, NULL, &pRenderpass->api.vk.renderpass));
+  OPAL_ATTEMPT_VK(
+    vkCreateRenderPass(g_OpalState.api.vk.device, &createInfo, NULL, &pRenderpass->api.vk.renderpass),
+    DestroyRenderpassData_Ovk(&data));
 
   pRenderpass->api.vk.pClearValues = OpalMemAllocArray(VkClearValue, initInfo.attachmentCount);
   for (int i = 0; i < initInfo.attachmentCount; i++)

@@ -164,7 +164,12 @@ void OpalRenderpassShutdown(OpalRenderpass* pRenderpass)
 
 OpalResult OpalFramebufferInit(OpalFramebuffer* pFramebuffer, OpalFramebufferInitInfo initInfo)
 {
-  return g_OpalState.api.functions.FramebufferInit(pFramebuffer, initInfo);;
+  OPAL_ATTEMPT(g_OpalState.api.functions.FramebufferInit(pFramebuffer, initInfo));
+
+  pFramebuffer->width = initInfo.pImages[0].width;
+  pFramebuffer->height = initInfo.pImages[0].height;
+
+  return Opal_Success;
 }
 
 void OpalFramebufferShutdown(OpalFramebuffer* pFramebuffer)

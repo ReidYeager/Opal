@@ -32,7 +32,13 @@ typedef struct OpalVulkanBuffer
 
 typedef struct OpalVulkanImage
 {
+  VkDeviceMemory memory;
   VkImage image;
+  VkImageView view;
+  VkSampler sampler;
+
+  VkFormat format;
+  VkImageLayout layout;
 } OpalVulkanImage;
 
 // Rendering
@@ -61,12 +67,13 @@ typedef struct OpalVulkanWindow
   VkSwapchainKHR swapchain;
 
   uint8_t imageCount;
-  VkImage* images;
-  VkImageView* imageViews;
+  VkImage* pImages;
+  VkImageView* pImageViews;
+  VkSampler* pSamplers;
 
-  VkFence* fencesImageAvailable;
-  VkSemaphore* semaphoresImageAvailable;
-  VkSemaphore* semaphoresRenderComplete;
+  VkFence* pFencesImageAvailable;
+  VkSemaphore* pSemaphoresImageAvailable;
+  VkSemaphore* pSemaphoresRenderComplete;
 } OpalVulkanWindow;
 
 // State
@@ -80,7 +87,7 @@ typedef struct OpalVulkanGpuInfo
   VkPhysicalDeviceMemoryProperties memoryProperties;
 
   uint32_t queueFamilyPropertiesCount;
-  VkQueueFamilyProperties* queueFamilyProperties;
+  VkQueueFamilyProperties* pQueueFamilyProperties;
 
   uint32_t queueIndexGraphics;
   uint32_t queueIndexTransfer;
