@@ -2,20 +2,16 @@
 #include "src/common.h"
 #include "src/vulkan/vulkan_common.h"
 
-// ============================================================
-// ============================================================
-//
-// Win32 ==========
-// PlatformGetExtensions_Ovk()
-// PlatformCreateSurface_Ovk()
-//
-// Default ==========
-// PlatformGetExtensions_Ovk()
-// PlatformCreateSurface_Ovk()
-//
-// ============================================================
+// Declarations
 // ============================================================
 
+// Win32 ==========
+// uint32_t   PlatformGetExtensions_Ovk(const char*** pOutExtensions)
+// OpalResult PlatformCreateSurface_Ovk(OpalPlatformWindowInfo windowInfo, VkSurfaceKHR* outSurface)
+
+// Default ==========
+// uint32_t   PlatformGetExtensions_Ovk(const char*** pOutExtensions)
+// OpalResult PlatformCreateSurface_Ovk(OpalPlatformWindowInfo windowInfo, VkSurfaceKHR* outSurface)
 
 #ifdef OPAL_PLATFORM_WIN32
 
@@ -43,10 +39,11 @@ OpalResult PlatformCreateSurface_Ovk(OpalPlatformWindowInfo windowInfo, VkSurfac
   createInfo.hinstance = (HINSTANCE)windowInfo.hinstance;
   createInfo.hwnd = (HWND)windowInfo.hwnd;
 
-  OPAL_ATTEMPT_VK(vkCreateWin32SurfaceKHR(g_OpalState.api.vk.instance, &createInfo, NULL, outSurface));
+  OPAL_ATTEMPT_VK(vkCreateWin32SurfaceKHR(g_ovkState->instance, &createInfo, NULL, outSurface));
 
   return Opal_Success;
 }
+
 #else
 
 // Default
@@ -62,4 +59,5 @@ OpalResult PlatformCreateSurface_Ovk(OpalPlatformWindowInfo windowInfo, VkSurfac
 {
   return Opal_Failure_Unknown;
 }
+
 #endif // OPAL_PLATFORM_*

@@ -1,6 +1,11 @@
 
 #include "src/vulkan/vulkan_common.h"
 
+// Global variables
+// ============================================================
+
+OpalVulkanState* g_ovkState = NULL;
+
 // Declarations
 // ============================================================
 
@@ -15,13 +20,28 @@ uint32_t          GetFamilyIndexForQueue_Ovk  (const OpalVulkanGpuInfo* const gp
 uint32_t          GetFamilyIndexForPresent_Ovk(const OpalVulkanGpuInfo* const gpu, VkSurfaceKHR surface);
 OpalResult        InitDevice_Ovk              (bool useDebug);
 OpalResult        InitCommandPool_Ovk         (bool isTransient);
-OpalResult        InitDescriptorPool          ();
+OpalResult        InitDescriptorPool_Ovk      ();
+OpalResult        InitRenderResources_Ovk     ();
+
+// Shutdown ==========
+//void OpalVulkanShutdown();
+
+// Tools ==========
+//void OpalVulkanWaitIdle();
 
 // Initialization
 // ============================================================
 
 OpalResult OpalVulkanInit(OpalInitInfo initInfo)
 {
+  if (g_ovkState != NULL)
+  {
+    OpalLogError("Vulkan state already initialized");
+    return Opal_Failure_Unknown;
+  }
+
+  g_ovkState = &g_OpalState.api.vk;
+
   OPAL_ATTEMPT(InitInstance_Ovk(initInfo.useDebug));
   OpalLog("Init Vulkan : Instance created");
 
@@ -30,7 +50,7 @@ OpalResult OpalVulkanInit(OpalInitInfo initInfo)
   OpalLog("Init Vulkan : Surface created");
 
   OPAL_ATTEMPT(ChoosePhysicalDevice_Ovk(tmpInitSurface));
-  OpalLog("Init Vulkan : Chose physical device (%s)", g_OpalState.api.vk.gpu.properties.deviceName);
+  OpalLog("Init Vulkan : Chose physical device (%s)", g_ovkState->gpu.properties.deviceName);
 
   OPAL_ATTEMPT(InitDevice_Ovk(initInfo.useDebug));
   OpalLog("Init Vulkan : Device created");
@@ -39,10 +59,13 @@ OpalResult OpalVulkanInit(OpalInitInfo initInfo)
   OPAL_ATTEMPT(InitCommandPool_Ovk(true));
   OpalLog("Init Vulkan : Command pools created");
 
-  OPAL_ATTEMPT(InitDescriptorPool());
+  OPAL_ATTEMPT(InitDescriptorPool_Ovk());
   OpalLog("Init Vulkan : Descriptor pool created");
 
-  vkDestroySurfaceKHR(g_OpalState.api.vk.instance, tmpInitSurface, NULL);
+  OPAL_ATTEMPT(InitRenderResources_Ovk());
+  OpalLog("Init Vulkan : Base render resources created");
+
+  vkDestroySurfaceKHR(g_ovkState->instance, tmpInitSurface, NULL);
 
   OpalLog("Init Vulkan : complete");
   return Opal_Success;
@@ -105,7 +128,7 @@ OpalResult InitInstance_Ovk(bool useDebug)
   createInfo.enabledLayerCount = layerCount;
   createInfo.ppEnabledLayerNames = layers;
 
-  OPAL_ATTEMPT_VK(vkCreateInstance(&createInfo, NULL, &g_OpalState.api.vk.instance));
+  OPAL_ATTEMPT_VK(vkCreateInstance(&createInfo, NULL, &g_ovkState->instance));
 
   // Shutdown ==============================
 
@@ -124,15 +147,15 @@ OpalResult InitInstance_Ovk(bool useDebug)
 OpalResult ChoosePhysicalDevice_Ovk(VkSurfaceKHR surface)
 {
   uint32_t deviceCount = 0;
-  OPAL_ATTEMPT_VK(vkEnumeratePhysicalDevices(g_OpalState.api.vk.instance, &deviceCount, NULL));
+  OPAL_ATTEMPT_VK(vkEnumeratePhysicalDevices(g_ovkState->instance, &deviceCount, NULL));
   VkPhysicalDevice* devices = OpalMemAllocArray(VkPhysicalDevice, deviceCount);
-  OPAL_ATTEMPT_VK(vkEnumeratePhysicalDevices(g_OpalState.api.vk.instance, &deviceCount, devices));
+  OPAL_ATTEMPT_VK(vkEnumeratePhysicalDevices(g_ovkState->instance, &deviceCount, devices));
 
   for (uint32_t i = 0; i < deviceCount; i++)
   {
     if (IsDeviceSuitable_Ovk(devices[i], surface))
     {
-      g_OpalState.api.vk.gpu = InitGpuInfo_Ovk(devices[i], surface);
+      g_ovkState->gpu = InitGpuInfo_Ovk(devices[i], surface);
 
       OpalMemFree(devices);
       return Opal_Success;
@@ -253,9 +276,9 @@ OpalResult InitDevice_Ovk(bool useDebug)
   uint32_t queueCount = 3;
   const float queuePriority = 1.0f;
   uint32_t* queueIndices = OpalMemAllocArray(uint32_t, queueCount);
-  queueIndices[0] = g_OpalState.api.vk.gpu.queueIndexGraphics;
-  queueIndices[1] = g_OpalState.api.vk.gpu.queueIndexTransfer;
-  queueIndices[2] = g_OpalState.api.vk.gpu.queueIndexPresent;
+  queueIndices[0] = g_ovkState->gpu.queueIndexGraphics;
+  queueIndices[1] = g_ovkState->gpu.queueIndexTransfer;
+  queueIndices[2] = g_ovkState->gpu.queueIndexPresent;
   VkDeviceQueueCreateInfo* queueCreateInfos = OpalMemAllocArray(VkDeviceQueueCreateInfo, queueCount);
 
   for (uint32_t i = 0; i < queueCount; i++)
@@ -288,7 +311,7 @@ OpalResult InitDevice_Ovk(bool useDebug)
 
   // Creation ==============================
 
-  VkPhysicalDeviceFeatures enabledFeatures = {};
+  VkPhysicalDeviceFeatures enabledFeatures = {0};
 
   VkDeviceCreateInfo createInfo;
   createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
@@ -302,11 +325,11 @@ OpalResult InitDevice_Ovk(bool useDebug)
   createInfo.enabledLayerCount = layerCount;
   createInfo.ppEnabledLayerNames = layers;
 
-  OPAL_ATTEMPT_VK(vkCreateDevice(g_OpalState.api.vk.gpu.device, &createInfo, NULL, &g_OpalState.api.vk.device));
+  OPAL_ATTEMPT_VK(vkCreateDevice(g_ovkState->gpu.device, &createInfo, NULL, &g_ovkState->device));
 
-  vkGetDeviceQueue(g_OpalState.api.vk.device, queueIndices[0], 0, &g_OpalState.api.vk.queueGraphics);
-  vkGetDeviceQueue(g_OpalState.api.vk.device, queueIndices[1], 0, &g_OpalState.api.vk.queueTransfer);
-  vkGetDeviceQueue(g_OpalState.api.vk.device, queueIndices[2], 0, &g_OpalState.api.vk.queuePresent);
+  vkGetDeviceQueue(g_ovkState->device, queueIndices[0], 0, &g_ovkState->queueGraphics);
+  vkGetDeviceQueue(g_ovkState->device, queueIndices[1], 0, &g_ovkState->queueTransfer);
+  vkGetDeviceQueue(g_ovkState->device, queueIndices[2], 0, &g_ovkState->queuePresent);
 
   // Shutdown ==============================
 
@@ -337,22 +360,22 @@ OpalResult InitCommandPool_Ovk(bool isTransient)
   if (isTransient)
   {
     createInfo.flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT;
-    createInfo.queueFamilyIndex = g_OpalState.api.vk.gpu.queueIndexTransfer;
-    outPool = &g_OpalState.api.vk.transientCommandPool;
+    createInfo.queueFamilyIndex = g_ovkState->gpu.queueIndexTransfer;
+    outPool = &g_ovkState->transientCommandPool;
   }
   else
   {
     createInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-    createInfo.queueFamilyIndex = g_OpalState.api.vk.gpu.queueIndexGraphics;
-    outPool = &g_OpalState.api.vk.graphicsCommandPool;
+    createInfo.queueFamilyIndex = g_ovkState->gpu.queueIndexGraphics;
+    outPool = &g_ovkState->graphicsCommandPool;
   }
 
-  OPAL_ATTEMPT_VK(vkCreateCommandPool(g_OpalState.api.vk.device, &createInfo, NULL, outPool));
+  OPAL_ATTEMPT_VK(vkCreateCommandPool(g_ovkState->device, &createInfo, NULL, outPool));
 
   return Opal_Success;
 }
 
-OpalResult InitDescriptorPool()
+OpalResult InitDescriptorPool_Ovk()
 {
   // TODO : Find a good way to determine required resource counts
 
@@ -371,7 +394,51 @@ OpalResult InitDescriptorPool()
   createInfo.pPoolSizes = sizes;
 
   OPAL_ATTEMPT_VK(
-    vkCreateDescriptorPool(g_OpalState.api.vk.device, &createInfo, NULL, &g_OpalState.api.vk.descriptorPool));
+    vkCreateDescriptorPool(g_ovkState->device, &createInfo, NULL, &g_ovkState->descriptorPool));
 
   return Opal_Success;
+}
+
+OpalResult InitRenderResources_Ovk()
+{
+  VkCommandBufferAllocateInfo allocInfo;
+  allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+  allocInfo.pNext = NULL;
+  allocInfo.commandBufferCount = 1;
+  allocInfo.commandPool = g_ovkState->graphicsCommandPool;
+  allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+
+  OPAL_ATTEMPT_VK(vkAllocateCommandBuffers(g_ovkState->device, &allocInfo, &g_ovkState->renderCmd));
+
+  VkSemaphoreCreateInfo semInfo;
+  semInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+  semInfo.flags = 0;
+  semInfo.pNext = NULL;
+
+  OPAL_ATTEMPT_VK(vkCreateSemaphore(g_ovkState->device, &semInfo, NULL, &g_ovkState->renderCompleteSem));
+
+  return Opal_Success;
+}
+
+// Shutdown
+// ============================================================
+
+void OpalVulkanShutdown()
+{
+  vkFreeCommandBuffers(g_ovkState->device, g_ovkState->graphicsCommandPool, 1, &g_ovkState->renderCmd);
+  vkDestroySemaphore(g_ovkState->device, g_ovkState->renderCompleteSem, NULL);
+  vkDestroyDescriptorPool(g_ovkState->device, g_ovkState->descriptorPool, NULL);
+  vkDestroyCommandPool(g_ovkState->device, g_ovkState->graphicsCommandPool, NULL);
+  vkDestroyCommandPool(g_ovkState->device, g_ovkState->transientCommandPool, NULL);
+  vkDestroyDevice(g_ovkState->device, NULL);
+  ShutdownGpuInfo_Ovk(&g_ovkState->gpu);
+  vkDestroyInstance(g_ovkState->instance, NULL);
+}
+
+// Tools
+// ============================================================
+
+void OpalVulkanWaitIdle()
+{
+  vkDeviceWaitIdle(g_ovkState->device);
 }

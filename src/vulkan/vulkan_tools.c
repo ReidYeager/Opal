@@ -4,14 +4,16 @@
 // Declarations
 // ============================================================
 
-// Tools ==========
-// VkFormat OpalFormatToVkFormat_Ovk(OpalFormat _format)
-// OpalFormat VkFormatToOpalFormat_Ovk(VkFormat _format)
-// VkShaderStageFlags OpalStagesToVkStages_Ovk(OpalStageFlags stages);
-// OpalResult BeginSingleUseCommandBuffer_Ovk(VkCommandBuffer* pCmd, VkCommandPool pool);
-// OpalResult EndSingleUseCommandBuffer_Ovk(VkCommandBuffer* pCmd, VkCommandPool pool, VkQueue submissionQueue);
+// Converters ==========
+// VkFormat           OpalFormatToVkFormat_Ovk       (OpalFormat _format)
+// OpalFormat         VkFormatToOpalFormat_Ovk       (VkFormat _format)
+// VkShaderStageFlags OpalStagesToVkStages_Ovk       (OpalStageFlags stages)
 
-// Tools
+// Commands ==========
+// OpalResult         BeginSingleUseCommandBuffer_Ovk(VkCommandBuffer* pCmd, VkCommandPool pool)
+// OpalResult         EndSingleUseCommandBuffer_Ovk  (VkCommandBuffer* pCmd, VkCommandPool pool, VkQueue submissionQueue)
+
+// Converters
 // ============================================================
 
 VkFormat OpalFormatToVkFormat_Ovk(OpalFormat _format)
@@ -68,8 +70,6 @@ VkFormat OpalFormatToVkFormat_Ovk(OpalFormat _format)
   case Opal_Format_RG64_U:   return VK_FORMAT_R64G64_UINT;
   case Opal_Format_RGB64_U:  return VK_FORMAT_R64G64B64_UINT;
   case Opal_Format_RGBA64_U: return VK_FORMAT_R64G64B64A64_UINT;
-
-  case Opal_Format_Presented_BGRA8: return VK_FORMAT_B8G8R8A8_SRGB;
 
     // Depth stencils
   case Opal_Format_D24_S8:   return VK_FORMAT_D24_UNORM_S8_UINT;
@@ -134,8 +134,6 @@ OpalFormat VkFormatToOpalFormat_Ovk(VkFormat _format)
   case VK_FORMAT_R64G64B64_UINT:    return Opal_Format_RGB64_U;
   case VK_FORMAT_R64G64B64A64_UINT: return Opal_Format_RGBA64_U;
 
-  case VK_FORMAT_B8G8R8A8_SRGB: return Opal_Format_Presented_BGRA8;
-
     // Depth stencils
   case VK_FORMAT_D24_UNORM_S8_UINT: return Opal_Format_D24_S8;
   case VK_FORMAT_D32_SFLOAT:        return Opal_Format_D32;
@@ -160,6 +158,9 @@ VkShaderStageFlags OpalStagesToVkStages_Ovk(OpalStageFlags stages)
   return flags;
 }
 
+// Commands
+// ============================================================
+
 OpalResult BeginSingleUseCommandBuffer_Ovk(VkCommandBuffer* pCmd, VkCommandPool pool)
 {
   VkCommandBufferAllocateInfo allocInfo;
@@ -169,7 +170,7 @@ OpalResult BeginSingleUseCommandBuffer_Ovk(VkCommandBuffer* pCmd, VkCommandPool 
   allocInfo.commandPool = pool;
   allocInfo.commandBufferCount = 1;
 
-  OPAL_ATTEMPT_VK(vkAllocateCommandBuffers(g_OpalState.api.vk.device, &allocInfo, pCmd));
+  OPAL_ATTEMPT_VK(vkAllocateCommandBuffers(g_ovkState->device, &allocInfo, pCmd));
   
   VkCommandBufferBeginInfo beginInfo;
   beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -201,7 +202,7 @@ OpalResult EndSingleUseCommandBuffer_Ovk(VkCommandBuffer cmd, VkCommandPool pool
 
   OPAL_ATTEMPT_VK(vkQueueWaitIdle(submissionQueue));
 
-  vkFreeCommandBuffers(g_OpalState.api.vk.device, pool, 1, &cmd);
+  vkFreeCommandBuffers(g_ovkState->device, pool, 1, &cmd);
 
   return Opal_Success;
 }

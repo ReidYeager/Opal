@@ -4,24 +4,60 @@
 
 #include <stdarg.h>
 
-// ============================================================
-// ============================================================
-//
-// Global variables ==========
-// g_OpalState
-//
-// Core ==========
-// OpalOutputMessage()
-// OpalInit()
-//
-// ============================================================
-// ============================================================
-
-
 // Global variables
 // ============================================================
 
-OpalState g_OpalState = {};
+OpalState g_OpalState = {0};
+
+// Declarations
+// ============================================================
+
+// Core ==========
+//void OpalOutputMessage(OpalMessageType type, const char* message, ...)
+//OpalResult OpalInit(OpalInitInfo initInfo)
+//void OpalShutdown()
+//void OpalWaitIdle()
+
+// Window ==========
+//OpalResult OpalWindowInit(OpalWindow* pWindow, OpalWindowInitInfo initInfo)
+//void OpalWindowShutdown(OpalWindow* pWindow)
+
+// Buffer ==========
+//OpalResult OpalBufferInit(OpalBuffer* pBuffer, OpalBufferInitInfo initInfo)
+//void OpalBufferShutdown(OpalBuffer* pBuffer)
+
+// Image ==========
+//OpalResult OpalImageInit(OpalImage* pImage, OpalImageInitInfo initInfo)
+//void OpalImageShutdown(OpalImage* pImage)
+
+// Renderpass ==========
+//OpalResult OpalRenderpassInit(OpalRenderpass* pRenderpass, OpalRenderpassInitInfo initInfo)
+//void OpalRenderpassShutdown(OpalRenderpass* pRenderpass)
+
+// Framebuffer ==========
+//OpalResult OpalFramebufferInit(OpalFramebuffer* pFramebuffer, OpalFramebufferInitInfo initInfo)
+//void OpalFramebufferShutdown(OpalFramebuffer* pFramebuffer)
+
+// Shader ==========
+//OpalResult OpalShaderInit(OpalShader* pShader, OpalShaderInitInfo initInfo)
+//void OpalShaderShutdown(OpalShader* pShader)
+
+// ShaderGroup ==========
+//OpalResult OpalShaderGroupInit(OpalShaderGroup* pShaderGroup, OpalShaderGroupInitInfo initInfo)
+//void OpalShaderGroupShutdown(OpalShaderGroup* pShaderGroup)
+
+// ShaderInput ==========
+//OpalResult OpalShaderInputInit(OpalShaderInput* pShaderInput, OpalShaderInputInitInfo initInfo)
+//void OpalShaderInputShutdown(OpalShaderInput* pShaderInput)
+
+// Rendering ==========
+//OpalResult OpalRenderBegin()
+//OpalResult OpalRenderEnd()
+//OpalResult OpalRenderToWindowBegin(OpalWindow* pWindow)
+//OpalResult OpalRenderToWindowEnd(OpalWindow* pWindow)
+//void OpalRenderRenderpassBegin(const OpalRenderpass* pRenderpass, const OpalFramebuffer* pFramebuffer)
+//void OpalRenderRenderpassEnd(const OpalRenderpass* pRenderpass)
+
 
 // Core
 // ============================================================
@@ -48,6 +84,8 @@ OpalResult OpalInit(OpalInitInfo initInfo)
   case Opal_Api_Vulkan:
   {
     OPAL_ATTEMPT(OpalVulkanInit(initInfo));
+    g_OpalState.api.functions.Shutdown              = OpalVulkanShutdown;
+    g_OpalState.api.functions.WaitIdle              = OpalVulkanWaitIdle;
     // Window
     g_OpalState.api.functions.WindowInit            = OpalVulkanWindowInit;
     g_OpalState.api.functions.WindowShutdown        = OpalVulkanWindowShutdown;
@@ -89,6 +127,16 @@ OpalResult OpalInit(OpalInitInfo initInfo)
   }
 
   return Opal_Success;
+}
+
+void OpalShutdown()
+{
+  g_OpalState.api.functions.Shutdown();
+}
+
+void OpalWaitIdle()
+{
+  g_OpalState.api.functions.WaitIdle();
 }
 
 // Window

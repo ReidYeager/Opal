@@ -1,7 +1,17 @@
 
 #include "src/vulkan/vulkan_common.h"
 
-// Init
+// Declarations
+// ============================================================
+
+// Core ==========
+// OpalResult OpalVulkanImageInit      (OpalImage* pImage, OpalImageInitInfo initInfo)
+// void       OpalVulkanImageShutdown  (OpalImage* pImage)
+
+// Tools ==========
+// OpalResult ImageTransitionLayout_Ovk(OpalImage* pImage, VkImageLayout newLayout)
+
+// Core
 // ============================================================
 
 OpalResult OpalVulkanImageInit(OpalImage* pImage, OpalImageInitInfo initInfo)
@@ -9,9 +19,6 @@ OpalResult OpalVulkanImageInit(OpalImage* pImage, OpalImageInitInfo initInfo)
   
   return Opal_Success;
 }
-
-// Shutdown
-// ============================================================
 
 void OpalVulkanImageShutdown(OpalImage* pImage)
 {
@@ -93,9 +100,9 @@ OpalResult ImageTransitionLayout_Ovk(OpalImage* pImage, VkImageLayout newLayout)
   }
 
   VkCommandBuffer cmd;
-  OPAL_ATTEMPT(BeginSingleUseCommandBuffer_Ovk(&cmd, g_OpalState.api.vk.graphicsCommandPool));
+  OPAL_ATTEMPT(BeginSingleUseCommandBuffer_Ovk(&cmd, g_ovkState->graphicsCommandPool));
   vkCmdPipelineBarrier(cmd, srcStage, dstStage, 0, 0, NULL, 0, NULL, 1, &memBarrier);
-  OPAL_ATTEMPT(EndSingleUseCommandBuffer_Ovk(cmd, g_OpalState.api.vk.graphicsCommandPool, g_OpalState.api.vk.queueGraphics));
+  OPAL_ATTEMPT(EndSingleUseCommandBuffer_Ovk(cmd, g_ovkState->graphicsCommandPool, g_ovkState->queueGraphics));
 
   pImage->api.vk.layout = newLayout;
 

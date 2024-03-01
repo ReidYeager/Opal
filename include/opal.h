@@ -7,7 +7,9 @@ extern "C" {
 
 #include "./defines.h"
 
-OpalResult OpalInit(OpalInitInfo initInfo);
+OpalResult OpalInit    (OpalInitInfo initInfo);
+void       OpalShutdown();
+void       OpalWaitIdle();
 
 // ==============================
 // Objects

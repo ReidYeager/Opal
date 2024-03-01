@@ -8,19 +8,14 @@
 
 extern OpalState g_OpalState;
 
-// Preprocessor
+// Declarations
 // ============================================================
 
-// Platform
+// Logging ==========
+// void OpalOutputMessage(OpalMessageType type, const char* message, ...)
 
-#if defined(WIN32) || defined(_WIN32) || defined(__WIN32__)
-#define OPAL_PLATFORM_WIN32 1
-#ifndef _WIN64
-#error "Must have 64-bit windows"
-#endif
-#else
-#error "Unsupported platform"
-#endif // OPAL_PLATFORM_*
+// Preprocessor
+// ============================================================
 
 // Memory
 
@@ -68,10 +63,6 @@ extern OpalState g_OpalState;
 // ============================================================
 
 void OpalOutputMessage(OpalMessageType type, const char* message, ...);
-
-// Core
-// ============================================================
-
 
 
 #endif // !OPAL_COMMON_H

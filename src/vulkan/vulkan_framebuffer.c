@@ -1,6 +1,16 @@
 
 #include "src/vulkan/vulkan_common.h"
 
+// Declarations
+// ============================================================
+
+// Core ==========
+//OpalResult OpalVulkanFramebufferInit    (OpalFramebuffer* pFramebuffer, OpalFramebufferInitInfo initInfo)
+//void       OpalVulkanFramebufferShutdown(OpalFramebuffer* pFramebuffer)
+
+// Core
+// ============================================================
+
 OpalResult OpalVulkanFramebufferInit(OpalFramebuffer* pFramebuffer, OpalFramebufferInitInfo initInfo)
 {
   VkImageView* attachments = OpalMemAllocArray(VkImageView, initInfo.imageCount);
@@ -20,7 +30,7 @@ OpalResult OpalVulkanFramebufferInit(OpalFramebuffer* pFramebuffer, OpalFramebuf
   createinfo.attachmentCount = initInfo.imageCount;
   createinfo.pAttachments = attachments;
 
-  OPAL_ATTEMPT_VK(vkCreateFramebuffer(g_OpalState.api.vk.device, &createinfo, NULL, &pFramebuffer->api.vk.framebuffer));
+  OPAL_ATTEMPT_VK(vkCreateFramebuffer(g_ovkState->device, &createinfo, NULL, &pFramebuffer->api.vk.framebuffer));
 
   OpalMemFree(attachments);
   return Opal_Success;
@@ -28,5 +38,5 @@ OpalResult OpalVulkanFramebufferInit(OpalFramebuffer* pFramebuffer, OpalFramebuf
 
 void OpalVulkanFramebufferShutdown(OpalFramebuffer* pFramebuffer)
 {
-  
+  vkDestroyFramebuffer(g_ovkState->device, pFramebuffer->api.vk.framebuffer, NULL);
 }

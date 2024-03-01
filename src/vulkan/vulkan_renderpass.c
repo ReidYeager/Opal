@@ -1,6 +1,9 @@
 
 #include "src/vulkan/vulkan_common.h"
 
+// Local types
+// ============================================================
+
 typedef struct DependencyPair_Ovk
 {
   int producer, consumer;
@@ -20,10 +23,21 @@ typedef struct RenderpassData_Ovk
   VkSubpassDependency* pDependencies;
 } RenderpassData_Ovk;
 
-OpalResult BuildAttachments_Ovk     (OpalRenderpassInitInfo initInfo, RenderpassData_Ovk* data);
-OpalResult BuildSubpasses_Ovk       (OpalRenderpassInitInfo initInfo, RenderpassData_Ovk* data);
-OpalResult BuildDependencies_Ovk    (OpalRenderpassInitInfo initInfo, RenderpassData_Ovk* data);
-void       DestroyRenderpassData_Ovk(RenderpassData_Ovk* data);
+// Declarations
+// ============================================================
+
+// Core ==========
+//OpalResult OpalVulkanRenderpassInit(OpalRenderpass* pRenderpass, OpalRenderpassInitInfo initInfo)
+//void OpalVulkanRenderpassShutdown(OpalRenderpass* pRenderpass)
+OpalResult BuildAttachments_Ovk(OpalRenderpassInitInfo initInfo, RenderpassData_Ovk* data);
+OpalResult BuildSubpasses_Ovk(OpalRenderpassInitInfo initInfo, RenderpassData_Ovk* data);
+OpalResult BuildDependencies_Ovk(OpalRenderpassInitInfo initInfo, RenderpassData_Ovk* data);
+
+// Tools ==========
+void DestroyRenderpassData_Ovk(RenderpassData_Ovk* data);
+
+// Core
+// ============================================================
 
 OpalResult OpalVulkanRenderpassInit(OpalRenderpass* pRenderpass, OpalRenderpassInitInfo initInfo)
 {
@@ -45,7 +59,7 @@ OpalResult OpalVulkanRenderpassInit(OpalRenderpass* pRenderpass, OpalRenderpassI
   createInfo.pSubpasses      = data.pSubpasses;
 
   OPAL_ATTEMPT_VK(
-    vkCreateRenderPass(g_OpalState.api.vk.device, &createInfo, NULL, &pRenderpass->api.vk.renderpass),
+    vkCreateRenderPass(g_ovkState->device, &createInfo, NULL, &pRenderpass->api.vk.renderpass),
     DestroyRenderpassData_Ovk(&data));
 
   pRenderpass->api.vk.pClearValues = OpalMemAllocArray(VkClearValue, initInfo.attachmentCount);
@@ -63,7 +77,8 @@ OpalResult OpalVulkanRenderpassInit(OpalRenderpass* pRenderpass, OpalRenderpassI
 
 void OpalVulkanRenderpassShutdown(OpalRenderpass* pRenderpass)
 {
-  
+  vkDestroyRenderPass(g_ovkState->device, pRenderpass->api.vk.renderpass, NULL);
+  OpalMemFree(pRenderpass->api.vk.pClearValues);
 }
 
 OpalResult BuildAttachments_Ovk(OpalRenderpassInitInfo initInfo, RenderpassData_Ovk* data)
@@ -264,6 +279,9 @@ OpalResult BuildDependencies_Ovk(OpalRenderpassInitInfo initInfo, RenderpassData
   data->dependencyCount = count;
   return Opal_Success;
 }
+
+// Tools
+// ============================================================
 
 void DestroyRenderpassData_Ovk(RenderpassData_Ovk* data)
 {

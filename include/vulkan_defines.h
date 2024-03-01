@@ -67,17 +67,17 @@ typedef struct OpalVulkanWindow
   VkPresentModeKHR presentMode;
   VkSwapchainKHR swapchain;
 
-  uint32_t currentImageIndex;
-  uint32_t currentSyncIndex;
-  uint8_t imageCount;
-  VkImage* pImages;
+  uint8_t      imageCount;
+  VkImage*     pImages;
   VkImageView* pImageViews;
-  VkSampler* pSamplers;
+  VkSampler*   pSamplers;
 
-  VkFence fenceNextImageRetrieved;
-  VkFence* pFenceFrameAvailable;
-  VkSemaphore* pSemaphoresImageAvailable;
-  VkSemaphore* pSemaphoresRenderComplete;
+  // Synchronization
+  uint32_t         imageIndex;
+  uint32_t         syncIndex;
+  VkFence*         pCmdAvailableFences;
+  VkSemaphore*     pImageAvailableSems;
+  VkSemaphore*     pRenderCompleteSems;
   VkCommandBuffer* pCommandBuffers;
 } OpalVulkanWindow;
 
@@ -112,12 +112,9 @@ typedef struct OpalVulkanState
   VkCommandPool transientCommandPool;
   VkCommandPool graphicsCommandPool;
 
-  struct
-  {
-    VkCommandBuffer cmd;
-    VkSemaphore semImageAvailable;
-    VkSemaphore semRenderingComplete;
-  } currentRenderInfo;
+  VkCommandBuffer renderCurrentCmd;
+  VkCommandBuffer renderCmd;
+  VkSemaphore renderCompleteSem;
 
   VkDescriptorPool descriptorPool;
 } OpalVulkanState;
