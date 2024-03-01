@@ -1,6 +1,7 @@
 #ifndef OPAL_VULKAN_DEFINES_H
 #define OPAL_VULKAN_DEFINES_H 1
 
+#include <stdbool.h>
 #include <vulkan/vulkan.h>
 
 // Material
@@ -66,14 +67,18 @@ typedef struct OpalVulkanWindow
   VkPresentModeKHR presentMode;
   VkSwapchainKHR swapchain;
 
+  uint32_t currentImageIndex;
+  uint32_t currentSyncIndex;
   uint8_t imageCount;
   VkImage* pImages;
   VkImageView* pImageViews;
   VkSampler* pSamplers;
 
-  VkFence* pFencesImageAvailable;
+  VkFence fenceNextImageRetrieved;
+  VkFence* pFenceFrameAvailable;
   VkSemaphore* pSemaphoresImageAvailable;
   VkSemaphore* pSemaphoresRenderComplete;
+  VkCommandBuffer* pCommandBuffers;
 } OpalVulkanWindow;
 
 // State
@@ -106,6 +111,13 @@ typedef struct OpalVulkanState
 
   VkCommandPool transientCommandPool;
   VkCommandPool graphicsCommandPool;
+
+  struct
+  {
+    VkCommandBuffer cmd;
+    VkSemaphore semImageAvailable;
+    VkSemaphore semRenderingComplete;
+  } currentRenderInfo;
 
   VkDescriptorPool descriptorPool;
 } OpalVulkanState;

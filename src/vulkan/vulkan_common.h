@@ -34,6 +34,8 @@
 VkFormat           OpalFormatToVkFormat_Ovk(OpalFormat _format);
 OpalFormat         VkFormatToOpalFormat_Ovk(VkFormat _format);
 VkShaderStageFlags OpalStagesToVkStages_Ovk(OpalStageFlags stages);
+OpalResult         BeginSingleUseCommandBuffer_Ovk(VkCommandBuffer* pCmd, VkCommandPool pool);
+OpalResult         EndSingleUseCommandBuffer_Ovk(VkCommandBuffer cmd, VkCommandPool pool, VkQueue submissionQueue);
 
 // Wrappers
 // ============================================================
@@ -43,16 +45,15 @@ OpalResult OpalVulkanInit(OpalInitInfo initInfo);
 // Window ==========
 OpalResult OpalVulkanWindowInit         (OpalWindow* pWindow, OpalWindowInitInfo initInfo);
 void       OpalVulkanWindowShutdown     (OpalWindow* pWindow);
-OpalResult OpalVulkanWindowSwapBuffers  (const OpalWindow* pWindow);
-OpalResult OpalVulkanWindowGetFrameImage(const OpalWindow* pWindow, uint32_t frameIndex, OpalImage* pImage);
 
 // Buffer ==========
 OpalResult OpalVulkanBufferInit    (OpalBuffer* pBuffer, OpalBufferInitInfo initInfo);
 void       OpalVulkanBufferShutdown(OpalBuffer* pBuffer);
 
 // Image ==========
-OpalResult OpalVulkanImageInit    (OpalImage* pImage, OpalImageInitInfo initInfo);
-void       OpalVulkanImageShutdown(OpalImage* pImage);
+OpalResult OpalVulkanImageInit      (OpalImage* pImage, OpalImageInitInfo initInfo);
+void       OpalVulkanImageShutdown  (OpalImage* pImage);
+OpalResult ImageTransitionLayout_Ovk(OpalImage* pImage, VkImageLayout newLayout);
 
 // Renderpass ==========
 OpalResult OpalVulkanRenderpassInit    (OpalRenderpass* pRenderpass, OpalRenderpassInitInfo initInfo);
@@ -77,6 +78,8 @@ void       OpalVulkanShaderInputShutdown(OpalShaderInput* pShaderInput);
 // Rendering ==========
 OpalResult OpalVulkanRenderBegin          ();
 OpalResult OpalVulkanRenderEnd            ();
+OpalResult OpalVulkanRenderToWindowBegin  (OpalWindow* pWindow);
+OpalResult OpalVulkanRenderToWindowEnd    (OpalWindow* pWindow);
 void       OpalVulkanRenderRenderpassBegin(const OpalRenderpass* pRenderpass, const OpalFramebuffer* pFramebuffer);
 void       OpalVulkanRenderRenderpassEnd  (const OpalRenderpass* pRenderpass);
 

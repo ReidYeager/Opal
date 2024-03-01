@@ -49,34 +49,34 @@ OpalResult OpalInit(OpalInitInfo initInfo)
   {
     OPAL_ATTEMPT(OpalVulkanInit(initInfo));
     // Window
-    g_OpalState.api.functions.WindowInit          = OpalVulkanWindowInit;
-    g_OpalState.api.functions.WindowShutdown      = OpalVulkanWindowShutdown;
-    g_OpalState.api.functions.WindowSwapBuffers   = OpalVulkanWindowSwapBuffers;
-    g_OpalState.api.functions.WindowGetFrameImage = OpalVulkanWindowGetFrameImage;
+    g_OpalState.api.functions.WindowInit            = OpalVulkanWindowInit;
+    g_OpalState.api.functions.WindowShutdown        = OpalVulkanWindowShutdown;
     // Buffer
-    g_OpalState.api.functions.BufferInit          = OpalVulkanBufferInit;
-    g_OpalState.api.functions.BufferShutdown      = OpalVulkanBufferShutdown;
+    g_OpalState.api.functions.BufferInit            = OpalVulkanBufferInit;
+    g_OpalState.api.functions.BufferShutdown        = OpalVulkanBufferShutdown;
     // Image
-    g_OpalState.api.functions.ImageInit           = OpalVulkanImageInit;
-    g_OpalState.api.functions.ImageShutdown       = OpalVulkanImageShutdown;
+    g_OpalState.api.functions.ImageInit             = OpalVulkanImageInit;
+    g_OpalState.api.functions.ImageShutdown         = OpalVulkanImageShutdown;
     // Renderpass
-    g_OpalState.api.functions.RenderpassInit      = OpalVulkanRenderpassInit;
-    g_OpalState.api.functions.RenderpassShutdown  = OpalVulkanRenderpassShutdown;
+    g_OpalState.api.functions.RenderpassInit        = OpalVulkanRenderpassInit;
+    g_OpalState.api.functions.RenderpassShutdown    = OpalVulkanRenderpassShutdown;
     // Framebuffer
-    g_OpalState.api.functions.FramebufferInit     = OpalVulkanFramebufferInit;
-    g_OpalState.api.functions.FramebufferShutdown = OpalVulkanFramebufferShutdown;
+    g_OpalState.api.functions.FramebufferInit       = OpalVulkanFramebufferInit;
+    g_OpalState.api.functions.FramebufferShutdown   = OpalVulkanFramebufferShutdown;
     // Shader
-    g_OpalState.api.functions.ShaderInit          = OpalVulkanShaderInit;
-    g_OpalState.api.functions.ShaderShutdown      = OpalVulkanShaderShutdown;
+    g_OpalState.api.functions.ShaderInit            = OpalVulkanShaderInit;
+    g_OpalState.api.functions.ShaderShutdown        = OpalVulkanShaderShutdown;
     // ShaderGroup
-    g_OpalState.api.functions.ShaderGroupInit     = OpalVulkanShaderGroupInit;
-    g_OpalState.api.functions.ShaderGroupShutdown = OpalVulkanShaderGroupShutdown;
+    g_OpalState.api.functions.ShaderGroupInit       = OpalVulkanShaderGroupInit;
+    g_OpalState.api.functions.ShaderGroupShutdown   = OpalVulkanShaderGroupShutdown;
     // ShaderInput
-    g_OpalState.api.functions.ShaderInputInit     = OpalVulkanShaderInputInit;
-    g_OpalState.api.functions.ShaderInputShutdown = OpalVulkanShaderInputShutdown;
-
+    g_OpalState.api.functions.ShaderInputInit       = OpalVulkanShaderInputInit;
+    g_OpalState.api.functions.ShaderInputShutdown   = OpalVulkanShaderInputShutdown;
+    // Rendering
     g_OpalState.api.functions.RenderBegin           = OpalVulkanRenderBegin;
     g_OpalState.api.functions.RenderEnd             = OpalVulkanRenderEnd;
+    g_OpalState.api.functions.RenderToWindowBegin   = OpalVulkanRenderToWindowBegin;
+    g_OpalState.api.functions.RenderToWindowEnd     = OpalVulkanRenderToWindowEnd;
     g_OpalState.api.functions.RenderRenderpassBegin = OpalVulkanRenderRenderpassBegin;
     g_OpalState.api.functions.RenderRenderpassEnd   = OpalVulkanRenderRenderpassEnd;
 
@@ -108,16 +108,6 @@ OpalResult OpalWindowInit(OpalWindow* pWindow, OpalWindowInitInfo initInfo)
 void OpalWindowShutdown(OpalWindow* pWindow)
 {
   g_OpalState.api.functions.WindowShutdown(pWindow);
-}
-
-OpalResult OpalWindowSwapBuffers(const OpalWindow* pWindow)
-{
-  return g_OpalState.api.functions.WindowSwapBuffers(pWindow);
-}
-
-OpalResult OpalWindowGetFrameImage(const OpalWindow* pWindow, uint32_t frameIndex, OpalImage* pImage)
-{
-  return g_OpalState.api.functions.WindowGetFrameImage(pWindow, frameIndex, pImage);
 }
 
 // Buffer
@@ -227,6 +217,16 @@ OpalResult OpalRenderBegin()
 OpalResult OpalRenderEnd()
 {
   return g_OpalState.api.functions.RenderEnd();
+}
+
+OpalResult OpalRenderToWindowBegin(OpalWindow* pWindow)
+{
+  return g_OpalState.api.functions.RenderToWindowBegin(pWindow);
+}
+
+OpalResult OpalRenderToWindowEnd(OpalWindow* pWindow)
+{
+  return g_OpalState.api.functions.RenderToWindowEnd(pWindow);
 }
 
 void OpalRenderRenderpassBegin(const OpalRenderpass* pRenderpass, const OpalFramebuffer* pFramebuffer)

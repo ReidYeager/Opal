@@ -8,6 +8,8 @@
 // VkFormat OpalFormatToVkFormat_Ovk(OpalFormat _format)
 // OpalFormat VkFormatToOpalFormat_Ovk(VkFormat _format)
 // VkShaderStageFlags OpalStagesToVkStages_Ovk(OpalStageFlags stages);
+// OpalResult BeginSingleUseCommandBuffer_Ovk(VkCommandBuffer* pCmd, VkCommandPool pool);
+// OpalResult EndSingleUseCommandBuffer_Ovk(VkCommandBuffer* pCmd, VkCommandPool pool, VkQueue submissionQueue);
 
 // Tools
 // ============================================================
@@ -157,3 +159,50 @@ VkShaderStageFlags OpalStagesToVkStages_Ovk(OpalStageFlags stages)
 
   return flags;
 }
+
+OpalResult BeginSingleUseCommandBuffer_Ovk(VkCommandBuffer* pCmd, VkCommandPool pool)
+{
+  VkCommandBufferAllocateInfo allocInfo;
+  allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+  allocInfo.pNext = NULL;
+  allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+  allocInfo.commandPool = pool;
+  allocInfo.commandBufferCount = 1;
+
+  OPAL_ATTEMPT_VK(vkAllocateCommandBuffers(g_OpalState.api.vk.device, &allocInfo, pCmd));
+  
+  VkCommandBufferBeginInfo beginInfo;
+  beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+  beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+  beginInfo.pNext = NULL;
+  beginInfo.pInheritanceInfo = NULL;
+
+  OPAL_ATTEMPT_VK(vkBeginCommandBuffer(*pCmd, &beginInfo));
+
+  return Opal_Success;
+}
+
+OpalResult EndSingleUseCommandBuffer_Ovk(VkCommandBuffer cmd, VkCommandPool pool, VkQueue submissionQueue)
+{
+  OPAL_ATTEMPT_VK(vkEndCommandBuffer(cmd));
+
+  VkSubmitInfo submitInfo;
+  submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+  submitInfo.pNext = NULL;
+  submitInfo.commandBufferCount = 1;
+  submitInfo.pCommandBuffers = &cmd;
+  submitInfo.signalSemaphoreCount = 0;
+  submitInfo.pSignalSemaphores = NULL;
+  submitInfo.waitSemaphoreCount = 0;
+  submitInfo.pWaitSemaphores = NULL;
+  submitInfo.pWaitDstStageMask = NULL;
+
+  OPAL_ATTEMPT_VK(vkQueueSubmit(submissionQueue, 1, &submitInfo, VK_NULL_HANDLE));
+
+  OPAL_ATTEMPT_VK(vkQueueWaitIdle(submissionQueue));
+
+  vkFreeCommandBuffers(g_OpalState.api.vk.device, pool, 1, &cmd);
+
+  return Opal_Success;
+}
+

@@ -30,6 +30,7 @@ OpalResult OpalVulkanWindowInit(OpalWindow* pWindow, OpalWindowInitInfo initInfo
   OPAL_ATTEMPT(FramesInit_Ovk(pWindow));
 
   pWindow->imageCount = pWindow->api.vk.imageCount;
+  pWindow->api.vk.currentImageIndex = pWindow->api.vk.imageCount - 1;
 
   return Opal_Success;
 }
@@ -156,7 +157,7 @@ VkPresentModeKHR GetSwapchainPresentMode_Ovk(OpalVulkanWindow* pWindow)
 
 OpalResult FramesInit_Ovk(OpalWindow* pWindow)
 {
-  uint32_t createdCount;
+  uint32_t createdCount = 0;
   OpalVulkanWindow* window = &pWindow->api.vk;
 
   // Swapchain images ==========
@@ -164,12 +165,13 @@ OpalResult FramesInit_Ovk(OpalWindow* pWindow)
   OPAL_ATTEMPT_VK(vkGetSwapchainImagesKHR(g_OpalState.api.vk.device, window->swapchain, &createdCount, NULL));
 
   window->imageCount = createdCount;
-  window->pImages                   = OpalMemAllocArray(VkImage,     createdCount);
-  window->pImageViews               = OpalMemAllocArray(VkImageView, createdCount);
-  window->pSamplers                 = OpalMemAllocArray(VkSampler,   createdCount);
-  window->pFencesImageAvailable     = OpalMemAllocArray(VkFence,     createdCount);
-  window->pSemaphoresImageAvailable = OpalMemAllocArray(VkSemaphore, createdCount);
-  window->pSemaphoresRenderComplete = OpalMemAllocArray(VkSemaphore, createdCount);
+  window->pImages                   = OpalMemAllocArray(VkImage,         createdCount);
+  window->pImageViews               = OpalMemAllocArray(VkImageView,     createdCount);
+  window->pSamplers                 = OpalMemAllocArray(VkSampler,       createdCount);
+  window->pFenceFrameAvailable      = OpalMemAllocArray(VkFence,         createdCount);
+  window->pSemaphoresImageAvailable = OpalMemAllocArray(VkSemaphore,     createdCount);
+  window->pSemaphoresRenderComplete = OpalMemAllocArray(VkSemaphore,     createdCount);
+  window->pCommandBuffers           = OpalMemAllocArray(VkCommandBuffer, createdCount);
 
   OPAL_ATTEMPT_VK(vkGetSwapchainImagesKHR(g_OpalState.api.vk.device, window->swapchain, &createdCount, window->pImages));
 
@@ -233,17 +235,51 @@ OpalResult FramesInit_Ovk(OpalWindow* pWindow)
 
   VkFenceCreateInfo fenceInfo;
   fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
-  fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
+  fenceInfo.flags = 0;
   fenceInfo.pNext = NULL;
 
+  OPAL_ATTEMPT_VK(vkCreateFence(g_OpalState.api.vk.device, &fenceInfo, NULL, &window->fenceNextImageRetrieved));
+
+  fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
   for (int i = 0; i < createdCount; i++)
   {
     OPAL_ATTEMPT_VK(
-      vkCreateFence(g_OpalState.api.vk.device, &fenceInfo, NULL, &window->pFencesImageAvailable[i]));
+      vkCreateFence(g_OpalState.api.vk.device, &fenceInfo, NULL, &window->pFenceFrameAvailable[i]));
     OPAL_ATTEMPT_VK(
       vkCreateSemaphore(g_OpalState.api.vk.device, &semaphoreInfo, NULL, &window->pSemaphoresImageAvailable[i]));
     OPAL_ATTEMPT_VK(
       vkCreateSemaphore(g_OpalState.api.vk.device, &semaphoreInfo, NULL, &window->pSemaphoresRenderComplete[i]));
+  }
+  window->currentSyncIndex = 0;
+
+  // Command buffers ==========
+
+  VkCommandBufferAllocateInfo allocInfo;
+  allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+  allocInfo.pNext = NULL;
+  allocInfo.commandBufferCount = createdCount;
+  allocInfo.commandPool = g_OpalState.api.vk.graphicsCommandPool;
+  allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+
+  OPAL_ATTEMPT_VK(vkAllocateCommandBuffers(g_OpalState.api.vk.device, &allocInfo, window->pCommandBuffers));
+
+  // Images ==========
+
+  pWindow->pImages = OpalMemAllocArrayZeroed(OpalImage, createdCount);
+  for (int i = 0; i < createdCount; i++)
+  {
+    pWindow->pImages[i].width = pWindow->width;
+    pWindow->pImages[i].height = pWindow->height;
+    pWindow->pImages[i].mipCount = 1;
+    pWindow->pImages[i].format = VkFormatToOpalFormat_Ovk(pWindow->api.vk.format);
+    pWindow->pImages[i].api.vk.format = pWindow->api.vk.format;
+    pWindow->pImages[i].api.vk.image = pWindow->api.vk.pImages[i];
+    pWindow->pImages[i].api.vk.view = pWindow->api.vk.pImageViews[i];
+    pWindow->pImages[i].api.vk.sampler = pWindow->api.vk.pSamplers[i];
+    pWindow->pImages[i].api.vk.memory = VK_NULL_HANDLE;
+    pWindow->pImages[i].api.vk.layout = VK_IMAGE_LAYOUT_UNDEFINED;
+
+    OPAL_ATTEMPT(ImageTransitionLayout_Ovk(&pWindow->pImages[i], VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL));
   }
 
   return Opal_Success;
@@ -254,9 +290,10 @@ OpalResult FramesInit_Ovk(OpalWindow* pWindow)
 
 void OpalVulkanWindowShutdown(OpalWindow* pWindow)
 {
+  vkDestroyFence(g_OpalState.api.vk.device, pWindow->api.vk.fenceNextImageRetrieved, NULL);
   for (int i = 0; i < pWindow->api.vk.imageCount; i++)
   {
-    vkDestroyFence(g_OpalState.api.vk.device, pWindow->api.vk.pFencesImageAvailable[i], NULL);
+    //vkDestroyFence(g_OpalState.api.vk.device, pWindow->api.vk.pFencesImageAvailable[i], NULL);
     vkDestroySemaphore(g_OpalState.api.vk.device, pWindow->api.vk.pSemaphoresImageAvailable[i], NULL);
     vkDestroySemaphore(g_OpalState.api.vk.device, pWindow->api.vk.pSemaphoresRenderComplete[i], NULL);
 
@@ -264,7 +301,7 @@ void OpalVulkanWindowShutdown(OpalWindow* pWindow)
     vkDestroyImageView(g_OpalState.api.vk.device, pWindow->api.vk.pImageViews[i], NULL);
     vkDestroySampler(g_OpalState.api.vk.device, pWindow->api.vk.pSamplers[i], NULL);
   }
-  OpalMemFree(pWindow->api.vk.pFencesImageAvailable);
+  //OpalMemFree(pWindow->api.vk.pFencesImageAvailable);
   OpalMemFree(pWindow->api.vk.pSemaphoresImageAvailable);
   OpalMemFree(pWindow->api.vk.pSemaphoresRenderComplete);
   OpalMemFree(pWindow->api.vk.pImages);
@@ -273,28 +310,4 @@ void OpalVulkanWindowShutdown(OpalWindow* pWindow)
 
   vkDestroySwapchainKHR(g_OpalState.api.vk.device, pWindow->api.vk.swapchain, NULL);
   vkDestroySurfaceKHR(g_OpalState.api.vk.instance, pWindow->api.vk.surface, NULL);
-}
-
-// Use
-// ============================================================
-
-OpalResult OpalVulkanWindowSwapBuffers(const OpalWindow* pWindow)
-{
-  
-  return Opal_Success;
-}
-
-OpalResult OpalVulkanWindowGetFrameImage(const OpalWindow* pWindow, uint32_t frameIndex, OpalImage* pImage)
-{
-  pImage->width = pWindow->width;
-  pImage->height = pWindow->height;
-  pImage->format = VkFormatToOpalFormat_Ovk(pWindow->api.vk.format);
-  pImage->api.vk.format = pWindow->api.vk.format;
-  pImage->api.vk.image = pWindow->api.vk.pImages[frameIndex];
-  pImage->api.vk.view = pWindow->api.vk.pImageViews[frameIndex];
-  pImage->api.vk.sampler = pWindow->api.vk.pSamplers[frameIndex];
-  pImage->api.vk.memory = VK_NULL_HANDLE;
-  pImage->api.vk.layout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-
-  return Opal_Success;
 }

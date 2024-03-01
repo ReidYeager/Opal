@@ -16,8 +16,6 @@ OpalResult OpalInit(OpalInitInfo initInfo);
 // Window ==========
 OpalResult OpalWindowInit         (OpalWindow* pWindow, OpalWindowInitInfo initInfo);
 void       OpalWindowShutdown     (OpalWindow* pWindow);
-OpalResult OpalWindowSwapBuffers  (const OpalWindow* pWindow);
-OpalResult OpalWindowGetFrameImage(const OpalWindow* pWindow, uint32_t frameIndex, OpalImage* pImage);
 
 // Buffer ==========
 OpalResult OpalBufferInit    (OpalBuffer* pBuffer, OpalBufferInitInfo initInfo);
@@ -51,10 +49,12 @@ void       OpalShaderInputShutdown(OpalShaderInput* pShaderInput);
 // Rendering
 // ==============================
 
-OpalResult OpalRenderBegin();
-OpalResult OpalRenderEnd();
-void OpalRenderRenderpassBegin(const OpalRenderpass* pRenderpass, const OpalFramebuffer* pFramebuffer);
-void OpalRenderRenderpassEnd(const OpalRenderpass* pRenderpass);
+OpalResult OpalRenderBegin        ();
+OpalResult OpalRenderEnd          ();
+OpalResult OpalRenderToWindowBegin(OpalWindow* pWindow);
+OpalResult OpalRenderToWindowEnd  (OpalWindow* pWindow);
+void OpalRenderRenderpassBegin    (const OpalRenderpass* pRenderpass, const OpalFramebuffer* pFramebuffer);
+void OpalRenderRenderpassEnd      (const OpalRenderpass* pRenderpass);
 //void OpalRenderBindShaderInput(const OpalShaderInput* pInput, uint32_t setIndex);
 //void OpalRenderBindShaderGroup(const OpalShaderGroup* pGroup);
 //void OpalRenderSetViewportDimensions(uint32_t width, uint32_t height);

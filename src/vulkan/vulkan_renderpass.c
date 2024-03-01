@@ -54,6 +54,9 @@ OpalResult OpalVulkanRenderpassInit(OpalRenderpass* pRenderpass, OpalRenderpassI
     pRenderpass->api.vk.pClearValues[i] = *(VkClearValue*)(&initInfo.pAttachments[i].clearValue);
   }
 
+  pRenderpass->attachmentCount = initInfo.attachmentCount;
+  pRenderpass->subpassCount = initInfo.subpassCount;
+
   DestroyRenderpassData_Ovk(&data);
   return Opal_Success;
 }
@@ -98,7 +101,7 @@ OpalResult BuildAttachments_Ovk(OpalRenderpassInitInfo initInfo, RenderpassData_
 
       if (initInfo.pAttachments[i].pSubpassUsages[initInfo.subpassCount - 1] == Opal_Attachment_Usage_Output_Presented)
       {
-        data->pAttachments[i].finalLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+        data->pAttachments[i].finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
       }
       else
       {
@@ -110,16 +113,16 @@ OpalResult BuildAttachments_Ovk(OpalRenderpassInitInfo initInfo, RenderpassData_
 
     switch (initInfo.pAttachments[i].loadOp)
     {
-    case Opal_Attachment_Load_Op_Dont_Care:
+    case Opal_Attachment_Load_Op_Clear:
     {
       data->pAttachments[i].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
     } break;
-    case Opal_Attachment_Load_Op_Clear:
+    case Opal_Attachment_Load_Op_Load:
     {
       data->pAttachments[i].loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
       data->pAttachments[i].initialLayout = data->pReferences[i].layout;
     } break;
-    case Opal_Attachment_Load_Op_Load:
+    case Opal_Attachment_Load_Op_Dont_Care:
     {
       data->pAttachments[i].loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
     } break;

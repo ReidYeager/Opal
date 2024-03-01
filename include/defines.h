@@ -94,28 +94,6 @@ typedef struct OpalPlatformWindowInfo
 } OpalPlatformWindowInfo;
 #endif // OPAL_PLATFORM_*
 
-// Window
-// ============================================================
-
-typedef struct OpalWindowInitInfo
-{
-  OpalPlatformWindowInfo platform;
-  uint32_t width;
-  uint32_t height;
-} OpalWindowInitInfo;
-
-typedef struct OpalWindow
-{
-  uint32_t width, height;
-  uint32_t imageCount;
-  OpalFormat imageFormat;
-
-  union
-  {
-    OpalVulkanWindow vk;
-  }api;
-} OpalWindow;
-
 // Buffer
 // ============================================================
 
@@ -178,7 +156,7 @@ typedef enum OpalImageSampleMode
 typedef struct OpalImageInitInfo
 {
   uint32_t width, height;
-  uint32_t mipLevels;
+  uint32_t mipCount;
   OpalFormat format;
   OpalImageUsageFlags usage;
   OpalImageFilterType filter;
@@ -188,6 +166,7 @@ typedef struct OpalImageInitInfo
 typedef struct OpalImage
 {
   uint32_t width, height;
+  uint32_t mipCount;
   OpalFormat format;
 
   union
@@ -256,6 +235,7 @@ typedef struct OpalRenderpass
 {
   uint32_t subpassCount;
   uint32_t attachmentCount;
+  bool presents;
 
   union
   {
@@ -385,6 +365,30 @@ typedef struct OpalShaderInput
   } api;
 } OpalShaderInput;
 
+// Window
+// ============================================================
+
+typedef struct OpalWindowInitInfo
+{
+  OpalPlatformWindowInfo platform;
+  uint32_t width;
+  uint32_t height;
+} OpalWindowInitInfo;
+
+typedef struct OpalWindow
+{
+  uint32_t width, height;
+  OpalFormat imageFormat;
+
+  uint32_t imageCount;
+  OpalImage* pImages;
+
+  union
+  {
+    OpalVulkanWindow vk;
+  }api;
+} OpalWindow;
+
 // State
 // ============================================================
 
@@ -409,8 +413,6 @@ typedef struct OpalState
       // Window ==========
       OpalResult (*WindowInit)         (OpalWindow* pWindow, OpalWindowInitInfo initInfo);
       void       (*WindowShutdown)     (OpalWindow* pWindow);
-      OpalResult (*WindowSwapBuffers)  (const OpalWindow* pWindow);
-      OpalResult (*WindowGetFrameImage)(const OpalWindow* pWindow, uint32_t frameIndex, OpalImage* pImage);
 
       // Buffer ==========
       OpalResult (*BufferInit)         (OpalBuffer* pBuffer, OpalBufferInitInfo initInfo);
@@ -446,6 +448,8 @@ typedef struct OpalState
 
       OpalResult (*RenderBegin)          ();
       OpalResult (*RenderEnd)            ();
+      OpalResult (*RenderToWindowBegin)  (OpalWindow* pWindow);
+      OpalResult (*RenderToWindowEnd)    (OpalWindow* pWindow);
       void       (*RenderRenderpassBegin)(const OpalRenderpass* pRenderpass, const OpalFramebuffer* pFramebuffer);
       void       (*RenderRenderpassEnd)  (const OpalRenderpass* pRenderpass);
 
