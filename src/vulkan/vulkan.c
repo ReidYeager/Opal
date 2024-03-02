@@ -21,7 +21,7 @@ uint32_t          GetFamilyIndexForPresent_Ovk(const OpalVulkanGpuInfo* const gp
 OpalResult        InitDevice_Ovk              (bool useDebug);
 OpalResult        InitCommandPool_Ovk         (bool isTransient);
 OpalResult        InitDescriptorPool_Ovk      ();
-OpalResult        InitRenderResources_Ovk     ();
+OpalResult        InitGlobalResources_Ovk     ();
 
 // Shutdown ==========
 //void OpalVulkanShutdown();
@@ -62,7 +62,7 @@ OpalResult OpalVulkanInit(OpalInitInfo initInfo)
   OPAL_ATTEMPT(InitDescriptorPool_Ovk());
   OpalLog("Init Vulkan : Descriptor pool created");
 
-  OPAL_ATTEMPT(InitRenderResources_Ovk());
+  OPAL_ATTEMPT(InitGlobalResources_Ovk());
   OpalLog("Init Vulkan : Base render resources created");
 
   vkDestroySurfaceKHR(g_ovkState->instance, tmpInitSurface, NULL);
@@ -399,8 +399,14 @@ OpalResult InitDescriptorPool_Ovk()
   return Opal_Success;
 }
 
-OpalResult InitRenderResources_Ovk()
+OpalResult InitGlobalResources_Ovk()
 {
+  // Buffer ==========
+
+  OPAL_ATTEMPT(TransferBufferInit_Ovk());
+
+  // Rendering ==========
+
   VkCommandBufferAllocateInfo allocInfo;
   allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
   allocInfo.pNext = NULL;
@@ -425,6 +431,10 @@ OpalResult InitRenderResources_Ovk()
 
 void OpalVulkanShutdown()
 {
+  // Global resources
+  TransferBufferShutdown_Ovk();
+
+  // Core
   vkFreeCommandBuffers(g_ovkState->device, g_ovkState->graphicsCommandPool, 1, &g_ovkState->renderCmd);
   vkDestroySemaphore(g_ovkState->device, g_ovkState->renderCompleteSem, NULL);
   vkDestroyDescriptorPool(g_ovkState->device, g_ovkState->descriptorPool, NULL);

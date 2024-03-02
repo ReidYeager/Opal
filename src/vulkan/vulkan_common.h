@@ -39,6 +39,8 @@ extern OpalVulkanState* g_ovkState;
 OpalResult OpalVulkanInit                 (OpalInitInfo initInfo);
 void       OpalVulkanShutdown             ();
 void       OpalVulkanWaitIdle             ();
+OpalResult TransferBufferInit_Ovk         ();
+void       TransferBufferShutdown_Ovk     ();
 
 // Window ==========
 OpalResult OpalVulkanWindowInit           (OpalWindow* pWindow, OpalWindowInitInfo initInfo);
@@ -47,6 +49,8 @@ void       OpalVulkanWindowShutdown       (OpalWindow* pWindow);
 // Buffer ==========
 OpalResult OpalVulkanBufferInit           (OpalBuffer* pBuffer, OpalBufferInitInfo initInfo);
 void       OpalVulkanBufferShutdown       (OpalBuffer* pBuffer);
+OpalResult OpalVulkanBufferPushData       (OpalBuffer* pBuffer, void* data);
+OpalResult OpalVulkanBufferPushDataSegment(OpalBuffer* pBuffer, void* data, uint64_t size, uint64_t offset);
 
 // Image ==========
 OpalResult OpalVulkanImageInit            (OpalImage* pImage, OpalImageInitInfo initInfo);

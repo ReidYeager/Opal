@@ -29,6 +29,7 @@ typedef struct OpalVulkanShaderInput
 typedef struct OpalVulkanBuffer
 {
   VkBuffer buffer;
+  VkDeviceMemory memory;
 } OpalVulkanBuffer;
 
 typedef struct OpalVulkanImage

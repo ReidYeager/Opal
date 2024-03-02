@@ -83,7 +83,6 @@ OpalResult OpalInit(OpalInitInfo initInfo)
   {
   case Opal_Api_Vulkan:
   {
-    OPAL_ATTEMPT(OpalVulkanInit(initInfo));
     g_OpalState.api.functions.Shutdown              = OpalVulkanShutdown;
     g_OpalState.api.functions.WaitIdle              = OpalVulkanWaitIdle;
     // Window
@@ -92,6 +91,8 @@ OpalResult OpalInit(OpalInitInfo initInfo)
     // Buffer
     g_OpalState.api.functions.BufferInit            = OpalVulkanBufferInit;
     g_OpalState.api.functions.BufferShutdown        = OpalVulkanBufferShutdown;
+    g_OpalState.api.functions.BufferPushData        = OpalVulkanBufferPushData;
+    g_OpalState.api.functions.BufferPushDataSegment = OpalVulkanBufferPushDataSegment;
     // Image
     g_OpalState.api.functions.ImageInit             = OpalVulkanImageInit;
     g_OpalState.api.functions.ImageShutdown         = OpalVulkanImageShutdown;
@@ -118,6 +119,7 @@ OpalResult OpalInit(OpalInitInfo initInfo)
     g_OpalState.api.functions.RenderRenderpassBegin = OpalVulkanRenderRenderpassBegin;
     g_OpalState.api.functions.RenderRenderpassEnd   = OpalVulkanRenderRenderpassEnd;
 
+    OPAL_ATTEMPT(OpalVulkanInit(initInfo));
   } break;
   default:
   {
@@ -169,6 +171,15 @@ OpalResult OpalBufferInit(OpalBuffer* pBuffer, OpalBufferInitInfo initInfo)
 void OpalBufferShutdown(OpalBuffer* pBuffer)
 {
   g_OpalState.api.functions.BufferShutdown(pBuffer);
+}
+
+OpalResult OpalBufferPushData(OpalBuffer* pBuffer, void* data)
+{
+  return g_OpalState.api.functions.BufferPushData(pBuffer, data);
+}
+OpalResult OpalBufferPushDataSegment(OpalBuffer* pBuffer, void* data, uint64_t size, uint64_t bufferOffset)
+{
+  return g_OpalState.api.functions.BufferPushDataSegment(pBuffer, data, size, bufferOffset);
 }
 
 // Image

@@ -136,6 +136,7 @@ typedef struct OpalBuffer
 {
   uint64_t size;
   uint64_t paddedSize;
+  OpalBufferUsageFlags usage;
 
   union
   {
@@ -426,51 +427,53 @@ typedef struct OpalState
       // ==============================
 
       // Core ==========
-      void       (*Shutdown)           ();
-      void       (*WaitIdle)           ();
+      void       (*Shutdown)             ();
+      void       (*WaitIdle)             ();
 
       // Window ==========
-      OpalResult (*WindowInit)         (OpalWindow* pWindow, OpalWindowInitInfo initInfo);
-      void       (*WindowShutdown)     (OpalWindow* pWindow);
+      OpalResult (*WindowInit)           (OpalWindow* pWindow, OpalWindowInitInfo initInfo);
+      void       (*WindowShutdown)       (OpalWindow* pWindow);
 
       // Buffer ==========
-      OpalResult (*BufferInit)         (OpalBuffer* pBuffer, OpalBufferInitInfo initInfo);
-      void       (*BufferShutdown)     (OpalBuffer* pBuffer);
+      OpalResult (*BufferInit)           (OpalBuffer* pBuffer, OpalBufferInitInfo initInfo);
+      void       (*BufferShutdown)       (OpalBuffer* pBuffer);
+      OpalResult (*BufferPushData)       (OpalBuffer* pBuffer, void* data);
+      OpalResult (*BufferPushDataSegment)(OpalBuffer* pBuffer, void* data, uint64_t size, uint64_t bufferOffset);
 
       // Image ==========
-      OpalResult (*ImageInit)          (OpalImage* pImage, OpalImageInitInfo initInfo);
-      void       (*ImageShutdown)      (OpalImage* pImage);
+      OpalResult (*ImageInit)            (OpalImage* pImage, OpalImageInitInfo initInfo);
+      void       (*ImageShutdown)        (OpalImage* pImage);
 
       // Renderpass ==========
-      OpalResult (*RenderpassInit)     (OpalRenderpass* pRenderpass, OpalRenderpassInitInfo initInfo);
-      void       (*RenderpassShutdown) (OpalRenderpass* pRenderpass);
+      OpalResult (*RenderpassInit)       (OpalRenderpass* pRenderpass, OpalRenderpassInitInfo initInfo);
+      void       (*RenderpassShutdown)   (OpalRenderpass* pRenderpass);
 
       // Framebuffer ==========
-      OpalResult (*FramebufferInit)    (OpalFramebuffer* pFramebuffer, OpalFramebufferInitInfo initInfo);
-      void       (*FramebufferShutdown)(OpalFramebuffer* pFramebuffer);
+      OpalResult (*FramebufferInit)      (OpalFramebuffer* pFramebuffer, OpalFramebufferInitInfo initInfo);
+      void       (*FramebufferShutdown)  (OpalFramebuffer* pFramebuffer);
 
       // Shader ==========
-      OpalResult (*ShaderInit)         (OpalShader* pShader, OpalShaderInitInfo initInfo);
-      void       (*ShaderShutdown)     (OpalShader* pShader);
+      OpalResult (*ShaderInit)           (OpalShader* pShader, OpalShaderInitInfo initInfo);
+      void       (*ShaderShutdown)       (OpalShader* pShader);
 
       // ShaderGroup ==========
-      OpalResult (*ShaderGroupInit)    (OpalShaderGroup* pShaderGroup, OpalShaderGroupInitInfo initInfo);
-      void       (*ShaderGroupShutdown)(OpalShaderGroup* pShaderGroup);
+      OpalResult (*ShaderGroupInit)      (OpalShaderGroup* pShaderGroup, OpalShaderGroupInitInfo initInfo);
+      void       (*ShaderGroupShutdown)  (OpalShaderGroup* pShaderGroup);
 
       // ShaderInput ==========
-      OpalResult (*ShaderInputInit)    (OpalShaderInput* pShaderInput, OpalShaderInputInitInfo initInfo);
-      void       (*ShaderInputShutdown)(OpalShaderInput* pShaderInput);
+      OpalResult (*ShaderInputInit)      (OpalShaderInput* pShaderInput, OpalShaderInputInitInfo initInfo);
+      void       (*ShaderInputShutdown)  (OpalShaderInput* pShaderInput);
 
       // ==============================
       // Rendering
       // ==============================
 
-      OpalResult (*RenderBegin)          ();
-      OpalResult (*RenderEnd)            ();
-      OpalResult (*RenderToWindowBegin)  (OpalWindow* pWindow);
-      OpalResult (*RenderToWindowEnd)    (OpalWindow* pWindow);
-      void       (*RenderRenderpassBegin)(const OpalRenderpass* pRenderpass, const OpalFramebuffer* pFramebuffer);
-      void       (*RenderRenderpassEnd)  (const OpalRenderpass* pRenderpass);
+      OpalResult (*RenderBegin)              ();
+      OpalResult (*RenderEnd)                ();
+      OpalResult (*RenderToWindowBegin)      (OpalWindow* pWindow);
+      OpalResult (*RenderToWindowEnd)        (OpalWindow* pWindow);
+      void       (*RenderRenderpassBegin)    (const OpalRenderpass* pRenderpass, const OpalFramebuffer* pFramebuffer);
+      void       (*RenderRenderpassEnd)      (const OpalRenderpass* pRenderpass);
 
     } functions;
 
