@@ -47,10 +47,10 @@ OpalResult OpalVulkanRenderpassInit(OpalRenderpass* pRenderpass, OpalRenderpassI
   OPAL_ATTEMPT(BuildSubpasses_Ovk   (initInfo, &data), DestroyRenderpassData_Ovk(&data));
   OPAL_ATTEMPT(BuildDependencies_Ovk(initInfo, &data), DestroyRenderpassData_Ovk(&data));
 
-  VkRenderPassCreateInfo createInfo;
+  VkRenderPassCreateInfo createInfo = { 0 };
   createInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-  createInfo.flags = 0;
   createInfo.pNext = NULL;
+  createInfo.flags = 0;
   createInfo.attachmentCount = data.attachmentCount;
   createInfo.pAttachments    = data.pAttachments;
   createInfo.dependencyCount = data.dependencyCount;

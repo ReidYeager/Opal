@@ -32,6 +32,7 @@ OpalResult ImageTransitionLayout_Ovk(OpalImage* pImage, VkImageLayout newLayout)
 {
   VkImageMemoryBarrier memBarrier = { 0 };
   memBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+  memBarrier.pNext = NULL;
   memBarrier.image = pImage->api.vk.image;
   memBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
   memBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;

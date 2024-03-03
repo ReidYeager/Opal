@@ -79,10 +79,10 @@ OpalResult InitBuffer_Ovk(OpalVulkanBuffer* pBuffer, OpalBufferInitInfo initInfo
 {
   uint32_t queueIndices[2] = { g_ovkState->gpu.queueIndexGraphics, g_ovkState->gpu.queueIndexPresent };
 
-  VkBufferCreateInfo createInfo;
+  VkBufferCreateInfo createInfo = { 0 };
   createInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-  createInfo.flags = 0;
   createInfo.pNext = NULL;
+  createInfo.flags = 0;
 
   createInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
   createInfo.queueFamilyIndexCount = 1;
@@ -113,7 +113,7 @@ OpalResult InitMemory_Ovk(OpalVulkanBuffer* pBuffer, OpalBufferInitInfo initInfo
     OToVk(Opal_Buffer_Usage_Cpu_Read, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 #undef OToVk
 
-  VkMemoryAllocateInfo allocInfo;
+  VkMemoryAllocateInfo allocInfo = { 0 };
   allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
   allocInfo.pNext = NULL;
   allocInfo.allocationSize = initInfo.size;

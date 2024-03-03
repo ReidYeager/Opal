@@ -4,12 +4,13 @@
 #include <stdbool.h>
 #include <vulkan/vulkan.h>
 
-// Material
+// Shaders
 // ============================================================
 
 typedef struct OpalVulkanShader
 {
   VkShaderModule module;
+  VkShaderStageFlagBits stage;
 } OpalVulkanShader;
 
 typedef struct OpalVulkanShaderGroup
@@ -17,6 +18,11 @@ typedef struct OpalVulkanShaderGroup
   VkPipelineLayout pipelineLayout;
   VkPipeline pipeline;
 } OpalVulkanShaderGroup;
+
+typedef struct OpalVulkanShaderInputLayout
+{
+  VkDescriptorSetLayout layout;
+} OpalVulkanShaderInputLayout;
 
 typedef struct OpalVulkanShaderInput
 {
@@ -106,6 +112,13 @@ typedef struct OpalVulkanState
   OpalVulkanGpuInfo gpu;
   VkDevice device;
 
+  struct
+  {
+    uint32_t attribCount;
+    VkVertexInputAttributeDescription* pAttribDescriptions;
+    VkVertexInputBindingDescription bindingDescription;
+  } vertex;
+
   VkQueue queueGraphics;
   VkQueue queueTransfer;
   VkQueue queuePresent;
@@ -113,7 +126,12 @@ typedef struct OpalVulkanState
   VkCommandPool transientCommandPool;
   VkCommandPool graphicsCommandPool;
 
-  VkCommandBuffer renderCurrentCmd;
+  struct
+  {
+    VkCommandBuffer cmd;
+    VkPipelineLayout layout;
+  } renderState;
+
   VkCommandBuffer renderCmd;
   VkSemaphore renderCompleteSem;
 

@@ -63,6 +63,7 @@ extern OpalState g_OpalState;
 // ============================================================
 
 void OpalOutputMessage(OpalMessageType type, const char* message, ...);
+uint32_t OpalFormatToSize(OpalFormat format);
 
 
 #endif // !OPAL_COMMON_H

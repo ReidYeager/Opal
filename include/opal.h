@@ -45,26 +45,32 @@ void       OpalShaderShutdown(OpalShader* pShader);
 OpalResult OpalShaderGroupInit    (OpalShaderGroup* pShaderGroup, OpalShaderGroupInitInfo initInfo);
 void       OpalShaderGroupShutdown(OpalShaderGroup* pShaderGroup);
 
-// ShaderInput ==========
-OpalResult OpalShaderInputInit    (OpalShaderInput* pShaderInput, OpalShaderInputInitInfo initInfo);
-void       OpalShaderInputShutdown(OpalShaderInput* pShaderInput);
+// ShaderInput* ==========
+OpalResult OpalShaderInputLayoutInit    (OpalShaderInputLayout* pLayout, OpalShaderInputLayoutInitInfo initInfo);
+void       OpalShaderInputLayoutShutdown(OpalShaderInputLayout* pLayout);
+OpalResult OpalShaderInputInit          (OpalShaderInput* pShaderInput, OpalShaderInputInitInfo initInfo);
+void       OpalShaderInputShutdown      (OpalShaderInput* pShaderInput);
 
 // ==============================
 // Rendering
 // ==============================
 
-OpalResult OpalRenderBegin        ();
-OpalResult OpalRenderEnd          ();
-OpalResult OpalRenderToWindowBegin(OpalWindow* pWindow);
-OpalResult OpalRenderToWindowEnd  (OpalWindow* pWindow);
-void OpalRenderRenderpassBegin    (const OpalRenderpass* pRenderpass, const OpalFramebuffer* pFramebuffer);
-void OpalRenderRenderpassEnd      (const OpalRenderpass* pRenderpass);
+OpalResult OpalRenderBegin          ();
+OpalResult OpalRenderEnd            ();
+OpalResult OpalRenderToWindowBegin  (OpalWindow* pWindow);
+OpalResult OpalRenderToWindowEnd    (OpalWindow* pWindow);
+void OpalRenderRenderpassBegin      (const OpalRenderpass* pRenderpass, const OpalFramebuffer* pFramebuffer);
+void OpalRenderRenderpassEnd        (const OpalRenderpass* pRenderpass);
+void OpalRenderSetViewportDimensions(uint32_t width, uint32_t height);
+void OpalRenderBindShaderGroup(const OpalShaderGroup* pGroup);
+void OpalRenderBindShaderInput(const OpalShaderInput* pInput);
+
 //void OpalRenderBindShaderInput(const OpalShaderInput* pInput, uint32_t setIndex);
-//void OpalRenderBindShaderGroup(const OpalShaderGroup* pGroup);
 //void OpalRenderSetViewportDimensions(uint32_t width, uint32_t height);
 //void OpalRenderSetPushConstant(void* _data);
 //void OpalRenderMesh(OpalMesh _mesh);
 
+void OpalRenderDrawCount_DEBUG(uint32_t vertexCount);
 
 #ifdef __cplusplus
 }

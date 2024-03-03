@@ -13,7 +13,6 @@ OpalState g_OpalState = {0};
 // ============================================================
 
 // Core ==========
-//void OpalOutputMessage(OpalMessageType type, const char* message, ...)
 //OpalResult OpalInit(OpalInitInfo initInfo)
 //void OpalShutdown()
 //void OpalWaitIdle()
@@ -58,24 +57,12 @@ OpalState g_OpalState = {0};
 //void OpalRenderRenderpassBegin(const OpalRenderpass* pRenderpass, const OpalFramebuffer* pFramebuffer)
 //void OpalRenderRenderpassEnd(const OpalRenderpass* pRenderpass)
 
+// Tools ==========
+//void     OpalOutputMessage(OpalMessageType type, const char* message, ...)
+//uint32_t OpalFormatToSize (OpalFormat format)
 
 // Core
 // ============================================================
-
-void OpalOutputMessage(OpalMessageType type, const char* message, ...)
-{
-  if (g_OpalState.messageCallback != NULL)
-  {
-    char messageBuffer[1024];
-
-    va_list args;
-    va_start(args, message);
-    vsnprintf(messageBuffer, 1024, message, args);
-    va_end(args);
-
-    g_OpalState.messageCallback(type, messageBuffer);
-  }
-}
 
 OpalResult OpalInit(OpalInitInfo initInfo)
 {
@@ -109,15 +96,21 @@ OpalResult OpalInit(OpalInitInfo initInfo)
     g_OpalState.api.functions.ShaderGroupInit       = OpalVulkanShaderGroupInit;
     g_OpalState.api.functions.ShaderGroupShutdown   = OpalVulkanShaderGroupShutdown;
     // ShaderInput
-    g_OpalState.api.functions.ShaderInputInit       = OpalVulkanShaderInputInit;
-    g_OpalState.api.functions.ShaderInputShutdown   = OpalVulkanShaderInputShutdown;
+    g_OpalState.api.functions.ShaderInputLayoutInit     = OpalVulkanShaderInputLayoutInit;
+    g_OpalState.api.functions.ShaderInputLayoutShutdown = OpalVulkanShaderInputLayoutShutdown;
+    g_OpalState.api.functions.ShaderInputInit           = OpalVulkanShaderInputInit;
+    g_OpalState.api.functions.ShaderInputShutdown       = OpalVulkanShaderInputShutdown;
     // Rendering
     g_OpalState.api.functions.RenderBegin           = OpalVulkanRenderBegin;
     g_OpalState.api.functions.RenderEnd             = OpalVulkanRenderEnd;
     g_OpalState.api.functions.RenderToWindowBegin   = OpalVulkanRenderToWindowBegin;
     g_OpalState.api.functions.RenderToWindowEnd     = OpalVulkanRenderToWindowEnd;
+    g_OpalState.api.functions.RenderSetViewportDimensions = OpalVulkanRenderSetViewportDimensions;
+    // Rendering - objects
     g_OpalState.api.functions.RenderRenderpassBegin = OpalVulkanRenderRenderpassBegin;
     g_OpalState.api.functions.RenderRenderpassEnd   = OpalVulkanRenderRenderpassEnd;
+    g_OpalState.api.functions.RenderBindShaderGroup = OpalVulkanRenderBindShaderGroup;
+    g_OpalState.api.functions.RenderBindShaderInput = OpalVulkanRenderBindShaderInput;
 
     OPAL_ATTEMPT(OpalVulkanInit(initInfo));
   } break;
@@ -255,6 +248,16 @@ void OpalShaderGroupShutdown(OpalShaderGroup* pShaderGroup)
 // ShaderInput
 // ============================================================
 
+OpalResult OpalShaderInputLayoutInit(OpalShaderInputLayout* pLayout, OpalShaderInputLayoutInitInfo initInfo)
+{
+  return g_OpalState.api.functions.ShaderInputLayoutInit(pLayout, initInfo);
+}
+
+void OpalShaderInputLayoutShutdown(OpalShaderInputLayout* pLayout)
+{
+  g_OpalState.api.functions.ShaderInputLayoutShutdown(pLayout);
+}
+
 OpalResult OpalShaderInputInit(OpalShaderInput* pShaderInput, OpalShaderInputInitInfo initInfo)
 {
   return g_OpalState.api.functions.ShaderInputInit(pShaderInput, initInfo);
@@ -298,5 +301,73 @@ void OpalRenderRenderpassEnd(const OpalRenderpass* pRenderpass)
   g_OpalState.api.functions.RenderRenderpassEnd(pRenderpass);
 }
 
+void OpalRenderSetViewportDimensions(uint32_t width, uint32_t height)
+{
+  g_OpalState.api.functions.RenderSetViewportDimensions(width, height);
+}
 
+void OpalRenderBindShaderGroup(const OpalShaderGroup* pGroup)
+{
+  g_OpalState.api.functions.RenderBindShaderGroup(pGroup);
+}
+
+void OpalRenderBindShaderInput(const OpalShaderInput* pInput)
+{
+  g_OpalState.api.functions.RenderBindShaderInput(pInput);
+}
+
+void OpalRenderDrawCount_DEBUG(uint32_t vertexCount)
+{
+  vkCmdDraw(g_OpalState.api.vk.renderState.cmd, vertexCount, 1, 0, 0);
+}
+
+// Tools
+// ============================================================
+
+void OpalOutputMessage(OpalMessageType type, const char* message, ...)
+{
+  if (g_OpalState.messageCallback != NULL)
+  {
+    char messageBuffer[1024];
+
+    va_list args;
+    va_start(args, message);
+    vsnprintf(messageBuffer, 1024, message, args);
+    va_end(args);
+
+    g_OpalState.messageCallback(type, messageBuffer);
+  }
+}
+
+uint32_t OpalFormatToSize(OpalFormat format)
+{
+  switch (format)
+  {
+    // R G B A variants
+  case Opal_Format_R8:     case Opal_Format_R8_I:     case Opal_Format_R8_U:     return 1;
+  case Opal_Format_RG8:    case Opal_Format_RG8_I:    case Opal_Format_RG8_U:    return 2;
+  case Opal_Format_RGB8:   case Opal_Format_RGB8_I:   case Opal_Format_RGB8_U:   return 3;
+  case Opal_Format_RGBA8:  case Opal_Format_RGBA8_I:  case Opal_Format_RGBA8_U:  return 4;
+  case Opal_Format_R16:    case Opal_Format_R16_I:    case Opal_Format_R16_U:    return 2;
+  case Opal_Format_RG16:   case Opal_Format_RG16_I:   case Opal_Format_RG16_U:   return 4;
+  case Opal_Format_RGB16:  case Opal_Format_RGB16_I:  case Opal_Format_RGB16_U:  return 6;
+  case Opal_Format_RGBA16: case Opal_Format_RGBA16_I: case Opal_Format_RGBA16_U: return 8;
+  case Opal_Format_R32:    case Opal_Format_R32_I:    case Opal_Format_R32_U:    return 4;
+  case Opal_Format_RG32:   case Opal_Format_RG32_I:   case Opal_Format_RG32_U:   return 8;
+  case Opal_Format_RGB32:  case Opal_Format_RGB32_I:  case Opal_Format_RGB32_U:  return 12;
+  case Opal_Format_RGBA32: case Opal_Format_RGBA32_I: case Opal_Format_RGBA32_U: return 16;
+  case Opal_Format_R64:    case Opal_Format_R64_I:    case Opal_Format_R64_U:    return 8;
+  case Opal_Format_RG64:   case Opal_Format_RG64_I:   case Opal_Format_RG64_U:   return 16;
+  case Opal_Format_RGB64:  case Opal_Format_RGB64_I:  case Opal_Format_RGB64_U:  return 24;
+  case Opal_Format_RGBA64: case Opal_Format_RGBA64_I: case Opal_Format_RGBA64_U: return 32;
+
+    // Depth stencils
+  case Opal_Format_D24_S8: case Opal_Format_D32: return 4;
+
+    // Other
+  case Opal_Format_Mat4x4: return 64;
+
+  default: return 0;
+  }
+}
 

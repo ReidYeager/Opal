@@ -163,7 +163,7 @@ VkShaderStageFlags OpalStagesToVkStages_Ovk(OpalStageFlags stages)
 
 OpalResult BeginSingleUseCommandBuffer_Ovk(VkCommandBuffer* pCmd, VkCommandPool pool)
 {
-  VkCommandBufferAllocateInfo allocInfo;
+  VkCommandBufferAllocateInfo allocInfo = { 0 };
   allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
   allocInfo.pNext = NULL;
   allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
@@ -172,10 +172,10 @@ OpalResult BeginSingleUseCommandBuffer_Ovk(VkCommandBuffer* pCmd, VkCommandPool 
 
   OPAL_ATTEMPT_VK(vkAllocateCommandBuffers(g_ovkState->device, &allocInfo, pCmd));
   
-  VkCommandBufferBeginInfo beginInfo;
+  VkCommandBufferBeginInfo beginInfo = { 0 };
   beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-  beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
   beginInfo.pNext = NULL;
+  beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
   beginInfo.pInheritanceInfo = NULL;
 
   OPAL_ATTEMPT_VK(vkBeginCommandBuffer(*pCmd, &beginInfo));
@@ -187,7 +187,7 @@ OpalResult EndSingleUseCommandBuffer_Ovk(VkCommandBuffer cmd, VkCommandPool pool
 {
   OPAL_ATTEMPT_VK(vkEndCommandBuffer(cmd));
 
-  VkSubmitInfo submitInfo;
+  VkSubmitInfo submitInfo = { 0 };
   submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
   submitInfo.pNext = NULL;
   submitInfo.commandBufferCount = 1;

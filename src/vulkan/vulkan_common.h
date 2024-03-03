@@ -73,17 +73,24 @@ void       OpalVulkanShaderShutdown       (OpalShader* pShader);
 OpalResult OpalVulkanShaderGroupInit      (OpalShaderGroup* pShaderGroup, OpalShaderGroupInitInfo initInfo);
 void       OpalVulkanShaderGroupShutdown  (OpalShaderGroup* pShaderGroup);
 
-// ShaderInput ==========
-OpalResult OpalVulkanShaderInputInit      (OpalShaderInput* pShaderInput, OpalShaderInputInitInfo initInfo);
-void       OpalVulkanShaderInputShutdown  (OpalShaderInput* pShaderInput);
+// ShaderInput* ==========
+OpalResult OpalVulkanShaderInputLayoutInit    (OpalShaderInputLayout* pLayout, OpalShaderInputLayoutInitInfo initInfo);
+void       OpalVulkanShaderInputLayoutShutdown(OpalShaderInputLayout* pLayout);
+OpalResult OpalVulkanShaderInputInit          (OpalShaderInput* pShaderInput, OpalShaderInputInitInfo initInfo);
+void       OpalVulkanShaderInputShutdown      (OpalShaderInput* pShaderInput);
 
 // Rendering ==========
-OpalResult OpalVulkanRenderBegin          ();
-OpalResult OpalVulkanRenderEnd            ();
-OpalResult OpalVulkanRenderToWindowBegin  (OpalWindow* pWindow);
-OpalResult OpalVulkanRenderToWindowEnd    (OpalWindow* pWindow);
-void       OpalVulkanRenderRenderpassBegin(const OpalRenderpass* pRenderpass, const OpalFramebuffer* pFramebuffer);
-void       OpalVulkanRenderRenderpassEnd  (const OpalRenderpass* pRenderpass);
+OpalResult OpalVulkanRenderBegin                ();
+OpalResult OpalVulkanRenderEnd                  ();
+OpalResult OpalVulkanRenderToWindowBegin        (OpalWindow* pWindow);
+OpalResult OpalVulkanRenderToWindowEnd          (OpalWindow* pWindow);
+void       OpalVulkanRenderSetViewportDimensions(uint32_t width, uint32_t height);
+// Rendering - Renderpass ==========
+void       OpalVulkanRenderRenderpassBegin      (const OpalRenderpass* pRenderpass, const OpalFramebuffer* pFramebuffer);
+void       OpalVulkanRenderRenderpassEnd        (const OpalRenderpass* pRenderpass);
+// Rendering - Shaders ==========
+void       OpalVulkanRenderBindShaderGroup      (const OpalShaderGroup* pGroup);
+void       OpalVulkanRenderBindShaderInput      (const OpalShaderInput* pInput);
 
 // Platform
 // ============================================================

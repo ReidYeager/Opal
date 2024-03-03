@@ -19,10 +19,10 @@ OpalResult OpalVulkanFramebufferInit(OpalFramebuffer* pFramebuffer, OpalFramebuf
     attachments[i] = initInfo.pImages[i].api.vk.view;
   }
 
-  VkFramebufferCreateInfo createinfo;
+  VkFramebufferCreateInfo createinfo = { 0 };
   createinfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-  createinfo.flags = 0;
   createinfo.pNext = NULL;
+  createinfo.flags = 0;
   createinfo.width = initInfo.pImages[0].width;
   createinfo.height = initInfo.pImages[0].height;
   createinfo.layers = 1;

@@ -21,7 +21,7 @@ uint32_t          GetFamilyIndexForPresent_Ovk(const OpalVulkanGpuInfo* const gp
 OpalResult        InitDevice_Ovk              (bool useDebug);
 OpalResult        InitCommandPool_Ovk         (bool isTransient);
 OpalResult        InitDescriptorPool_Ovk      ();
-OpalResult        InitGlobalResources_Ovk     ();
+OpalResult        InitGlobalResources_Ovk     (OpalInitInfo initInfo);
 
 // Shutdown ==========
 //void OpalVulkanShutdown();
@@ -62,7 +62,7 @@ OpalResult OpalVulkanInit(OpalInitInfo initInfo)
   OPAL_ATTEMPT(InitDescriptorPool_Ovk());
   OpalLog("Init Vulkan : Descriptor pool created");
 
-  OPAL_ATTEMPT(InitGlobalResources_Ovk());
+  OPAL_ATTEMPT(InitGlobalResources_Ovk(initInfo));
   OpalLog("Init Vulkan : Base render resources created");
 
   vkDestroySurfaceKHR(g_ovkState->instance, tmpInitSurface, NULL);
@@ -118,10 +118,10 @@ OpalResult InitInstance_Ovk(bool useDebug)
 
   // Creation ==============================
 
-  VkInstanceCreateInfo createInfo;
+  VkInstanceCreateInfo createInfo = { 0 };
   createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
-  createInfo.flags = 0;
   createInfo.pNext = NULL;
+  createInfo.flags = 0;
   createInfo.pApplicationInfo = NULL;
   createInfo.enabledExtensionCount = extensionCount;
   createInfo.ppEnabledExtensionNames = extensions;
@@ -313,10 +313,10 @@ OpalResult InitDevice_Ovk(bool useDebug)
 
   VkPhysicalDeviceFeatures enabledFeatures = {0};
 
-  VkDeviceCreateInfo createInfo;
+  VkDeviceCreateInfo createInfo = { 0 };
   createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-  createInfo.flags = 0;
   createInfo.pNext = NULL;
+  createInfo.flags = 0;
   createInfo.pEnabledFeatures = &enabledFeatures;
   createInfo.queueCreateInfoCount = queueCount;
   createInfo.pQueueCreateInfos = queueCreateInfos;
@@ -351,9 +351,10 @@ OpalResult InitDevice_Ovk(bool useDebug)
 
 OpalResult InitCommandPool_Ovk(bool isTransient)
 {
-  VkCommandPoolCreateInfo createInfo;
+  VkCommandPoolCreateInfo createInfo = { 0 };
   createInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
   createInfo.pNext = NULL;
+  createInfo.flags = 0;
 
   VkCommandPool* outPool = NULL;
 
@@ -385,10 +386,10 @@ OpalResult InitDescriptorPool_Ovk()
   sizes[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
   sizes[1].descriptorCount = 1024;
 
-  VkDescriptorPoolCreateInfo createInfo;
+  VkDescriptorPoolCreateInfo createInfo = { 0 };
   createInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-  createInfo.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
   createInfo.pNext = NULL;
+  createInfo.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
   createInfo.maxSets = 1024;
   createInfo.poolSizeCount = 2;
   createInfo.pPoolSizes = sizes;
@@ -399,15 +400,49 @@ OpalResult InitDescriptorPool_Ovk()
   return Opal_Success;
 }
 
-OpalResult InitGlobalResources_Ovk()
+OpalResult InitGlobalResources_Ovk(OpalInitInfo initInfo)
 {
+  // Vertex layout ==========
+
+  OpalVertexLayoutInfo* vLayout = &initInfo.vertexLayout;
+
+  uint32_t vertBackupCount = 3;
+  OpalFormat vertBackupFormats[3] = { Opal_Format_RGB32, Opal_Format_RGB32, Opal_Format_RG32 };
+  //if (vLayout->elementCount == 0 || vLayout->pElementFormats == NULL)
+  //{
+  //  OpalLog("Using backup vertex layout");
+  //  vLayout->elementCount = vertBackupCount;
+  //  vLayout->pElementFormats = vertBackupFormats;
+  //}
+
+  VkVertexInputAttributeDescription* pAttribs = OpalMemAllocArray(VkVertexInputAttributeDescription, vLayout->elementCount);
+
+  uint32_t offsetSum = 0;
+  for (uint32_t i = 0; i < vLayout->elementCount; i++)
+  {
+    pAttribs[i].binding = 0;
+    pAttribs[i].location = i;
+    pAttribs[i].offset = offsetSum;
+    pAttribs[i].format = OpalFormatToVkFormat_Ovk(vLayout->pElementFormats[i]);
+    offsetSum += OpalFormatToSize(vLayout->pElementFormats[i]);
+  }
+
+  VkVertexInputBindingDescription binding;
+  binding.binding = 0;
+  binding.stride = offsetSum;
+  binding.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+
+  g_ovkState->vertex.attribCount = vLayout->elementCount;
+  g_ovkState->vertex.pAttribDescriptions = pAttribs;
+  g_ovkState->vertex.bindingDescription = binding;
+
   // Buffer ==========
 
   OPAL_ATTEMPT(TransferBufferInit_Ovk());
 
   // Rendering ==========
 
-  VkCommandBufferAllocateInfo allocInfo;
+  VkCommandBufferAllocateInfo allocInfo = { 0 };
   allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
   allocInfo.pNext = NULL;
   allocInfo.commandBufferCount = 1;
@@ -416,10 +451,10 @@ OpalResult InitGlobalResources_Ovk()
 
   OPAL_ATTEMPT_VK(vkAllocateCommandBuffers(g_ovkState->device, &allocInfo, &g_ovkState->renderCmd));
 
-  VkSemaphoreCreateInfo semInfo;
+  VkSemaphoreCreateInfo semInfo = { 0 };
   semInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
-  semInfo.flags = 0;
   semInfo.pNext = NULL;
+  semInfo.flags = 0;
 
   OPAL_ATTEMPT_VK(vkCreateSemaphore(g_ovkState->device, &semInfo, NULL, &g_ovkState->renderCompleteSem));
 

@@ -38,7 +38,7 @@ OpalResult SwapchainInit_Ovk(OpalWindow* pWindow)
   VkPresentModeKHR presentMode = GetSwapchainPresentMode_Ovk(&pWindow->api.vk);
   VkSurfaceFormatKHR format = GetSwapchainFormat_Ovk(&pWindow->api.vk);
 
-  VkSwapchainCreateInfoKHR createInfo = {0};
+  VkSwapchainCreateInfoKHR createInfo = { 0 };
   createInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
   createInfo.pNext = NULL;
   createInfo.flags = 0;
@@ -176,7 +176,7 @@ OpalResult FramesInit_Ovk(OpalWindow* pWindow)
 
   // Swapchain image views ==========
 
-  VkImageViewCreateInfo viewInfo;
+  VkImageViewCreateInfo viewInfo = { 0 };
   viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
   viewInfo.pNext = NULL;
   viewInfo.flags = 0;
@@ -200,10 +200,10 @@ OpalResult FramesInit_Ovk(OpalWindow* pWindow)
 
   // Image samplers ==========
 
-  VkSamplerCreateInfo samplerInfo;
+  VkSamplerCreateInfo samplerInfo = { 0 };
   samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-  samplerInfo.flags = 0;
   samplerInfo.pNext = NULL;
+  samplerInfo.flags = 0;
   samplerInfo.magFilter = VK_FILTER_LINEAR;
   samplerInfo.minFilter = VK_FILTER_LINEAR;
   samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
@@ -227,15 +227,15 @@ OpalResult FramesInit_Ovk(OpalWindow* pWindow)
 
   // Synchronization ==========
 
-  VkSemaphoreCreateInfo semaphoreInfo;
+  VkSemaphoreCreateInfo semaphoreInfo = { 0 };
   semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
-  semaphoreInfo.flags = 0;
   semaphoreInfo.pNext = NULL;
+  semaphoreInfo.flags = 0;
 
-  VkFenceCreateInfo fenceInfo;
+  VkFenceCreateInfo fenceInfo = { 0 };
   fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
-  fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
   fenceInfo.pNext = NULL;
+  fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
 
   for (int i = 0; i < createdCount; i++)
   {
@@ -250,7 +250,7 @@ OpalResult FramesInit_Ovk(OpalWindow* pWindow)
 
   // Command buffers ==========
 
-  VkCommandBufferAllocateInfo allocInfo;
+  VkCommandBufferAllocateInfo allocInfo = { 0 };
   allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
   allocInfo.pNext = NULL;
   allocInfo.commandBufferCount = createdCount;

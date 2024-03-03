@@ -309,7 +309,57 @@ typedef struct OpalShader
   } api;
 } OpalShader;
 
-// Shader group
+// ShaderInput
+// ============================================================
+
+typedef enum OpalShaderInputType
+{
+  Opal_Shader_Input_Buffer,
+  Opal_Shader_Input_Image,
+  Opal_Shader_Input_Subpass_Product,
+} OpalShaderInputType;
+
+typedef struct OpalShaderInputLayoutInitInfo
+{
+  uint32_t count;
+  OpalShaderInputType* pTypes;
+  OpalStageFlags* pStages;
+} OpalShaderInputLayoutInitInfo;
+
+typedef struct OpalShaderInputLayout
+{
+  uint32_t elementCount;
+  OpalShaderInputType* pTypes;
+
+  union
+  {
+    OpalVulkanShaderInputLayout vk;
+  } api;
+} OpalShaderInputLayout;
+
+typedef union OpalShaderInputValue
+{
+  OpalBuffer* buffer;
+  OpalImage* image;
+} OpalShaderInputValue;
+
+typedef struct OpalShaderInputInitInfo
+{
+  OpalShaderInputLayout layout;
+  OpalShaderInputValue* pValues;
+} OpalShaderInputInitInfo;
+
+typedef struct OpalShaderInput
+{
+  OpalShaderInputLayout layout;
+
+  union
+  {
+    OpalVulkanShaderInput vk;
+  } api;
+} OpalShaderInput;
+
+// ShaderGroup
 // ============================================================
 
 typedef enum OpalPipelineFlagBits
@@ -330,9 +380,13 @@ typedef struct OpalShaderGroupInitInfo
 {
   OpalRenderpass renderpass;
   uint32_t subpassIndex;
+  uint8_t pushConstantSize;
 
   uint32_t shaderCount;
   OpalShader* pShaders;
+
+  uint32_t shaderInputLayoutCount;
+  OpalShaderInputLayout* pShaderInputLayouts;
 
   OpalPipelineFlags flags;
 } OpalShaderGroupInitInfo;
@@ -344,42 +398,6 @@ typedef struct OpalShaderGroup
     OpalVulkanShaderGroup vk;
   } api;
 } OpalShaderGroup;
-
-// Shader input
-// ============================================================
-
-typedef enum OpalShaderInputType
-{
-  Opal_Shader_Input_Buffer,
-  Opal_Shader_Input_Image
-} OpalShaderInputType;
-
-typedef struct OpalShaderInputLayout
-{
-  uint32_t count;
-  OpalShaderInputType* pTypes;
-  OpalStageFlags* pStages;
-} OpalShaderInputLayout;
-
-typedef union OpalShaderInputValue
-{
-  OpalBuffer* buffer;
-  OpalImage* image;
-} OpalShaderInputValue;
-
-typedef struct OpalShaderInputInitInfo
-{
-  OpalShaderInputLayout layout;
-  OpalShaderInputValue* pValues;
-} OpalShaderInputInitInfo;
-
-typedef struct OpalShaderInput
-{
-  union
-  {
-    OpalVulkanShaderInput vk;
-  } api;
-} OpalShaderInput;
 
 // Window
 // ============================================================
@@ -408,11 +426,18 @@ typedef struct OpalWindow
 // State
 // ============================================================
 
+typedef struct OpalVertexLayoutInfo
+{
+  uint32_t elementCount;
+  OpalFormat* pElementFormats;
+} OpalVertexLayoutInfo;
+
 typedef struct OpalInitInfo
 {
   OpalGraphicsApi api;
   bool useDebug;
 
+  OpalVertexLayoutInfo vertexLayout;
   OpalPlatformWindowInfo window;
 } OpalInitInfo;
 
@@ -461,6 +486,8 @@ typedef struct OpalState
       void       (*ShaderGroupShutdown)  (OpalShaderGroup* pShaderGroup);
 
       // ShaderInput ==========
+      OpalResult (*ShaderInputLayoutInit)    (OpalShaderInputLayout* pLayout, OpalShaderInputLayoutInitInfo initInfo);
+      void       (*ShaderInputLayoutShutdown)(OpalShaderInputLayout* pLayout);
       OpalResult (*ShaderInputInit)      (OpalShaderInput* pShaderInput, OpalShaderInputInitInfo initInfo);
       void       (*ShaderInputShutdown)  (OpalShaderInput* pShaderInput);
 
@@ -468,12 +495,15 @@ typedef struct OpalState
       // Rendering
       // ==============================
 
-      OpalResult (*RenderBegin)              ();
-      OpalResult (*RenderEnd)                ();
-      OpalResult (*RenderToWindowBegin)      (OpalWindow* pWindow);
-      OpalResult (*RenderToWindowEnd)        (OpalWindow* pWindow);
-      void       (*RenderRenderpassBegin)    (const OpalRenderpass* pRenderpass, const OpalFramebuffer* pFramebuffer);
-      void       (*RenderRenderpassEnd)      (const OpalRenderpass* pRenderpass);
+      OpalResult (*RenderBegin)                ();
+      OpalResult (*RenderEnd)                  ();
+      OpalResult (*RenderToWindowBegin)        (OpalWindow* pWindow);
+      OpalResult (*RenderToWindowEnd)          (OpalWindow* pWindow);
+      void       (*RenderRenderpassBegin)      (const OpalRenderpass* pRenderpass, const OpalFramebuffer* pFramebuffer);
+      void       (*RenderRenderpassEnd)        (const OpalRenderpass* pRenderpass);
+      void       (*RenderSetViewportDimensions)(uint32_t width, uint32_t height);
+      void       (*RenderBindShaderGroup)      (const OpalShaderGroup* pGroup);
+      void       (*RenderBindShaderInput)      (const OpalShaderInput* pInput);
 
     } functions;
 
