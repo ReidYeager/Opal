@@ -186,6 +186,8 @@ typedef struct OpalImage
   uint32_t mipCount;
   OpalFormat format;
   OpalImageUsageFlags usage;
+  OpalImageFilterType filter;
+  OpalImageSampleMode sampleMode;
 
   union
   {
@@ -493,6 +495,7 @@ typedef struct OpalState
       OpalResult (*ImageInit)            (OpalImage* pImage, OpalImageInitInfo initInfo);
       void       (*ImageShutdown)        (OpalImage* pImage);
       OpalResult (*ImagePushData)        (OpalImage* pImage, const void* data);
+      OpalResult (*ImageGetMipAsImage)   (OpalImage* pImage, OpalImage* pMipImage, uint32_t mipLevel);
 
       // Renderpass ==========
       OpalResult (*RenderpassInit)       (OpalRenderpass* pRenderpass, OpalRenderpassInitInfo initInfo);

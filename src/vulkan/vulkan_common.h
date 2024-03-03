@@ -57,6 +57,7 @@ OpalResult OpalVulkanImageInit                    (OpalImage* pImage, OpalImageI
 void       OpalVulkanImageShutdown                (OpalImage* pImage);
 OpalResult ImageTransitionLayout_Ovk              (OpalImage* pImage, VkImageLayout newLayout);
 OpalResult OpalVulkanImagePushData                (OpalImage* pImage, const void* data);
+OpalResult OpalVulkanImageGetMipAsImage           (OpalImage* pImage, OpalImage* pMipImage, uint32_t mipLevel);
 
 // Renderpass ==========
 OpalResult OpalVulkanRenderpassInit               (OpalRenderpass* pRenderpass, OpalRenderpassInitInfo initInfo);

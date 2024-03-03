@@ -2,24 +2,27 @@
 #include "src/vulkan/vulkan_common.h"
 #include "include/opal.h" // Used for OpalVulkanImageFill
 
+#include <math.h>
+
 // Declarations
 // ============================================================
 
 // Core ==========
-//OpalResult      OpalVulkanImageInit        (OpalImage* pImage, OpalImageInitInfo initInfo)
-//void            OpalVulkanImageShutdown    (OpalImage* pImage)
-OpalResult        InitImage_Ovk              (OpalImage* pImage, OpalImageInitInfo initInfo);
-OpalResult        InitImageMemory_Ovk        (OpalImage* pImage);
-OpalResult        InitView_Ovk               (OpalImage* pImage, OpalImageInitInfo initInfo);
-OpalResult        InitSampler_Ovk            (OpalImage* pImage, OpalImageInitInfo initInfo);
-//OpalResult      OpalVulkanImagePushData    (OpalImage* pImage, const void* data)
-OpalResult        FillMipmaps_Ovk            (OpalImage* pImage);
+//OpalResult      OpalVulkanImageInit         (OpalImage* pImage, OpalImageInitInfo initInfo)
+//void            OpalVulkanImageShutdown     (OpalImage* pImage)
+OpalResult        InitImage_Ovk               (OpalImage* pImage, OpalImageInitInfo initInfo);
+OpalResult        InitImageMemory_Ovk         (OpalImage* pImage);
+OpalResult        InitView_Ovk                (OpalImage* pImage, OpalImageUsageFlags usage, uint32_t mipBase, uint32_t mipCount);
+OpalResult        InitSampler_Ovk             (OpalImage* pImage, OpalImageFilterType filter, OpalImageSampleMode sample, uint32_t minLod, uint32_t maxLod);
+//OpalResult      OpalVulkanImagePushData     (OpalImage* pImage, const void* data)
+OpalResult        FillMipmaps_Ovk             (OpalImage* pImage);
 
 // Tools ==========
-//OpalResult      ImageTransitionLayout_Ovk  (OpalImage* pImage, VkImageLayout newLayout)
-VkImageUsageFlags OpalImageUsageToVkFlags_Ovk(OpalImageUsageFlags opalFlags);
-uint32_t          GetMemoryTypeIndex_Ovk     (uint32_t _mask, VkMemoryPropertyFlags _flags);
-OpalResult        CopyBufferToImage_Ovk      (OpalBuffer* pBuffer, OpalImage* pImage);
+//OpalResult      ImageTransitionLayout_Ovk   (OpalImage* pImage, VkImageLayout newLayout)
+VkImageUsageFlags OpalImageUsageToVkFlags_Ovk (OpalImageUsageFlags opalFlags);
+uint32_t          GetMemoryTypeIndex_Ovk      (uint32_t _mask, VkMemoryPropertyFlags _flags);
+OpalResult        CopyBufferToImage_Ovk       (OpalBuffer* pBuffer, OpalImage* pImage);
+//OpalResult      OpalVulkanImageGetMipAsImage(OpalImage* pImage, OpalImage* pMipImage, uint32_t mipLevel);
 
 // Core
 // ============================================================
@@ -28,14 +31,16 @@ OpalResult OpalVulkanImageInit(OpalImage* pImage, OpalImageInitInfo initInfo)
 {
   OPAL_ATTEMPT(InitImage_Ovk(pImage, initInfo));
   OPAL_ATTEMPT(InitImageMemory_Ovk(pImage));
-  OPAL_ATTEMPT(InitView_Ovk(pImage, initInfo));
+  OPAL_ATTEMPT(InitView_Ovk(pImage, initInfo.usage, 0, initInfo.mipCount));
 
   pImage->usage = initInfo.usage;
+  pImage->filter = initInfo.filter;
+  pImage->sampleMode = initInfo.sampleMode;
   pImage->api.vk.layout = VK_IMAGE_LAYOUT_UNDEFINED;
 
   if (initInfo.usage & Opal_Image_Usage_Uniform)
   {
-    OPAL_ATTEMPT(InitSampler_Ovk(pImage, initInfo));
+    OPAL_ATTEMPT(InitSampler_Ovk(pImage, initInfo.filter, initInfo.sampleMode, 0, initInfo.mipCount - 1));
   }
   else
   {
@@ -102,7 +107,7 @@ OpalResult InitImageMemory_Ovk(OpalImage* pImage)
   return Opal_Success;
 }
 
-OpalResult InitView_Ovk(OpalImage* pImage, OpalImageInitInfo initInfo)
+OpalResult InitView_Ovk(OpalImage* pImage, OpalImageUsageFlags usage, uint32_t mipBase, uint32_t mipCount)
 {
   VkImageViewCreateInfo vCreateInfo = { 0 };
   vCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
@@ -110,14 +115,14 @@ OpalResult InitView_Ovk(OpalImage* pImage, OpalImageInitInfo initInfo)
   vCreateInfo.image = pImage->api.vk.image;
   vCreateInfo.format = pImage->api.vk.format;
   vCreateInfo.subresourceRange.aspectMask = 0;
-  if (initInfo.usage & Opal_Image_Usage_Color)
+  if (usage & Opal_Image_Usage_Color)
     vCreateInfo.subresourceRange.aspectMask |= VK_IMAGE_ASPECT_COLOR_BIT;
-  if (initInfo.usage & Opal_Image_Usage_Depth)
+  if (usage & Opal_Image_Usage_Depth)
     vCreateInfo.subresourceRange.aspectMask |= VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
-  if (initInfo.usage & Opal_Image_Usage_Uniform)
+  if (usage & Opal_Image_Usage_Uniform)
     vCreateInfo.subresourceRange.aspectMask |= VK_IMAGE_ASPECT_COLOR_BIT;
-  vCreateInfo.subresourceRange.levelCount = initInfo.mipCount;
-  vCreateInfo.subresourceRange.baseMipLevel = 0;
+  vCreateInfo.subresourceRange.levelCount = mipCount;
+  vCreateInfo.subresourceRange.baseMipLevel = mipBase;
   vCreateInfo.subresourceRange.layerCount = 1;
   vCreateInfo.subresourceRange.baseArrayLayer = 0;
 
@@ -126,13 +131,13 @@ OpalResult InitView_Ovk(OpalImage* pImage, OpalImageInitInfo initInfo)
   return Opal_Success;
 }
 
-OpalResult InitSampler_Ovk(OpalImage* pImage, OpalImageInitInfo initInfo)
+OpalResult InitSampler_Ovk(OpalImage* pImage, OpalImageFilterType filter, OpalImageSampleMode sample, uint32_t minLod, uint32_t maxLod)
 {
   VkSamplerCreateInfo createInfo = { 0 };
   createInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
   createInfo.pNext = NULL;
   createInfo.flags = 0;
-  switch (initInfo.filter)
+  switch (filter)
   {
   case Opal_Image_Filter_Linear:
   {
@@ -148,7 +153,7 @@ OpalResult InitSampler_Ovk(OpalImage* pImage, OpalImageInitInfo initInfo)
   }
 
   VkSamplerAddressMode sampleMode;
-  switch (initInfo.sampleMode)
+  switch (sampleMode)
   {
   case Opal_Image_Sample_Reflect:
   {
@@ -172,8 +177,8 @@ OpalResult InitSampler_Ovk(OpalImage* pImage, OpalImageInitInfo initInfo)
   createInfo.compareOp = VK_COMPARE_OP_ALWAYS;
   createInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
   createInfo.mipLodBias = 0.0f;
-  createInfo.minLod = 0.0f;
-  createInfo.maxLod = (float)initInfo.mipCount - 1.0f;
+  createInfo.minLod = (float)minLod;
+  createInfo.maxLod = (float)maxLod;
   createInfo.maxAnisotropy = 1.0f;
 
   OPAL_ATTEMPT_VK(vkCreateSampler(g_ovkState->device, &createInfo, NULL, &pImage->api.vk.sampler));
@@ -424,6 +429,20 @@ OpalResult CopyBufferToImage_Ovk(OpalBuffer* pBuffer, OpalImage* pImage)
   vkCmdCopyBufferToImage(cmd, pBuffer->api.vk.buffer, pImage->api.vk.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copyRegion);
 
   OPAL_ATTEMPT(EndSingleUseCommandBuffer_Ovk(cmd, g_ovkState->graphicsCommandPool, g_ovkState->queueGraphics));
+
+  return Opal_Success;
+}
+
+OpalResult OpalVulkanImageGetMipAsImage(OpalImage* pImage, OpalImage* pMipImage, uint32_t mipLevel)
+{
+  *pMipImage = *pImage;
+
+  pMipImage->mipCount   = 1;
+  pMipImage->height     = pImage->height * pow(0.5, mipLevel);
+  pMipImage->width      = pImage->width  * pow(0.5, mipLevel);
+
+  OPAL_ATTEMPT(InitView_Ovk(pMipImage, pMipImage->usage, mipLevel, 1));
+  OPAL_ATTEMPT(InitSampler_Ovk(pMipImage, pMipImage->filter, pMipImage->sampleMode, mipLevel, mipLevel));
 
   return Opal_Success;
 }

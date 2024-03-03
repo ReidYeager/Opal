@@ -110,6 +110,7 @@ OpalResult OpalInit(OpalInitInfo initInfo)
     g_OpalState.api.functions.ImageInit                   = OpalVulkanImageInit;
     g_OpalState.api.functions.ImageShutdown               = OpalVulkanImageShutdown;
     g_OpalState.api.functions.ImagePushData               = OpalVulkanImagePushData;
+    g_OpalState.api.functions.ImageGetMipAsImage          = OpalVulkanImageGetMipAsImage;
     // Renderpass
     g_OpalState.api.functions.RenderpassInit              = OpalVulkanRenderpassInit;
     g_OpalState.api.functions.RenderpassShutdown          = OpalVulkanRenderpassShutdown;
@@ -229,6 +230,11 @@ void OpalImageShutdown(OpalImage* pImage)
 OpalResult OpalImagePushData(OpalImage* pImage, const void* data)
 {
   return g_OpalState.api.functions.ImagePushData(pImage, data);
+}
+
+OpalResult OpalImageGetMipAsImage(OpalImage* pImage, OpalImage* pMipImage, uint32_t mipLevel)
+{
+  return g_OpalState.api.functions.ImageGetMipAsImage(pImage, pMipImage, mipLevel);
 }
 
 // Mesh
