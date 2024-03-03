@@ -11,12 +11,12 @@ static OpalBuffer g_transferBuffer_Ovk;
 // ============================================================
 
 // Core ==========
-//OpalResult TransferBufferInit_Ovk         ();
-//void       TransferBufferShutdown_Ovk     ();
-//OpalResult OpalVulkanBufferInit           (OpalBuffer* pBuffer, OpalBufferInitInfo initInfo);
-//void       OpalVulkanBufferShutdown       (OpalBuffer* pBuffer);
+//OpalResult TransferBufferInit_Ovk         ()
+//void       TransferBufferShutdown_Ovk     ()
+//OpalResult OpalVulkanBufferInit           (OpalBuffer* pBuffer, OpalBufferInitInfo initInfo)
+//void       OpalVulkanBufferShutdown       (OpalBuffer* pBuffer)
 OpalResult   InitBuffer_Ovk                 (OpalVulkanBuffer* pBuffer, OpalBufferInitInfo initInfo);
-OpalResult   InitMemory_Ovk                 (OpalVulkanBuffer* pBuffer, OpalBufferInitInfo initInfo);
+OpalResult   InitBufferMemory_Ovk           (OpalVulkanBuffer* pBuffer, OpalBufferInitInfo initInfo);
 
 // Manipulation ==========
 //OpalResult OpalVulkanBufferPushData       (OpalBuffer* pBuffer, void* data)
@@ -63,7 +63,7 @@ OpalResult OpalVulkanBufferInit(OpalBuffer* pBuffer, OpalBufferInitInfo initInfo
   initInfo.size = pBuffer->paddedSize;
 
   OPAL_ATTEMPT(InitBuffer_Ovk(&pBuffer->api.vk, initInfo));
-  OPAL_ATTEMPT(InitMemory_Ovk(&pBuffer->api.vk, initInfo));
+  OPAL_ATTEMPT(InitBufferMemory_Ovk(&pBuffer->api.vk, initInfo));
   OPAL_ATTEMPT_VK(vkBindBufferMemory(g_ovkState->device, pBuffer->api.vk.buffer, pBuffer->api.vk.memory, 0));
 
   return Opal_Success;
@@ -103,7 +103,7 @@ OpalResult InitBuffer_Ovk(OpalVulkanBuffer* pBuffer, OpalBufferInitInfo initInfo
   return Opal_Success;
 }
 
-OpalResult InitMemory_Ovk(OpalVulkanBuffer* pBuffer, OpalBufferInitInfo initInfo)
+OpalResult InitBufferMemory_Ovk(OpalVulkanBuffer* pBuffer, OpalBufferInitInfo initInfo)
 {
   VkMemoryRequirements memoryRequirements;
   vkGetBufferMemoryRequirements(g_ovkState->device, pBuffer->buffer, &memoryRequirements);
@@ -126,22 +126,6 @@ OpalResult InitMemory_Ovk(OpalVulkanBuffer* pBuffer, OpalBufferInitInfo initInfo
 
   OPAL_ATTEMPT_VK(vkAllocateMemory(g_ovkState->device, &allocInfo, NULL, &pBuffer->memory));
   return Opal_Success;
-}
-
-uint32_t GetMemTypeIndex_Ovk(uint32_t supportedTypes, VkMemoryPropertyFlags flags)
-{
-  const VkPhysicalDeviceMemoryProperties* props = &g_ovkState->gpu.memoryProperties;
-
-  for (uint32_t i = 0; i < props->memoryTypeCount; i++)
-  {
-    if (supportedTypes & (1 << i) && (props->memoryTypes[i].propertyFlags & flags) == flags)
-    {
-      return i;
-    }
-  }
-
-  OpalLog("Failed to find a suitable memory type for the buffer");
-  return ~0u;
 }
 
 // Manipulation
@@ -210,4 +194,20 @@ uint64_t PadBufferSize_Ovk(uint32_t usage, uint64_t size)
   }
 
   return (size + alignment) & ~alignment;
+}
+
+uint32_t GetMemTypeIndex_Ovk(uint32_t supportedTypes, VkMemoryPropertyFlags flags)
+{
+  const VkPhysicalDeviceMemoryProperties* props = &g_ovkState->gpu.memoryProperties;
+
+  for (uint32_t i = 0; i < props->memoryTypeCount; i++)
+  {
+    if (supportedTypes & (1 << i) && (props->memoryTypes[i].propertyFlags & flags) == flags)
+    {
+      return i;
+    }
+  }
+
+  OpalLog("Failed to find a suitable memory type for the buffer");
+  return ~0u;
 }

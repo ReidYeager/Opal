@@ -185,6 +185,7 @@ typedef struct OpalImage
   uint32_t width, height;
   uint32_t mipCount;
   OpalFormat format;
+  OpalImageUsageFlags usage;
 
   union
   {
@@ -491,6 +492,7 @@ typedef struct OpalState
       // Image ==========
       OpalResult (*ImageInit)            (OpalImage* pImage, OpalImageInitInfo initInfo);
       void       (*ImageShutdown)        (OpalImage* pImage);
+      OpalResult (*ImagePushData)        (OpalImage* pImage, const void* data);
 
       // Renderpass ==========
       OpalResult (*RenderpassInit)       (OpalRenderpass* pRenderpass, OpalRenderpassInitInfo initInfo);
@@ -511,8 +513,8 @@ typedef struct OpalState
       // ShaderInput ==========
       OpalResult (*ShaderInputLayoutInit)    (OpalShaderInputLayout* pLayout, OpalShaderInputLayoutInitInfo initInfo);
       void       (*ShaderInputLayoutShutdown)(OpalShaderInputLayout* pLayout);
-      OpalResult (*ShaderInputInit)      (OpalShaderInput* pShaderInput, OpalShaderInputInitInfo initInfo);
-      void       (*ShaderInputShutdown)  (OpalShaderInput* pShaderInput);
+      OpalResult (*ShaderInputInit)          (OpalShaderInput* pShaderInput, OpalShaderInputInitInfo initInfo);
+      void       (*ShaderInputShutdown)      (OpalShaderInput* pShaderInput);
 
       // ==============================
       // Rendering

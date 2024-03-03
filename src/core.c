@@ -30,6 +30,11 @@ OpalState g_OpalState = {0};
 // Image ==========
 //OpalResult OpalImageInit                  (OpalImage* pImage, OpalImageInitInfo initInfo)
 //void       OpalImageShutdown              (OpalImage* pImage)
+//OpalResult OpalImagePushData              (OpalImage* pImage, const void* data)
+
+// Mesh ==========
+//OpalResult OpalMeshInit                   (OpalMesh* pMesh, OpalMeshInitInfo initInfo)
+//void       OpalMeshShutdown               (OpalMesh* pMesh)
 
 // Renderpass ==========
 //OpalResult OpalRenderpassInit             (OpalRenderpass* pRenderpass, OpalRenderpassInitInfo initInfo)
@@ -54,15 +59,19 @@ OpalState g_OpalState = {0};
 //void       OpalShaderInputShutdown        (OpalShaderInput* pShaderInput)
 
 // Rendering ==========
+// Rendering - Begin/End
 //OpalResult OpalRenderBegin                ()
 //OpalResult OpalRenderEnd                  ()
 //OpalResult OpalRenderToWindowBegin        (OpalWindow* pWindow)
 //OpalResult OpalRenderToWindowEnd          (OpalWindow* pWindow)
+// Rendering - Objects
 //void       OpalRenderRenderpassBegin      (const OpalRenderpass* pRenderpass, const OpalFramebuffer* pFramebuffer)
 //void       OpalRenderRenderpassEnd        (const OpalRenderpass* pRenderpass)
-//void       OpalRenderSetViewportDimensions(uint32_t width, uint32_t height)
 //void       OpalRenderBindShaderGroup      (const OpalShaderGroup* pGroup)
+//void       OpalRenderSetViewportDimensions(uint32_t width, uint32_t height)
+//void       OpalRenderSetPushConstant      (const void* data)
 //void       OpalRenderBindShaderInput      (const OpalShaderInput* pInput)
+//void       OpalRenderMesh                 (const OpalMesh* pMesh)
 //void       OpalRenderDrawCount_DEBUG      (uint32_t vertexCount)
 
 // Tools ==========
@@ -100,6 +109,7 @@ OpalResult OpalInit(OpalInitInfo initInfo)
     // Image
     g_OpalState.api.functions.ImageInit                   = OpalVulkanImageInit;
     g_OpalState.api.functions.ImageShutdown               = OpalVulkanImageShutdown;
+    g_OpalState.api.functions.ImagePushData               = OpalVulkanImagePushData;
     // Renderpass
     g_OpalState.api.functions.RenderpassInit              = OpalVulkanRenderpassInit;
     g_OpalState.api.functions.RenderpassShutdown          = OpalVulkanRenderpassShutdown;
@@ -200,12 +210,25 @@ OpalResult OpalBufferPushDataSegment(OpalBuffer* pBuffer, const void* data, uint
 
 OpalResult OpalImageInit(OpalImage* pImage, OpalImageInitInfo initInfo)
 {
+  initInfo.mipCount = initInfo.mipCount > 0 ? initInfo.mipCount : 1;
+
+  pImage->width = initInfo.width;
+  pImage->height = initInfo.height;
+  pImage->mipCount = initInfo.mipCount;
+  pImage->format = initInfo.format;
+  pImage->usage = initInfo.usage;
+
   return g_OpalState.api.functions.ImageInit(pImage, initInfo);
 }
 
 void OpalImageShutdown(OpalImage* pImage)
 {
   g_OpalState.api.functions.ImageShutdown(pImage);
+}
+
+OpalResult OpalImagePushData(OpalImage* pImage, const void* data)
+{
+  return g_OpalState.api.functions.ImagePushData(pImage, data);
 }
 
 // Mesh
@@ -323,6 +346,8 @@ void OpalShaderInputShutdown(OpalShaderInput* pShaderInput)
 // Rendering
 // ============================================================
 
+// Begin/End ==============================
+
 OpalResult OpalRenderBegin()
 {
   return g_OpalState.api.functions.RenderBegin();
@@ -343,6 +368,8 @@ OpalResult OpalRenderToWindowEnd(OpalWindow* pWindow)
   return g_OpalState.api.functions.RenderToWindowEnd(pWindow);
 }
 
+// Objects ==============================
+
 void OpalRenderRenderpassBegin(const OpalRenderpass* pRenderpass, const OpalFramebuffer* pFramebuffer)
 {
   g_OpalState.api.functions.RenderRenderpassBegin(pRenderpass, pFramebuffer);
@@ -353,24 +380,24 @@ void OpalRenderRenderpassEnd(const OpalRenderpass* pRenderpass)
   g_OpalState.api.functions.RenderRenderpassEnd(pRenderpass);
 }
 
-void OpalRenderSetViewportDimensions(uint32_t width, uint32_t height)
-{
-  g_OpalState.api.functions.RenderSetViewportDimensions(width, height);
-}
-
 void OpalRenderBindShaderGroup(const OpalShaderGroup* pGroup)
 {
   g_OpalState.api.functions.RenderBindShaderGroup(pGroup);
 }
 
-void OpalRenderBindShaderInput(const OpalShaderInput* pInput)
+void OpalRenderSetViewportDimensions(uint32_t width, uint32_t height)
 {
-  g_OpalState.api.functions.RenderBindShaderInput(pInput);
+  g_OpalState.api.functions.RenderSetViewportDimensions(width, height);
 }
 
 void OpalRenderSetPushConstant(const void* data)
 {
   g_OpalState.api.functions.RenderSetPushConstant(data);
+}
+
+void OpalRenderBindShaderInput(const OpalShaderInput* pInput)
+{
+  g_OpalState.api.functions.RenderBindShaderInput(pInput);
 }
 
 void OpalRenderMesh(const OpalMesh* pMesh)

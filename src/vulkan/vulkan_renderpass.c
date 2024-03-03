@@ -27,11 +27,11 @@ typedef struct RenderpassData_Ovk
 // ============================================================
 
 // Core ==========
-//OpalResult OpalVulkanRenderpassInit(OpalRenderpass* pRenderpass, OpalRenderpassInitInfo initInfo)
-//void OpalVulkanRenderpassShutdown(OpalRenderpass* pRenderpass)
-OpalResult BuildAttachments_Ovk(OpalRenderpassInitInfo initInfo, RenderpassData_Ovk* data);
-OpalResult BuildSubpasses_Ovk(OpalRenderpassInitInfo initInfo, RenderpassData_Ovk* data);
-OpalResult BuildDependencies_Ovk(OpalRenderpassInitInfo initInfo, RenderpassData_Ovk* data);
+//OpalResult OpalVulkanRenderpassInit    (OpalRenderpass* pRenderpass, OpalRenderpassInitInfo initInfo)
+//void       OpalVulkanRenderpassShutdown(OpalRenderpass* pRenderpass)
+OpalResult   BuildAttachments_Ovk        (OpalRenderpassInitInfo initInfo, RenderpassData_Ovk* data);
+OpalResult   BuildSubpasses_Ovk          (OpalRenderpassInitInfo initInfo, RenderpassData_Ovk* data);
+OpalResult   BuildDependencies_Ovk       (OpalRenderpassInitInfo initInfo, RenderpassData_Ovk* data);
 
 // Tools ==========
 void DestroyRenderpassData_Ovk(RenderpassData_Ovk* data);

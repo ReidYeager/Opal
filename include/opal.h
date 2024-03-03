@@ -28,6 +28,7 @@ OpalResult OpalBufferPushDataSegment      (OpalBuffer* pBuffer, const void* data
 // Image ==========
 OpalResult OpalImageInit                  (OpalImage* pImage, OpalImageInitInfo initInfo);
 void       OpalImageShutdown              (OpalImage* pImage);
+OpalResult OpalImagePushData              (OpalImage* pImage, const void* data);
 
 // Mesh ==========
 OpalResult OpalMeshInit                   (OpalMesh* pMesh, OpalMeshInitInfo initInfo);

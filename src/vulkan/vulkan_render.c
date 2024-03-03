@@ -5,17 +5,19 @@
 // ============================================================
 
 // Begin/End ==========
-//OpalResult OpalVulkanRenderBegin          ()
-//OpalResult OpalVulkanRenderEnd            ()
-//OpalResult OpalVulkanRenderToWindowBegin  (OpalWindow* pWindow)
-//OpalResult OpalVulkanRenderToWindowEnd    (OpalWindow* pWindow)
+//OpalResult OpalVulkanRenderBegin                ()
+//OpalResult OpalVulkanRenderEnd                  ()
+//OpalResult OpalVulkanRenderToWindowBegin        (OpalWindow* pWindow)
+//OpalResult OpalVulkanRenderToWindowEnd          (OpalWindow* pWindow)
 
-// Object commands ==========
-//void       OpalVulkanRenderRenderpassBegin(const OpalRenderpass* pRenderpass, const OpalFramebuffer* pFramebuffer)
-//void       OpalVulkanRenderRenderpassEnd  (const OpalRenderpass* pRenderpass)
-//void       OpalVulkanRenderBindShaderGroup(const OpalShaderGroup* pGroup)
-//void       OpalVulkanRenderBindShaderInput(const OpalShaderInput* pInput)
-//void       OpalVulkanRenderMesh           (const OpalMesh* pMesh)
+// Objects ==========
+//void       OpalVulkanRenderRenderpassBegin      (const OpalRenderpass* pRenderpass, const OpalFramebuffer* pFramebuffer)
+//void       OpalVulkanRenderRenderpassEnd        (const OpalRenderpass* pRenderpass)
+//void       OpalVulkanRenderBindShaderGroup      (const OpalShaderGroup* pGroup)
+//void       OpalVulkanRenderSetViewportDimensions(uint32_t width, uint32_t height)
+//void       OpalVulkanRenderSetPushConstant      (const void* data)
+//void       OpalVulkanRenderBindShaderInput      (const OpalShaderInput* pInput)
+//void       OpalVulkanRenderMesh                 (const OpalMesh* pMesh)
 
 
 // Begin/End
@@ -123,25 +125,7 @@ OpalResult OpalVulkanRenderToWindowEnd(OpalWindow* pWindow)
   return Opal_Success;
 }
 
-void OpalVulkanRenderSetViewportDimensions(uint32_t width, uint32_t height)
-{
-  VkViewport viewport = { 0, 0, 1, 1, 0, 1 };
-  viewport.x = 0;
-  viewport.y = 0;
-  viewport.width = width;
-  viewport.height = height;
-  viewport.minDepth = 0;
-  viewport.maxDepth = 1;
-
-  VkRect2D scissor = { 0 };
-  scissor.extent = (VkExtent2D){ width, height };
-  scissor.offset = (VkOffset2D){ 0, 0 };
-
-  vkCmdSetViewport(g_ovkState->renderState.cmd, 0, 1, &viewport);
-  vkCmdSetScissor(g_ovkState->renderState.cmd, 0, 1, &scissor);
-}
-
-// Object commands
+// Objects
 // ============================================================
 
 void OpalVulkanRenderRenderpassBegin(const OpalRenderpass* pRenderpass, const OpalFramebuffer* pFramebuffer)
@@ -174,14 +158,22 @@ void OpalVulkanRenderBindShaderGroup(const OpalShaderGroup* pGroup)
   g_ovkState->renderState.pushConstSize = pGroup->pushConstSize;
 }
 
-void OpalVulkanRenderBindShaderInput(const OpalShaderInput* pInput)
+void OpalVulkanRenderSetViewportDimensions(uint32_t width, uint32_t height)
 {
-  vkCmdBindDescriptorSets(
-    g_ovkState->renderState.cmd,
-    VK_PIPELINE_BIND_POINT_GRAPHICS,
-    g_ovkState->renderState.layout,
-    0, 1, &pInput->api.vk.set,
-    0, NULL);
+  VkViewport viewport = { 0, 0, 1, 1, 0, 1 };
+  viewport.x = 0;
+  viewport.y = 0;
+  viewport.width = width;
+  viewport.height = height;
+  viewport.minDepth = 0;
+  viewport.maxDepth = 1;
+
+  VkRect2D scissor = { 0 };
+  scissor.extent = (VkExtent2D){ width, height };
+  scissor.offset = (VkOffset2D){ 0, 0 };
+
+  vkCmdSetViewport(g_ovkState->renderState.cmd, 0, 1, &viewport);
+  vkCmdSetScissor(g_ovkState->renderState.cmd, 0, 1, &scissor);
 }
 
 void OpalVulkanRenderSetPushConstant(const void* data)
@@ -193,6 +185,16 @@ void OpalVulkanRenderSetPushConstant(const void* data)
     0,
     g_ovkState->renderState.pushConstSize,
     data);
+}
+
+void OpalVulkanRenderBindShaderInput(const OpalShaderInput* pInput)
+{
+  vkCmdBindDescriptorSets(
+    g_ovkState->renderState.cmd,
+    VK_PIPELINE_BIND_POINT_GRAPHICS,
+    g_ovkState->renderState.layout,
+    0, 1, &pInput->api.vk.set,
+    0, NULL);
 }
 
 void OpalVulkanRenderMesh(const OpalMesh* pMesh)

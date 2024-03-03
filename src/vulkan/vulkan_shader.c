@@ -5,17 +5,21 @@
 // ============================================================
 
 // Shader ==========
-//OpalResult OpalVulkanShaderInit         (OpalShader* pShader, OpalShaderInitInfo initInfo)
-//void       OpalVulkanShaderShutdown     (OpalShader* pShader)
+//OpalResult OpalVulkanShaderInit               (OpalShader* pShader, OpalShaderInitInfo initInfo)
+//void       OpalVulkanShaderShutdown           (OpalShader* pShader)
 
 // ShaderInput ==========
-//OpalResult OpalVulkanShaderInputInit    (OpalShaderInput* pShaderInput, OpalShaderInputInitInfo initInfo)
-//void       OpalVulkanShaderInputShutdown(OpalShaderInput* pShaderInput)
-OpalResult UpdateDescriptorSet_Ovk(OpalShaderInput* pInput, OpalShaderInputValue* pValues);
+//OpalResult OpalVulkanShaderInputLayoutInit    (OpalShaderInputLayout* pLayout, OpalShaderInputLayoutInitInfo initInfo)
+//void       OpalVulkanShaderInputLayoutShutdown(OpalShaderInputLayout* pLayout)
+//OpalResult OpalVulkanShaderInputInit          (OpalShaderInput* pShaderInput, OpalShaderInputInitInfo initInfo)
+//void       OpalVulkanShaderInputShutdown      (OpalShaderInput* pShaderInput)
+OpalResult   UpdateDescriptorSet_Ovk            (OpalShaderInput* pInput, OpalShaderInputValue* pValues);
 
 // ShaderGroup ==========
-//OpalResult OpalVulkanShaderGroupInit    (OpalShaderGroup* pShaderGroup, OpalShaderGroupInitInfo initInfo)
-//void       OpalVulkanShaderGroupShutdown(OpalShaderGroup* pShaderGroup)
+//OpalResult OpalVulkanShaderGroupInit          (OpalShaderGroup* pShaderGroup, OpalShaderGroupInitInfo initInfo)
+//void       OpalVulkanShaderGroupShutdown      (OpalShaderGroup* pShaderGroup)
+OpalResult   InitPipelineLayout_Ovk             (OpalShaderGroup* pShaderGroup, OpalShaderGroupInitInfo initInfo);
+OpalResult   InitPipeline_Ovk                   (OpalShaderGroup* pShaderGroup, OpalShaderGroupInitInfo initInfo);
 
 
 // Shader
@@ -220,9 +224,6 @@ OpalResult UpdateDescriptorSet_Ovk(OpalShaderInput* pInput, OpalShaderInputValue
 
 // ShaderGroup
 // ============================================================
-
-OpalResult InitPipelineLayout_Ovk(OpalShaderGroup* pShaderGroup, OpalShaderGroupInitInfo initInfo);
-OpalResult InitPipeline_Ovk(OpalShaderGroup* pShaderGroup, OpalShaderGroupInitInfo initInfo);
 
 OpalResult OpalVulkanShaderGroupInit(OpalShaderGroup* pShaderGroup, OpalShaderGroupInitInfo initInfo)
 {

@@ -7,9 +7,9 @@
 // Initialization ==========
 //OpalResult       OpalVulkanWindowInit       (OpalWindowInitInfo initInfo, OpalWindow* pWindow);
 OpalResult         SwapchainInit_Ovk          (OpalWindow* pWindow);
-VkSurfaceFormatKHR GetSwapchainFormat_Ovk     (OpalVulkanWindow* pWindow);
 VkExtent2D         GetSurfaceExtents_Ovk      (OpalVulkanWindow* pWindow);
 uint32_t           GetSwapchainImageCount_Ovk (OpalVulkanWindow* pWindow);
+VkSurfaceFormatKHR GetSwapchainFormat_Ovk     (OpalVulkanWindow* pWindow);
 VkPresentModeKHR   GetSwapchainPresentMode_Ovk(OpalVulkanWindow* pWindow);
 OpalResult         FramesInit_Ovk             (OpalWindow* pWindow);
 
