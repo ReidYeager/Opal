@@ -192,6 +192,27 @@ typedef struct OpalImage
   } api;
 } OpalImage;
 
+// Mesh
+// ============================================================
+
+typedef struct OpalMeshInitInfo
+{
+  uint32_t vertexCount;
+  const void* pVertices;
+
+  uint32_t indexCount;
+  const uint32_t* pIndices;
+} OpalMeshInitInfo;
+
+typedef struct OpalMesh
+{
+  uint32_t vertexCount;
+  OpalBuffer vertexBuffer;
+
+  uint32_t indexCount;
+  OpalBuffer indexBuffer;
+} OpalMesh;
+
 // Renderpass
 // ============================================================
 
@@ -462,8 +483,8 @@ typedef struct OpalState
       // Buffer ==========
       OpalResult (*BufferInit)           (OpalBuffer* pBuffer, OpalBufferInitInfo initInfo);
       void       (*BufferShutdown)       (OpalBuffer* pBuffer);
-      OpalResult (*BufferPushData)       (OpalBuffer* pBuffer, void* data);
-      OpalResult (*BufferPushDataSegment)(OpalBuffer* pBuffer, void* data, uint64_t size, uint64_t bufferOffset);
+      OpalResult (*BufferPushData)       (OpalBuffer* pBuffer, const void* data);
+      OpalResult (*BufferPushDataSegment)(OpalBuffer* pBuffer, const void* data, uint64_t size, uint64_t bufferOffset);
 
       // Image ==========
       OpalResult (*ImageInit)            (OpalImage* pImage, OpalImageInitInfo initInfo);
@@ -504,6 +525,7 @@ typedef struct OpalState
       void       (*RenderSetViewportDimensions)(uint32_t width, uint32_t height);
       void       (*RenderBindShaderGroup)      (const OpalShaderGroup* pGroup);
       void       (*RenderBindShaderInput)      (const OpalShaderInput* pInput);
+      void       (*RenderMesh)                 (const OpalMesh* pMesh);
 
     } functions;
 
@@ -514,6 +536,13 @@ typedef struct OpalState
       // Directx state
     };
   } api;
+
+  struct
+  {
+    uint32_t size;
+    uint32_t attribCount;
+    OpalFormat* pFormats;
+  } vertex;
 
   void(*messageCallback)(OpalMessageType, const char*);
 } OpalState;

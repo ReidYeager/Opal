@@ -5,14 +5,18 @@
 // ============================================================
 
 // Begin/End ==========
-// OpalResult OpalVulkanRenderBegin          ()
-// OpalResult OpalVulkanRenderEnd            ()
-// OpalResult OpalVulkanRenderToWindowBegin  (OpalWindow* pWindow)
-// OpalResult OpalVulkanRenderToWindowEnd    (OpalWindow* pWindow)
+//OpalResult OpalVulkanRenderBegin          ()
+//OpalResult OpalVulkanRenderEnd            ()
+//OpalResult OpalVulkanRenderToWindowBegin  (OpalWindow* pWindow)
+//OpalResult OpalVulkanRenderToWindowEnd    (OpalWindow* pWindow)
 
 // Object commands ==========
-// void       OpalVulkanRenderRenderpassBegin(const OpalRenderpass* pRenderpass, const OpalFramebuffer* pFramebuffer)
-// void       OpalVulkanRenderRenderpassEnd  (const OpalRenderpass* pRenderpass)
+//void       OpalVulkanRenderRenderpassBegin(const OpalRenderpass* pRenderpass, const OpalFramebuffer* pFramebuffer)
+//void       OpalVulkanRenderRenderpassEnd  (const OpalRenderpass* pRenderpass)
+//void       OpalVulkanRenderBindShaderGroup(const OpalShaderGroup* pGroup)
+//void       OpalVulkanRenderBindShaderInput(const OpalShaderInput* pInput)
+//void       OpalVulkanRenderMesh           (const OpalMesh* pMesh)
+
 
 // Begin/End
 // ============================================================
@@ -177,4 +181,12 @@ void OpalVulkanRenderBindShaderInput(const OpalShaderInput* pInput)
     g_ovkState->renderState.layout,
     0, 1, &pInput->api.vk.set,
     0, NULL);
+}
+
+void OpalVulkanRenderMesh(const OpalMesh* pMesh)
+{
+  VkDeviceSize offset = 0;
+  vkCmdBindIndexBuffer(g_ovkState->renderState.cmd, pMesh->indexBuffer.api.vk.buffer, 0, VK_INDEX_TYPE_UINT32);
+  vkCmdBindVertexBuffers(g_ovkState->renderState.cmd, 0, 1, &pMesh->vertexBuffer.api.vk.buffer, &offset);
+  vkCmdDrawIndexed(g_ovkState->renderState.cmd, pMesh->indexCount, 1, 0, 0, 0);
 }

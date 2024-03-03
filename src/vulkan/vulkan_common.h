@@ -49,8 +49,8 @@ void       OpalVulkanWindowShutdown       (OpalWindow* pWindow);
 // Buffer ==========
 OpalResult OpalVulkanBufferInit           (OpalBuffer* pBuffer, OpalBufferInitInfo initInfo);
 void       OpalVulkanBufferShutdown       (OpalBuffer* pBuffer);
-OpalResult OpalVulkanBufferPushData       (OpalBuffer* pBuffer, void* data);
-OpalResult OpalVulkanBufferPushDataSegment(OpalBuffer* pBuffer, void* data, uint64_t size, uint64_t offset);
+OpalResult OpalVulkanBufferPushData       (OpalBuffer* pBuffer, const void* data);
+OpalResult OpalVulkanBufferPushDataSegment(OpalBuffer* pBuffer, const void* data, uint64_t size, uint64_t offset);
 
 // Image ==========
 OpalResult OpalVulkanImageInit            (OpalImage* pImage, OpalImageInitInfo initInfo);
@@ -85,12 +85,11 @@ OpalResult OpalVulkanRenderEnd                  ();
 OpalResult OpalVulkanRenderToWindowBegin        (OpalWindow* pWindow);
 OpalResult OpalVulkanRenderToWindowEnd          (OpalWindow* pWindow);
 void       OpalVulkanRenderSetViewportDimensions(uint32_t width, uint32_t height);
-// Rendering - Renderpass ==========
 void       OpalVulkanRenderRenderpassBegin      (const OpalRenderpass* pRenderpass, const OpalFramebuffer* pFramebuffer);
 void       OpalVulkanRenderRenderpassEnd        (const OpalRenderpass* pRenderpass);
-// Rendering - Shaders ==========
 void       OpalVulkanRenderBindShaderGroup      (const OpalShaderGroup* pGroup);
 void       OpalVulkanRenderBindShaderInput      (const OpalShaderInput* pInput);
+void       OpalVulkanRenderMesh                 (const OpalMesh* pMesh);
 
 // Platform
 // ============================================================

@@ -16,54 +16,59 @@ void       OpalWaitIdle();
 // ==============================
 
 // Window ==========
-OpalResult OpalWindowInit         (OpalWindow* pWindow, OpalWindowInitInfo initInfo);
-void       OpalWindowShutdown     (OpalWindow* pWindow);
+OpalResult OpalWindowInit                 (OpalWindow* pWindow, OpalWindowInitInfo initInfo);
+void       OpalWindowShutdown             (OpalWindow* pWindow);
 
 // Buffer ==========
-OpalResult OpalBufferInit           (OpalBuffer* pBuffer, OpalBufferInitInfo initInfo);
-void       OpalBufferShutdown       (OpalBuffer* pBuffer);
-OpalResult OpalBufferPushData       (OpalBuffer* pBuffer, void* data);
-OpalResult OpalBufferPushDataSegment(OpalBuffer* pBuffer, void* data, uint64_t size, uint64_t offset);
+OpalResult OpalBufferInit                 (OpalBuffer* pBuffer, OpalBufferInitInfo initInfo);
+void       OpalBufferShutdown             (OpalBuffer* pBuffer);
+OpalResult OpalBufferPushData             (OpalBuffer* pBuffer, const void* data);
+OpalResult OpalBufferPushDataSegment      (OpalBuffer* pBuffer, const void* data, uint64_t size, uint64_t offset);
 
 // Image ==========
-OpalResult OpalImageInit    (OpalImage* pImage, OpalImageInitInfo initInfo);
-void       OpalImageShutdown(OpalImage* pImage);
+OpalResult OpalImageInit                  (OpalImage* pImage, OpalImageInitInfo initInfo);
+void       OpalImageShutdown              (OpalImage* pImage);
+
+// Mesh ==========
+OpalResult OpalMeshInit                   (OpalMesh* pMesh, OpalMeshInitInfo initInfo);
+void       OpalMeshShutdown               (OpalMesh* pMesh);
 
 // Renderpass ==========
-OpalResult OpalRenderpassInit    (OpalRenderpass* pRenderpass, OpalRenderpassInitInfo initInfo);
-void       OpalRenderpassShutdown(OpalRenderpass* pRenderpass);
+OpalResult OpalRenderpassInit             (OpalRenderpass* pRenderpass, OpalRenderpassInitInfo initInfo);
+void       OpalRenderpassShutdown         (OpalRenderpass* pRenderpass);
 
 // Framebuffer ==========
-OpalResult OpalFramebufferInit    (OpalFramebuffer* pFramebuffer, OpalFramebufferInitInfo initInfo);
-void       OpalFramebufferShutdown(OpalFramebuffer* pFramebuffer);
+OpalResult OpalFramebufferInit            (OpalFramebuffer* pFramebuffer, OpalFramebufferInitInfo initInfo);
+void       OpalFramebufferShutdown        (OpalFramebuffer* pFramebuffer);
 
 // Shader ==========
-OpalResult OpalShaderInit    (OpalShader* pShader, OpalShaderInitInfo initInfo);
-void       OpalShaderShutdown(OpalShader* pShader);
+OpalResult OpalShaderInit                 (OpalShader* pShader, OpalShaderInitInfo initInfo);
+void       OpalShaderShutdown             (OpalShader* pShader);
 
 // ShaderGroup ==========
-OpalResult OpalShaderGroupInit    (OpalShaderGroup* pShaderGroup, OpalShaderGroupInitInfo initInfo);
-void       OpalShaderGroupShutdown(OpalShaderGroup* pShaderGroup);
+OpalResult OpalShaderGroupInit            (OpalShaderGroup* pShaderGroup, OpalShaderGroupInitInfo initInfo);
+void       OpalShaderGroupShutdown        (OpalShaderGroup* pShaderGroup);
 
 // ShaderInput* ==========
-OpalResult OpalShaderInputLayoutInit    (OpalShaderInputLayout* pLayout, OpalShaderInputLayoutInitInfo initInfo);
-void       OpalShaderInputLayoutShutdown(OpalShaderInputLayout* pLayout);
-OpalResult OpalShaderInputInit          (OpalShaderInput* pShaderInput, OpalShaderInputInitInfo initInfo);
-void       OpalShaderInputShutdown      (OpalShaderInput* pShaderInput);
+OpalResult OpalShaderInputLayoutInit      (OpalShaderInputLayout* pLayout, OpalShaderInputLayoutInitInfo initInfo);
+void       OpalShaderInputLayoutShutdown  (OpalShaderInputLayout* pLayout);
+OpalResult OpalShaderInputInit            (OpalShaderInput* pShaderInput, OpalShaderInputInitInfo initInfo);
+void       OpalShaderInputShutdown        (OpalShaderInput* pShaderInput);
 
 // ==============================
 // Rendering
 // ==============================
 
-OpalResult OpalRenderBegin          ();
-OpalResult OpalRenderEnd            ();
-OpalResult OpalRenderToWindowBegin  (OpalWindow* pWindow);
-OpalResult OpalRenderToWindowEnd    (OpalWindow* pWindow);
-void OpalRenderRenderpassBegin      (const OpalRenderpass* pRenderpass, const OpalFramebuffer* pFramebuffer);
-void OpalRenderRenderpassEnd        (const OpalRenderpass* pRenderpass);
-void OpalRenderSetViewportDimensions(uint32_t width, uint32_t height);
-void OpalRenderBindShaderGroup(const OpalShaderGroup* pGroup);
-void OpalRenderBindShaderInput(const OpalShaderInput* pInput);
+OpalResult OpalRenderBegin                ();
+OpalResult OpalRenderEnd                  ();
+OpalResult OpalRenderToWindowBegin        (OpalWindow* pWindow);
+OpalResult OpalRenderToWindowEnd          (OpalWindow* pWindow);
+void       OpalRenderRenderpassBegin      (const OpalRenderpass* pRenderpass, const OpalFramebuffer* pFramebuffer);
+void       OpalRenderRenderpassEnd        (const OpalRenderpass* pRenderpass);
+void       OpalRenderSetViewportDimensions(uint32_t width, uint32_t height);
+void       OpalRenderBindShaderGroup      (const OpalShaderGroup* pGroup);
+void       OpalRenderBindShaderInput      (const OpalShaderInput* pInput);
+void       OpalRenderMesh                 (const OpalMesh* pMesh);
 
 //void OpalRenderBindShaderInput(const OpalShaderInput* pInput, uint32_t setIndex);
 //void OpalRenderSetViewportDimensions(uint32_t width, uint32_t height);

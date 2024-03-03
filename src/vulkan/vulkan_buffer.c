@@ -147,12 +147,12 @@ uint32_t GetMemTypeIndex_Ovk(uint32_t supportedTypes, VkMemoryPropertyFlags flag
 // Manipulation
 // ============================================================
 
-OpalResult OpalVulkanBufferPushData(OpalBuffer* pBuffer, void* data)
+OpalResult OpalVulkanBufferPushData(OpalBuffer* pBuffer, const void* data)
 {
   return OpalVulkanBufferPushDataSegment(pBuffer, data, pBuffer->size, 0);
 }
 
-OpalResult OpalVulkanBufferPushDataSegment(OpalBuffer* pBuffer, void* data, uint64_t size, uint64_t bufferOffset)
+OpalResult OpalVulkanBufferPushDataSegment(OpalBuffer* pBuffer, const void* data, uint64_t size, uint64_t bufferOffset)
 {
   if (pBuffer->usage & Opal_Buffer_Usage_Cpu_Read)
   {
