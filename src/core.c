@@ -128,6 +128,7 @@ OpalResult OpalInit(OpalInitInfo initInfo)
     g_OpalState.api.functions.RenderRenderpassEnd         = OpalVulkanRenderRenderpassEnd;
     g_OpalState.api.functions.RenderBindShaderGroup       = OpalVulkanRenderBindShaderGroup;
     g_OpalState.api.functions.RenderBindShaderInput       = OpalVulkanRenderBindShaderInput;
+    g_OpalState.api.functions.RenderSetPushConstant       = OpalVulkanRenderSetPushConstant;
     g_OpalState.api.functions.RenderMesh                  = OpalVulkanRenderMesh;
 
     OPAL_ATTEMPT(OpalVulkanInit(initInfo));
@@ -365,6 +366,11 @@ void OpalRenderBindShaderGroup(const OpalShaderGroup* pGroup)
 void OpalRenderBindShaderInput(const OpalShaderInput* pInput)
 {
   g_OpalState.api.functions.RenderBindShaderInput(pInput);
+}
+
+void OpalRenderSetPushConstant(const void* data)
+{
+  g_OpalState.api.functions.RenderSetPushConstant(data);
 }
 
 void OpalRenderMesh(const OpalMesh* pMesh)

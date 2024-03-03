@@ -414,6 +414,8 @@ typedef struct OpalShaderGroupInitInfo
 
 typedef struct OpalShaderGroup
 {
+  uint32_t pushConstSize;
+
   union
   {
     OpalVulkanShaderGroup vk;
@@ -525,7 +527,8 @@ typedef struct OpalState
       void       (*RenderSetViewportDimensions)(uint32_t width, uint32_t height);
       void       (*RenderBindShaderGroup)      (const OpalShaderGroup* pGroup);
       void       (*RenderBindShaderInput)      (const OpalShaderInput* pInput);
-      void       (*RenderMesh)                 (const OpalMesh* pMesh);
+      void       (*RenderSetPushConstant)      (const void* data);
+      void       (*RenderMesh)                 (const OpalMesh* p);
 
     } functions;
 

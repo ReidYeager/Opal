@@ -171,6 +171,7 @@ void OpalVulkanRenderBindShaderGroup(const OpalShaderGroup* pGroup)
   vkCmdBindPipeline(g_ovkState->renderState.cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pGroup->api.vk.pipeline);
 
   g_ovkState->renderState.layout = pGroup->api.vk.pipelineLayout;
+  g_ovkState->renderState.pushConstSize = pGroup->pushConstSize;
 }
 
 void OpalVulkanRenderBindShaderInput(const OpalShaderInput* pInput)
@@ -181,6 +182,17 @@ void OpalVulkanRenderBindShaderInput(const OpalShaderInput* pInput)
     g_ovkState->renderState.layout,
     0, 1, &pInput->api.vk.set,
     0, NULL);
+}
+
+void OpalVulkanRenderSetPushConstant(const void* data)
+{
+  vkCmdPushConstants(
+    g_ovkState->renderState.cmd,
+    g_ovkState->renderState.layout,
+    VK_SHADER_STAGE_ALL_GRAPHICS,
+    0,
+    g_ovkState->renderState.pushConstSize,
+    data);
 }
 
 void OpalVulkanRenderMesh(const OpalMesh* pMesh)

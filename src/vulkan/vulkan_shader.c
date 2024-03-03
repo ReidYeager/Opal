@@ -229,6 +229,8 @@ OpalResult OpalVulkanShaderGroupInit(OpalShaderGroup* pShaderGroup, OpalShaderGr
   OPAL_ATTEMPT(InitPipelineLayout_Ovk(pShaderGroup, initInfo));
   OPAL_ATTEMPT(InitPipeline_Ovk(pShaderGroup, initInfo));
 
+  pShaderGroup->pushConstSize = initInfo.pushConstantSize;
+
   return Opal_Success;
 }
 

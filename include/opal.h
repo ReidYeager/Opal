@@ -68,12 +68,8 @@ void       OpalRenderRenderpassEnd        (const OpalRenderpass* pRenderpass);
 void       OpalRenderSetViewportDimensions(uint32_t width, uint32_t height);
 void       OpalRenderBindShaderGroup      (const OpalShaderGroup* pGroup);
 void       OpalRenderBindShaderInput      (const OpalShaderInput* pInput);
+void       OpalRenderSetPushConstant      (const void* data);
 void       OpalRenderMesh                 (const OpalMesh* pMesh);
-
-//void OpalRenderBindShaderInput(const OpalShaderInput* pInput, uint32_t setIndex);
-//void OpalRenderSetViewportDimensions(uint32_t width, uint32_t height);
-//void OpalRenderSetPushConstant(void* _data);
-//void OpalRenderMesh(OpalMesh _mesh);
 
 void OpalRenderDrawCount_DEBUG(uint32_t vertexCount);
 

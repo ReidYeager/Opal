@@ -130,6 +130,7 @@ typedef struct OpalVulkanState
   {
     VkCommandBuffer cmd;
     VkPipelineLayout layout;
+    uint32_t pushConstSize;
   } renderState;
 
   VkCommandBuffer renderCmd;
