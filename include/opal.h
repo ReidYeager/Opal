@@ -29,7 +29,7 @@ OpalResult OpalBufferPushDataSegment      (OpalBuffer* pBuffer, const void* data
 OpalResult OpalImageInit                  (OpalImage* pImage, OpalImageInitInfo initInfo);
 void       OpalImageShutdown              (OpalImage* pImage);
 OpalResult OpalImagePushData              (OpalImage* pImage, const void* data);
-OpalResult  OpalImageGetMipAsImage         (OpalImage* pImage, OpalImage* pMipImage, uint32_t mipLevel);
+OpalResult OpalImageGetMipAsImage         (OpalImage* pImage, OpalImage* pMipImage, uint32_t mipLevel);
 
 // Mesh ==========
 OpalResult OpalMeshInit                   (OpalMesh* pMesh, OpalMeshInitInfo initInfo);
@@ -69,7 +69,7 @@ void       OpalRenderRenderpassBegin      (const OpalRenderpass* pRenderpass, co
 void       OpalRenderRenderpassEnd        (const OpalRenderpass* pRenderpass);
 void       OpalRenderSetViewportDimensions(uint32_t width, uint32_t height);
 void       OpalRenderBindShaderGroup      (const OpalShaderGroup* pGroup);
-void       OpalRenderBindShaderInput      (const OpalShaderInput* pInput);
+void       OpalRenderBindShaderInput      (const OpalShaderInput* pInput, uint32_t setIndex);
 void       OpalRenderSetPushConstant      (const void* data);
 void       OpalRenderMesh                 (const OpalMesh* pMesh);
 

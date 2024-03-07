@@ -86,6 +86,8 @@ OpalResult OpalInit(OpalInitInfo initInfo)
   g_OpalState.vertex.attribCount = initInfo.vertexLayout.elementCount;
   g_OpalState.vertex.pFormats = OpalMemAllocArray(OpalFormat, initInfo.vertexLayout.elementCount);
 
+  g_OpalState.messageCallback = initInfo.messageCallback;
+
   for (int i = 0; i < initInfo.vertexLayout.elementCount; i++)
   {
     g_OpalState.vertex.pFormats[i] = initInfo.vertexLayout.pElementFormats[i];
@@ -289,8 +291,8 @@ OpalResult OpalFramebufferInit(OpalFramebuffer* pFramebuffer, OpalFramebufferIni
 {
   OPAL_ATTEMPT(g_OpalState.api.functions.FramebufferInit(pFramebuffer, initInfo));
 
-  pFramebuffer->width = initInfo.pImages[0].width;
-  pFramebuffer->height = initInfo.pImages[0].height;
+  pFramebuffer->width = initInfo.ppImages[0]->width;
+  pFramebuffer->height = initInfo.ppImages[0]->height;
 
   return Opal_Success;
 }
@@ -366,6 +368,11 @@ OpalResult OpalRenderEnd()
 
 OpalResult OpalRenderToWindowBegin(OpalWindow* pWindow)
 {
+  if (pWindow->isMinimized)
+  {
+    return Opal_Failure_Window_Minimized;
+  }
+
   return g_OpalState.api.functions.RenderToWindowBegin(pWindow);
 }
 
@@ -401,9 +408,9 @@ void OpalRenderSetPushConstant(const void* data)
   g_OpalState.api.functions.RenderSetPushConstant(data);
 }
 
-void OpalRenderBindShaderInput(const OpalShaderInput* pInput)
+void OpalRenderBindShaderInput(const OpalShaderInput* pInput, uint32_t setIndex)
 {
-  g_OpalState.api.functions.RenderBindShaderInput(pInput);
+  g_OpalState.api.functions.RenderBindShaderInput(pInput, setIndex);
 }
 
 void OpalRenderMesh(const OpalMesh* pMesh)

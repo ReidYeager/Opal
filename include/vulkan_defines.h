@@ -52,15 +52,19 @@ typedef struct OpalVulkanImage
 // Rendering
 // ============================================================
 
+struct OpalImage;
+
 typedef struct OpalVulkanFramebuffer
 {
   VkFramebuffer framebuffer;
+  struct OpalImage** pImagePointers;
 } OpalVulkanFramebuffer;
 
 typedef struct OpalVulkanRenderpass
 {
   VkRenderPass renderpass;
   VkClearValue* pClearValues;
+  VkImageLayout* pFinalLayouts;
 } OpalVulkanRenderpass;
 
 // Window
@@ -134,7 +138,7 @@ typedef struct OpalVulkanState
   } renderState;
 
   VkCommandBuffer renderCmd;
-  VkSemaphore renderCompleteSem;
+  VkFence renderCompleteFence;
 
   VkDescriptorPool descriptorPool;
 } OpalVulkanState;

@@ -93,7 +93,7 @@ void       OpalVulkanRenderRenderpassEnd          (const OpalRenderpass* pRender
 void       OpalVulkanRenderBindShaderGroup        (const OpalShaderGroup* pGroup);
 void       OpalVulkanRenderSetViewportDimensions  (uint32_t width, uint32_t height);
 void       OpalVulkanRenderSetPushConstant        (const void* data);
-void       OpalVulkanRenderBindShaderInput        (const OpalShaderInput* pInput);
+void       OpalVulkanRenderBindShaderInput        (const OpalShaderInput* pInput, uint32_t setIndex);
 void       OpalVulkanRenderMesh                   (const OpalMesh* pMesh);
 
 // Platform

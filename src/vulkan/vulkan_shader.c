@@ -180,6 +180,20 @@ OpalResult UpdateDescriptorSet_Ovk(OpalShaderInput* pInput, OpalShaderInputValue
     } break;
     case Opal_Shader_Input_Image:
     {
+      if ((pValues[i].image->usage & Opal_Image_Usage_Uniform) == 0)
+      {
+        OpalMemFree(pBufferInfos);
+        OpalMemFree(pImageInfos);
+        OpalMemFree(pWrites);
+
+        OpalLogError("Image %d is not marked for uniform usage", i);
+        return Opal_Failure_Invalid_Input;
+      }
+      if (pValues[i].image->api.vk.layout != VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
+      {
+        OPAL_ATTEMPT(ImageTransitionLayout_Ovk(pValues[i].image, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL));
+      }
+
       pImageInfos[imageInfoCount].imageLayout = pValues[i].image->api.vk.layout;
       pImageInfos[imageInfoCount].imageView   = pValues[i].image->api.vk.view;
       pImageInfos[imageInfoCount].sampler     = pValues[i].image->api.vk.sampler;

@@ -63,9 +63,11 @@ OpalResult OpalVulkanRenderpassInit(OpalRenderpass* pRenderpass, OpalRenderpassI
     DestroyRenderpassData_Ovk(&data));
 
   pRenderpass->api.vk.pClearValues = OpalMemAllocArray(VkClearValue, initInfo.attachmentCount);
+  pRenderpass->api.vk.pFinalLayouts = OpalMemAllocArray(VkImageLayout, initInfo.attachmentCount);
   for (int i = 0; i < initInfo.attachmentCount; i++)
   {
     pRenderpass->api.vk.pClearValues[i] = *(VkClearValue*)(&initInfo.pAttachments[i].clearValue);
+    pRenderpass->api.vk.pFinalLayouts[i] = data.pAttachments[i].finalLayout;
   }
 
   pRenderpass->attachmentCount = initInfo.attachmentCount;
@@ -79,6 +81,7 @@ void OpalVulkanRenderpassShutdown(OpalRenderpass* pRenderpass)
 {
   vkDestroyRenderPass(g_ovkState->device, pRenderpass->api.vk.renderpass, NULL);
   OpalMemFree(pRenderpass->api.vk.pClearValues);
+  OpalMemFree(pRenderpass->api.vk.pFinalLayouts);
 }
 
 OpalResult BuildAttachments_Ovk(OpalRenderpassInitInfo initInfo, RenderpassData_Ovk* data)
@@ -120,7 +123,7 @@ OpalResult BuildAttachments_Ovk(OpalRenderpassInitInfo initInfo, RenderpassData_
       }
       else
       {
-        data->pAttachments[i].finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+        data->pAttachments[i].finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
       }
     }
 

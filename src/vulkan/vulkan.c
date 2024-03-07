@@ -451,12 +451,12 @@ OpalResult InitGlobalResources_Ovk(OpalInitInfo initInfo)
 
   OPAL_ATTEMPT_VK(vkAllocateCommandBuffers(g_ovkState->device, &allocInfo, &g_ovkState->renderCmd));
 
-  VkSemaphoreCreateInfo semInfo = { 0 };
-  semInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
-  semInfo.pNext = NULL;
-  semInfo.flags = 0;
+  VkFenceCreateInfo fenceInfo = { 0 };
+  fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+  fenceInfo.pNext = NULL;
+  fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
 
-  OPAL_ATTEMPT_VK(vkCreateSemaphore(g_ovkState->device, &semInfo, NULL, &g_ovkState->renderCompleteSem));
+  OPAL_ATTEMPT_VK(vkCreateFence(g_ovkState->device, &fenceInfo, NULL, &g_ovkState->renderCompleteFence));
 
   return Opal_Success;
 }
@@ -471,7 +471,7 @@ void OpalVulkanShutdown()
 
   // Core
   vkFreeCommandBuffers(g_ovkState->device, g_ovkState->graphicsCommandPool, 1, &g_ovkState->renderCmd);
-  vkDestroySemaphore(g_ovkState->device, g_ovkState->renderCompleteSem, NULL);
+  vkDestroyFence(g_ovkState->device, g_ovkState->renderCompleteFence, NULL);
   vkDestroyDescriptorPool(g_ovkState->device, g_ovkState->descriptorPool, NULL);
   vkDestroyCommandPool(g_ovkState->device, g_ovkState->graphicsCommandPool, NULL);
   vkDestroyCommandPool(g_ovkState->device, g_ovkState->transientCommandPool, NULL);

@@ -25,12 +25,16 @@
 
 OpalResult OpalVulkanRenderBegin()
 {
+  vkWaitForFences(g_ovkState->device, 1, &g_ovkState->renderCompleteFence, VK_TRUE, UINT64_MAX);
+  vkResetFences(g_ovkState->device, 1, &g_ovkState->renderCompleteFence);
+
   VkCommandBufferBeginInfo beginInfo = { 0 };
   beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
   beginInfo.pNext = NULL;
   beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
   beginInfo.pInheritanceInfo = NULL;
 
+  g_ovkState->renderState.cmd = g_ovkState->renderCmd;
   OPAL_ATTEMPT_VK(vkBeginCommandBuffer(g_ovkState->renderState.cmd, &beginInfo));
 
   return Opal_Success;
@@ -51,7 +55,7 @@ OpalResult OpalVulkanRenderEnd()
   submitInfo.signalSemaphoreCount = 0;
   submitInfo.pSignalSemaphores = NULL;
 
-  OPAL_ATTEMPT_VK(vkQueueSubmit(g_ovkState->queueGraphics, 1, &submitInfo, VK_NULL_HANDLE));
+  OPAL_ATTEMPT_VK(vkQueueSubmit(g_ovkState->queueGraphics, 1, &submitInfo, g_ovkState->renderCompleteFence));
 
   return Opal_Success;
 }
@@ -143,6 +147,13 @@ void OpalVulkanRenderRenderpassBegin(const OpalRenderpass* pRenderpass, const Op
   beginInfo.renderArea.offset = (VkOffset2D){ 0, 0 };
 
   vkCmdBeginRenderPass(g_ovkState->renderState.cmd, &beginInfo, VK_SUBPASS_CONTENTS_INLINE);
+
+  for (int i = 0; i < pRenderpass->attachmentCount; i++)
+  {
+    pFramebuffer->api.vk.pImagePointers[i]->api.vk.layout = pRenderpass->api.vk.pFinalLayouts[i];
+  }
+
+  OpalVulkanRenderSetViewportDimensions(pFramebuffer->width, pFramebuffer->height);
 }
 
 void OpalVulkanRenderRenderpassEnd(const OpalRenderpass* pRenderpass)
@@ -187,13 +198,13 @@ void OpalVulkanRenderSetPushConstant(const void* data)
     data);
 }
 
-void OpalVulkanRenderBindShaderInput(const OpalShaderInput* pInput)
+void OpalVulkanRenderBindShaderInput(const OpalShaderInput* pInput, uint32_t setIndex)
 {
   vkCmdBindDescriptorSets(
     g_ovkState->renderState.cmd,
     VK_PIPELINE_BIND_POINT_GRAPHICS,
     g_ovkState->renderState.layout,
-    0, 1, &pInput->api.vk.set,
+    setIndex, 1, &pInput->api.vk.set,
     0, NULL);
 }
 

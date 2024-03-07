@@ -27,6 +27,7 @@ OpalResult OpalVulkanWindowInit(OpalWindow* pWindow, OpalWindowInitInfo initInfo
 
   pWindow->imageCount = pWindow->api.vk.imageCount;
   pWindow->api.vk.imageIndex = pWindow->api.vk.imageCount - 1;
+  pWindow->imageFormat = VkFormatToOpalFormat_Ovk(pWindow->api.vk.format);
 
   return Opal_Success;
 }

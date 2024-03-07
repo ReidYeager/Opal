@@ -3,6 +3,7 @@
 #include "include/opal.h" // Used for OpalVulkanImageFill
 
 #include <math.h>
+#include <stdint.h>
 
 // Declarations
 // ============================================================
@@ -33,6 +34,7 @@ OpalResult OpalVulkanImageInit(OpalImage* pImage, OpalImageInitInfo initInfo)
   OPAL_ATTEMPT(InitImageMemory_Ovk(pImage));
   OPAL_ATTEMPT(InitView_Ovk(pImage, initInfo.usage, 0, initInfo.mipCount));
 
+  pImage->isMipReference = false;
   pImage->usage = initInfo.usage;
   pImage->filter = initInfo.filter;
   pImage->sampleMode = initInfo.sampleMode;
@@ -47,23 +49,16 @@ OpalResult OpalVulkanImageInit(OpalImage* pImage, OpalImageInitInfo initInfo)
     pImage->api.vk.sampler = VK_NULL_HANDLE;
   }
 
-  VkImageLayout newlayout;
-  if (initInfo.usage & Opal_Image_Usage_Color)
-    newlayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-  else if (initInfo.usage & Opal_Image_Usage_Uniform)
-    newlayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-  else
-    newlayout = VK_IMAGE_LAYOUT_UNDEFINED;
-
-  OPAL_ATTEMPT(ImageTransitionLayout_Ovk(pImage, newlayout));
-
   return Opal_Success;
 }
 
 void OpalVulkanImageShutdown(OpalImage* pImage)
 {
-  vkFreeMemory(g_ovkState->device, pImage->api.vk.memory, NULL);
-  vkDestroyImage(g_ovkState->device, pImage->api.vk.image, NULL);
+  if (!pImage->isMipReference)
+  {
+    vkFreeMemory(g_ovkState->device, pImage->api.vk.memory, NULL);
+    vkDestroyImage(g_ovkState->device, pImage->api.vk.image, NULL);
+  }
   vkDestroyImageView(g_ovkState->device, pImage->api.vk.view, NULL);
   vkDestroySampler(g_ovkState->device, pImage->api.vk.sampler, NULL);
 }
@@ -188,6 +183,12 @@ OpalResult InitSampler_Ovk(OpalImage* pImage, OpalImageFilterType filter, OpalIm
 
 OpalResult OpalVulkanImagePushData(OpalImage* pImage, const void* data)
 {
+  if (pImage->api.vk.layout != VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
+  {
+    // Assume manually pushed data is being read by shaders.
+    OPAL_ATTEMPT(ImageTransitionLayout_Ovk(pImage, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL));
+  }
+
   OpalBufferInitInfo bufferInfo = { 0 };
   bufferInfo.size = OpalFormatToSize(pImage->format) * pImage->width * pImage->height;
   bufferInfo.usage = Opal_Buffer_Usage_Cpu_Read | Opal_Buffer_Usage_Transfer_Src;
@@ -435,6 +436,12 @@ OpalResult CopyBufferToImage_Ovk(OpalBuffer* pBuffer, OpalImage* pImage)
 
 OpalResult OpalVulkanImageGetMipAsImage(OpalImage* pImage, OpalImage* pMipImage, uint32_t mipLevel)
 {
+  if (pImage->isMipReference)
+  {
+    OpalLogError("Can not create a mip reference of another mip reference");
+    return Opal_Failure_Invalid_Input;
+  }
+
   *pMipImage = *pImage;
 
   pMipImage->mipCount   = 1;
@@ -443,6 +450,8 @@ OpalResult OpalVulkanImageGetMipAsImage(OpalImage* pImage, OpalImage* pMipImage,
 
   OPAL_ATTEMPT(InitView_Ovk(pMipImage, pMipImage->usage, mipLevel, 1));
   OPAL_ATTEMPT(InitSampler_Ovk(pMipImage, pMipImage->filter, pMipImage->sampleMode, mipLevel, mipLevel));
+
+  pMipImage->isMipReference = true;
 
   return Opal_Success;
 }

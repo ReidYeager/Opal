@@ -32,6 +32,7 @@ typedef enum OpalResult
   Opal_Failure_Unknown,       // Unknown issue
   Opal_Failure_Api,           // Graphics Api function failure
   Opal_Failure_Invalid_Input, // Invalid input from client
+  Opal_Failure_Window_Minimized, // Window for presentation is minimized
 } OpalResult;
 
 typedef enum OpalFormat
@@ -188,6 +189,7 @@ typedef struct OpalImage
   OpalImageUsageFlags usage;
   OpalImageFilterType filter;
   OpalImageSampleMode sampleMode;
+  bool isMipReference;
 
   union
   {
@@ -291,7 +293,7 @@ typedef struct OpalFramebufferInitInfo
 {
   OpalRenderpass renderpass;
   uint32_t imageCount;
-  const OpalImage* pImages;
+  OpalImage** ppImages;
 } OpalFramebufferInitInfo;
 
 typedef struct OpalFramebuffer
@@ -319,7 +321,7 @@ typedef enum OpalShaderType
 typedef struct OpalShaderInitInfo
 {
   uint32_t sourceSize;
-  void* pSource;
+  const void* pSource;
   OpalShaderType type;
 } OpalShaderInitInfo;
 
@@ -363,8 +365,8 @@ typedef struct OpalShaderInputLayout
 
 typedef union OpalShaderInputValue
 {
-  OpalBuffer* buffer;
-  OpalImage* image;
+  const OpalBuffer* buffer;
+  const OpalImage* image;
 } OpalShaderInputValue;
 
 typedef struct OpalShaderInputInitInfo
@@ -439,6 +441,7 @@ typedef struct OpalWindow
 {
   uint32_t width, height;
   OpalFormat imageFormat;
+  bool isMinimized;
 
   uint32_t imageCount;
   OpalImage* pImages;
@@ -462,6 +465,8 @@ typedef struct OpalInitInfo
 {
   OpalGraphicsApi api;
   bool useDebug;
+
+  void(*messageCallback)(OpalMessageType, const char*);
 
   OpalVertexLayoutInfo vertexLayout;
   OpalPlatformWindowInfo window;
@@ -531,7 +536,7 @@ typedef struct OpalState
       void       (*RenderRenderpassEnd)        (const OpalRenderpass* pRenderpass);
       void       (*RenderSetViewportDimensions)(uint32_t width, uint32_t height);
       void       (*RenderBindShaderGroup)      (const OpalShaderGroup* pGroup);
-      void       (*RenderBindShaderInput)      (const OpalShaderInput* pInput);
+      void       (*RenderBindShaderInput)      (const OpalShaderInput* pInput, uint32_t setIndex);
       void       (*RenderSetPushConstant)      (const void* data);
       void       (*RenderMesh)                 (const OpalMesh* p);
 
