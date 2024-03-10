@@ -10,6 +10,7 @@ extern "C" {
 OpalResult OpalInit    (OpalInitInfo initInfo);
 void       OpalShutdown();
 void       OpalWaitIdle();
+OpalState* OpalGetState();
 
 // ==============================
 // Objects

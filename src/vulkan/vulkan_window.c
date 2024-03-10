@@ -276,7 +276,7 @@ OpalResult FramesInit_Ovk(OpalWindow* pWindow)
     pWindow->pImages[i].api.vk.memory = VK_NULL_HANDLE;
     pWindow->pImages[i].api.vk.layout = VK_IMAGE_LAYOUT_UNDEFINED;
 
-    OPAL_ATTEMPT(ImageTransitionLayout_Ovk(&pWindow->pImages[i], VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL));
+    OPAL_ATTEMPT(ImageTransitionLayout_Ovk(&pWindow->pImages[i], VK_IMAGE_LAYOUT_PRESENT_SRC_KHR));
   }
 
   return Opal_Success;

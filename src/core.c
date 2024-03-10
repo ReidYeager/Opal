@@ -166,6 +166,11 @@ void OpalWaitIdle()
   g_OpalState.api.functions.WaitIdle();
 }
 
+OpalState* OpalGetState()
+{
+  return &g_OpalState;
+}
+
 // Window
 // ============================================================
 

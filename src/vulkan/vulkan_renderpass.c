@@ -106,25 +106,22 @@ OpalResult BuildAttachments_Ovk(OpalRenderpassInitInfo initInfo, RenderpassData_
 
     data->pReferences[i].attachment = i;
 
-    // Choose formats ==========
+    // Reference layout ==========
 
-    if (initInfo.pAttachments[i].format == Opal_Format_D24_S8 || initInfo.pAttachments[i].format == Opal_Format_D32)
+    switch (initInfo.pAttachments[i].format)
+    {
+    case Opal_Format_D32:
+    {
+      data->pReferences[i].layout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL;
+    } break;
+    case Opal_Format_D24_S8:
     {
       data->pReferences[i].layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-      data->pAttachments[i].finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-    }
-    else
+    } break;
+    default:
     {
       data->pReferences[i].layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-
-      if (initInfo.pAttachments[i].pSubpassUsages[initInfo.subpassCount - 1] == Opal_Attachment_Usage_Output_Presented)
-      {
-        data->pAttachments[i].finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-      }
-      else
-      {
-        data->pAttachments[i].finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-      }
+    } break;
     }
 
     // Load op ==========
@@ -149,6 +146,32 @@ OpalResult BuildAttachments_Ovk(OpalRenderpassInitInfo initInfo, RenderpassData_
       OpalLogError("Unknown renderpass attachment load op : %u", initInfo.pAttachments[i].loadOp);
       return Opal_Failure_Invalid_Input;
     }
+    }
+
+    // Final layout ==========
+
+    switch (initInfo.pAttachments[i].pSubpassUsages[initInfo.subpassCount - 1])
+    {
+    case Opal_Attachment_Usage_Output:
+    {
+      if (data->pAttachments[i].initialLayout == VK_IMAGE_LAYOUT_UNDEFINED)
+      {
+        data->pAttachments[i].finalLayout = data->pReferences[i].layout;
+      }
+      else
+      {
+        data->pAttachments[i].finalLayout = data->pAttachments[i].initialLayout;
+      }
+    } break;
+    case Opal_Attachment_Usage_Output_Uniform:
+    {
+      data->pAttachments[i].finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+    } break;
+    case Opal_Attachment_Usage_Output_Presented:
+    {
+      data->pAttachments[i].finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+    } break;
+    default: break;
     }
 
     // Store ==========
@@ -204,26 +227,33 @@ OpalResult BuildSubpasses_Ovk(OpalRenderpassInitInfo initInfo, RenderpassData_Ov
         inputRefs[inputCount] = data->pReferences[attachIndex];
         inputCount++;
       } break;
-      case Opal_Attachment_Usage_Output_Color:
+      case Opal_Attachment_Usage_Output:
+      case Opal_Attachment_Usage_Output_Uniform:
       case Opal_Attachment_Usage_Output_Presented:
       {
-        colorRefs[colorCount] = data->pReferences[attachIndex];
-        colorCount++;
-      } break;
-      case Opal_Attachment_Usage_Output_Depth:
-      {
-        if (sub->pDepthStencilAttachment != NULL)
+        if (initInfo.pAttachments[attachIndex].format == Opal_Format_D32
+          || initInfo.pAttachments[attachIndex].format == Opal_Format_D24_S8)
         {
-          OpalLogError("Renderpass may not have more than one depth attachment");
+          // Depth image
+          if (sub->pDepthStencilAttachment != NULL)
+          {
+            OpalLogError("Renderpass may not have more than one depth attachment");
 
-          OpalMemFree(colorRefs);
-          OpalMemFree(inputRefs);
-          OpalMemFree(preserveRefs);
+            OpalMemFree(colorRefs);
+            OpalMemFree(inputRefs);
+            OpalMemFree(preserveRefs);
 
-          return Opal_Failure_Invalid_Input;
+            return Opal_Failure_Invalid_Input;
+          }
+
+          sub->pDepthStencilAttachment = &data->pReferences[attachIndex];
         }
-
-        sub->pDepthStencilAttachment = &data->pReferences[attachIndex];
+        else
+        {
+          // Color image
+          colorRefs[colorCount] = data->pReferences[attachIndex];
+          colorCount++;
+        }
       } break;
       default: break;
       }
@@ -252,8 +282,8 @@ OpalResult BuildDependencies_Ovk(OpalRenderpassInitInfo initInfo, RenderpassData
 
     for (int subIndex = 0; subIndex < initInfo.subpassCount; subIndex++)
     {
-      if (at->pSubpassUsages[subIndex] == Opal_Attachment_Usage_Output_Color
-        || at->pSubpassUsages[subIndex] == Opal_Attachment_Usage_Output_Depth
+      if (at->pSubpassUsages[subIndex] == Opal_Attachment_Usage_Output
+        || at->pSubpassUsages[subIndex] == Opal_Attachment_Usage_Output_Uniform
         || at->pSubpassUsages[subIndex] == Opal_Attachment_Usage_Output_Presented)
       {
         prevOut = subIndex;

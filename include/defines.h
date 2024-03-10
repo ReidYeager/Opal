@@ -245,8 +245,8 @@ typedef enum OpalAttachmentUsage
   Opal_Attachment_Usage_Unused,
   Opal_Attachment_Usage_Preserved,
   Opal_Attachment_Usage_Input,
-  Opal_Attachment_Usage_Output_Color,
-  Opal_Attachment_Usage_Output_Depth,
+  Opal_Attachment_Usage_Output,
+  Opal_Attachment_Usage_Output_Uniform,
   Opal_Attachment_Usage_Output_Presented,
 } OpalAttachmentUsage;
 
