@@ -42,6 +42,7 @@ OpalResult OpalVulkanImageInit(OpalImage* pImage, OpalImageInitInfo initInfo)
 
   if (initInfo.usage & Opal_Image_Usage_Uniform)
   {
+    OPAL_ATTEMPT(ImageTransitionLayout_Ovk(pImage, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL));
     OPAL_ATTEMPT(InitSampler_Ovk(pImage, initInfo.filter, initInfo.sampleMode, 0, initInfo.mipCount - 1));
   }
   else
@@ -148,7 +149,7 @@ OpalResult InitSampler_Ovk(OpalImage* pImage, OpalImageFilterType filter, OpalIm
   }
 
   VkSamplerAddressMode sampleMode;
-  switch (sampleMode)
+  switch (sample)
   {
   case Opal_Image_Sample_Reflect:
   {
