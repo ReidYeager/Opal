@@ -161,6 +161,11 @@ void OpalVulkanRenderRenderpassEnd(const OpalRenderpass* pRenderpass)
   vkCmdEndRenderPass(g_ovkState->renderState.cmd);
 }
 
+void OpalVulkanRenderRenderpassNext(const OpalRenderpass* pRenderpass)
+{
+  vkCmdNextSubpass(g_ovkState->renderState.cmd, VK_SUBPASS_CONTENTS_INLINE);
+}
+
 void OpalVulkanRenderBindShaderGroup(const OpalShaderGroup* pGroup)
 {
   vkCmdBindPipeline(g_ovkState->renderState.cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pGroup->api.vk.pipeline);

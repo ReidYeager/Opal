@@ -90,6 +90,7 @@ OpalResult OpalVulkanRenderToWindowEnd            (OpalWindow* pWindow);
 // Rendering - Objects
 void       OpalVulkanRenderRenderpassBegin        (const OpalRenderpass* pRenderpass, const OpalFramebuffer* pFramebuffer);
 void       OpalVulkanRenderRenderpassEnd          (const OpalRenderpass* pRenderpass);
+void       OpalVulkanRenderRenderpassNext         (const OpalRenderpass* pRenderpass);
 void       OpalVulkanRenderBindShaderGroup        (const OpalShaderGroup* pGroup);
 void       OpalVulkanRenderSetViewportDimensions  (uint32_t width, uint32_t height);
 void       OpalVulkanRenderSetPushConstant        (const void* data);

@@ -45,6 +45,10 @@ OpalResult OpalVulkanImageInit(OpalImage* pImage, OpalImageInitInfo initInfo)
     OPAL_ATTEMPT(ImageTransitionLayout_Ovk(pImage, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL));
     OPAL_ATTEMPT(InitSampler_Ovk(pImage, initInfo.filter, initInfo.sampleMode, 0, initInfo.mipCount - 1));
   }
+  else if (initInfo.usage & Opal_Image_Usage_Subpass_Product)
+  {
+    OPAL_ATTEMPT(ImageTransitionLayout_Ovk(pImage, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL));
+  }
   else
   {
     pImage->api.vk.sampler = VK_NULL_HANDLE;
@@ -113,16 +117,17 @@ OpalResult InitView_Ovk(OpalImage* pImage, OpalImageUsageFlags usage, uint32_t m
   vCreateInfo.subresourceRange.aspectMask = 0;
   if (usage & Opal_Image_Usage_Color)
     vCreateInfo.subresourceRange.aspectMask |= VK_IMAGE_ASPECT_COLOR_BIT;
-  if (usage & Opal_Image_Usage_Depth)
-    vCreateInfo.subresourceRange.aspectMask |= VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
-  if (usage & Opal_Image_Usage_Uniform)
-    vCreateInfo.subresourceRange.aspectMask |= VK_IMAGE_ASPECT_COLOR_BIT;
+  else if (usage & Opal_Image_Usage_Depth)
+    vCreateInfo.subresourceRange.aspectMask |= VK_IMAGE_ASPECT_DEPTH_BIT
+      | ((pImage->format == Opal_Format_D24_S8) * VK_IMAGE_ASPECT_STENCIL_BIT);
   vCreateInfo.subresourceRange.levelCount = mipCount;
   vCreateInfo.subresourceRange.baseMipLevel = mipBase;
   vCreateInfo.subresourceRange.layerCount = 1;
   vCreateInfo.subresourceRange.baseArrayLayer = 0;
 
   OPAL_ATTEMPT_VK(vkCreateImageView(g_ovkState->device, &vCreateInfo, NULL, &pImage->api.vk.view));
+
+  pImage->api.vk.aspectFlags = vCreateInfo.subresourceRange.aspectMask;
 
   return Opal_Success;
 }
@@ -310,7 +315,7 @@ OpalResult ImageTransitionLayout_Ovk(OpalImage* pImage, VkImageLayout newLayout)
   memBarrier.image = pImage->api.vk.image;
   memBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
   memBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-  memBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+  memBarrier.subresourceRange.aspectMask = pImage->api.vk.aspectFlags;
   memBarrier.subresourceRange.levelCount = pImage->mipCount;
   memBarrier.subresourceRange.baseMipLevel = 0;
   memBarrier.subresourceRange.layerCount = 1;
@@ -363,6 +368,14 @@ OpalResult ImageTransitionLayout_Ovk(OpalImage* pImage, VkImageLayout newLayout)
     dstStage = VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT;
     memBarrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT;
   } break;
+  case VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL:
+  {
+    srcStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+    memBarrier.srcAccessMask = 0;
+
+    dstStage = VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT;
+    memBarrier.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT;
+  } break;
   case 0:
   {
     return Opal_Success;
@@ -388,11 +401,12 @@ VkImageUsageFlags OpalImageUsageToVkFlags_Ovk(OpalImageUsageFlags opalFlags)
 {
   #define uses(o, vk) ((opalFlags & o) != 0) * vk
   VkImageUsageFlags vkUsage = 0;
-  vkUsage |= uses(Opal_Image_Usage_Color, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT);
-  vkUsage |= uses(Opal_Image_Usage_Depth, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT);
-  vkUsage |= uses(Opal_Image_Usage_Copy_Src, VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
-  vkUsage |= uses(Opal_Image_Usage_Copy_Dst, VK_IMAGE_USAGE_TRANSFER_DST_BIT);
-  vkUsage |= uses(Opal_Image_Usage_Uniform, VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT);
+  vkUsage |= uses(Opal_Image_Usage_Color          , VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT);
+  vkUsage |= uses(Opal_Image_Usage_Depth          , VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT);
+  vkUsage |= uses(Opal_Image_Usage_Copy_Src       , VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
+  vkUsage |= uses(Opal_Image_Usage_Copy_Dst       , VK_IMAGE_USAGE_TRANSFER_DST_BIT);
+  vkUsage |= uses(Opal_Image_Usage_Uniform        , VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT);
+  vkUsage |= uses(Opal_Image_Usage_Subpass_Product, VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT);
   return vkUsage;
   #undef uses
 }

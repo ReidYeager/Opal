@@ -150,11 +150,12 @@ typedef struct OpalBuffer
 
 typedef enum OpalImageUsageFlagBits
 {
-  Opal_Image_Usage_Color    = 0x01,
-  Opal_Image_Usage_Depth    = 0x02,
-  Opal_Image_Usage_Copy_Src = 0x04,
-  Opal_Image_Usage_Copy_Dst = 0x08,
-  Opal_Image_Usage_Uniform  = 0x10
+  Opal_Image_Usage_Color           = 0x01,
+  Opal_Image_Usage_Depth           = 0x02,
+  Opal_Image_Usage_Copy_Src        = 0x04,
+  Opal_Image_Usage_Copy_Dst        = 0x08,
+  Opal_Image_Usage_Uniform         = 0x10,
+  Opal_Image_Usage_Subpass_Product = 0x20
 } OpalImageUsageFlagBits;
 typedef uint32_t OpalImageUsageFlags;
 
@@ -276,8 +277,9 @@ typedef struct OpalRenderpassInitInfo
 
 typedef struct OpalRenderpass
 {
-  uint32_t subpassCount;
   uint32_t attachmentCount;
+  uint32_t subpassCount;
+
   bool presents;
 
   union
@@ -348,8 +350,8 @@ typedef enum OpalShaderInputType
 typedef struct OpalShaderInputLayoutInitInfo
 {
   uint32_t count;
-  OpalShaderInputType* pTypes;
-  OpalStageFlags* pStages;
+  const OpalShaderInputType* pTypes;
+  const OpalStageFlags* pStages;
 } OpalShaderInputLayoutInitInfo;
 
 typedef struct OpalShaderInputLayout
@@ -372,7 +374,7 @@ typedef union OpalShaderInputValue
 typedef struct OpalShaderInputInitInfo
 {
   OpalShaderInputLayout layout;
-  OpalShaderInputValue* pValues;
+  const OpalShaderInputValue* pValues;
 } OpalShaderInputInitInfo;
 
 typedef struct OpalShaderInput
@@ -534,6 +536,7 @@ typedef struct OpalState
       OpalResult (*RenderToWindowEnd)          (OpalWindow* pWindow);
       void       (*RenderRenderpassBegin)      (const OpalRenderpass* pRenderpass, const OpalFramebuffer* pFramebuffer);
       void       (*RenderRenderpassEnd)        (const OpalRenderpass* pRenderpass);
+      void       (*RenderRenderpassNext)       (const OpalRenderpass* pRenderpass);
       void       (*RenderSetViewportDimensions)(uint32_t width, uint32_t height);
       void       (*RenderBindShaderGroup)      (const OpalShaderGroup* pGroup);
       void       (*RenderBindShaderInput)      (const OpalShaderInput* pInput, uint32_t setIndex);

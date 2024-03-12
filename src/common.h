@@ -26,7 +26,7 @@ extern OpalState g_OpalState;
 #define OpalMemAllocZeroed(size)                     memset(malloc(size), 0, size)
 #define OpalMemRealloc(data, size)                   realloc(data, size)
 #define OpalMemSet(data, value, size)                memset(data, value, size)
-#define OpalMemCopy(src, dst, size)                  memcpy(dst, src, size)
+#define OpalMemCopy(src, dst, size)                  memcpy(dst, (const void*)src, size)
 #define OpalMemFree(data)                            free((void*)data)
 #define OpalMemAllocSingle(type)                    (type*)OpalMemAlloc(sizeof(type))
 #define OpalMemAllocSingleZeroed(type)              (type*)OpalMemAllocZeroed(sizeof(type))

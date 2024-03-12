@@ -13,11 +13,13 @@ typedef struct RenderpassData_Ovk
 {
   uint32_t attachmentCount;
   VkAttachmentDescription* pAttachments;
-  VkAttachmentReference* pReferences;
   VkClearValue* pClearValues;
+
+  VkAttachmentReference* pReferences;
 
   uint32_t subpassCount;
   VkSubpassDescription* pSubpasses;
+  uint32_t* pSubpassColorOutputCount;
 
   uint32_t dependencyCount;
   VkSubpassDependency* pDependencies;
@@ -70,6 +72,12 @@ OpalResult OpalVulkanRenderpassInit(OpalRenderpass* pRenderpass, OpalRenderpassI
     pRenderpass->api.vk.pFinalLayouts[i] = data.pAttachments[i].finalLayout;
   }
 
+  pRenderpass->api.vk.subpassColorOutputCount = OpalMemAllocArray(uint32_t, initInfo.subpassCount);
+  for (int i = 0; i < initInfo.subpassCount; i++)
+  {
+    pRenderpass->api.vk.subpassColorOutputCount[i] = data.pSubpassColorOutputCount[i];
+  }
+
   pRenderpass->attachmentCount = initInfo.attachmentCount;
   pRenderpass->subpassCount = initInfo.subpassCount;
 
@@ -82,107 +90,114 @@ void OpalVulkanRenderpassShutdown(OpalRenderpass* pRenderpass)
   vkDestroyRenderPass(g_ovkState->device, pRenderpass->api.vk.renderpass, NULL);
   OpalMemFree(pRenderpass->api.vk.pClearValues);
   OpalMemFree(pRenderpass->api.vk.pFinalLayouts);
+  OpalMemFree(pRenderpass->api.vk.subpassColorOutputCount);
 }
 
 OpalResult BuildAttachments_Ovk(OpalRenderpassInitInfo initInfo, RenderpassData_Ovk* data)
 {
   data->attachmentCount = initInfo.attachmentCount;
   data->pAttachments = OpalMemAllocArrayZeroed(VkAttachmentDescription, initInfo.attachmentCount);
-  data->pReferences  = OpalMemAllocArrayZeroed(VkAttachmentReference, initInfo.attachmentCount);
   data->pClearValues = OpalMemAllocArrayZeroed(VkClearValue, initInfo.attachmentCount);
+  data->pReferences  = OpalMemAllocArrayZeroed(VkAttachmentReference, initInfo.attachmentCount * initInfo.subpassCount);
+  data->pSubpassColorOutputCount = OpalMemAllocArrayZeroed(uint32_t, initInfo.subpassCount);
 
-  for (int i = 0; i < initInfo.attachmentCount; i++)
+  for (int attachIndex = 0; attachIndex < initInfo.attachmentCount; attachIndex++)
   {
-    data->pClearValues[i] = *(VkClearValue*)(&initInfo.pAttachments[i].clearValue);
+    data->pClearValues[attachIndex] = *(VkClearValue*)(&initInfo.pAttachments[attachIndex].clearValue);
 
-    data->pAttachments[i].format         = OpalFormatToVkFormat_Ovk(initInfo.pAttachments[i].format);
-    data->pAttachments[i].samples        = VK_SAMPLE_COUNT_1_BIT;
-    data->pAttachments[i].initialLayout  = VK_IMAGE_LAYOUT_UNDEFINED;
-    data->pAttachments[i].finalLayout    = VK_IMAGE_LAYOUT_UNDEFINED;
-    data->pAttachments[i].loadOp         = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-    data->pAttachments[i].storeOp        = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-    data->pAttachments[i].stencilLoadOp  = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-    data->pAttachments[i].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-
-    data->pReferences[i].attachment = i;
+    data->pAttachments[attachIndex].format         = OpalFormatToVkFormat_Ovk(initInfo.pAttachments[attachIndex].format);
+    data->pAttachments[attachIndex].samples        = VK_SAMPLE_COUNT_1_BIT;
+    data->pAttachments[attachIndex].initialLayout  = VK_IMAGE_LAYOUT_UNDEFINED;
+    data->pAttachments[attachIndex].finalLayout    = VK_IMAGE_LAYOUT_UNDEFINED;
+    data->pAttachments[attachIndex].loadOp         = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+    data->pAttachments[attachIndex].storeOp        = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+    data->pAttachments[attachIndex].stencilLoadOp  = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+    data->pAttachments[attachIndex].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 
     // Reference layout ==========
 
-    switch (initInfo.pAttachments[i].format)
+    for (int subIndex = 0; subIndex < initInfo.subpassCount; subIndex++)
     {
-    case Opal_Format_D32:
+      int refIndex = subIndex * initInfo.attachmentCount + attachIndex;
+
+      data->pReferences[refIndex].attachment = attachIndex;
+
+      OpalAttachmentUsage use = initInfo.pAttachments[attachIndex].pSubpassUsages[subIndex];
+      if (use == Opal_Attachment_Usage_Input)
+      {
+        data->pReferences[refIndex].layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+      }
+      else
+      {
+        if (initInfo.pAttachments[attachIndex].format == Opal_Format_D32
+          || initInfo.pAttachments[attachIndex].format == Opal_Format_D24_S8)
+        {
+          data->pReferences[refIndex].layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+        }
+        else
+        {
+          data->pSubpassColorOutputCount[subIndex] += use == Opal_Attachment_Usage_Output
+            | use == Opal_Attachment_Usage_Output_Uniform
+            | use == Opal_Attachment_Usage_Output_Presented;
+
+          data->pReferences[refIndex].layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+        }
+      }
+    }
+
+    // Final layout ==========
+
+    switch (initInfo.pAttachments[attachIndex].pSubpassUsages[initInfo.subpassCount - 1])
     {
-      data->pReferences[i].layout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL;
+    case Opal_Attachment_Usage_Output_Uniform:
+    case Opal_Attachment_Usage_Input:
+    {
+      data->pAttachments[attachIndex].finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
     } break;
-    case Opal_Format_D24_S8:
+    case Opal_Attachment_Usage_Output_Presented:
     {
-      data->pReferences[i].layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+      data->pAttachments[attachIndex].finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
     } break;
     default:
     {
-      data->pReferences[i].layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+      int finalSubpassOffset = (initInfo.subpassCount - 1) * initInfo.attachmentCount;
+      data->pAttachments[attachIndex].finalLayout = data->pReferences[finalSubpassOffset + attachIndex].layout;
     } break;
     }
 
     // Load op ==========
 
-    switch (initInfo.pAttachments[i].loadOp)
+    switch (initInfo.pAttachments[attachIndex].loadOp)
     {
     case Opal_Attachment_Load_Op_Clear:
     {
-      data->pAttachments[i].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+      data->pAttachments[attachIndex].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
     } break;
     case Opal_Attachment_Load_Op_Load:
     {
-      data->pAttachments[i].loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
-      data->pAttachments[i].initialLayout = data->pReferences[i].layout;
+      data->pAttachments[attachIndex].loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
+      data->pAttachments[attachIndex].initialLayout = data->pAttachments[attachIndex].finalLayout;
     } break;
     case Opal_Attachment_Load_Op_Dont_Care:
     {
-      data->pAttachments[i].loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+      data->pAttachments[attachIndex].loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
     } break;
     default:
     {
-      OpalLogError("Unknown renderpass attachment load op : %u", initInfo.pAttachments[i].loadOp);
+      OpalLogError("Unknown renderpass attachment load op : %u", initInfo.pAttachments[attachIndex].loadOp);
       return Opal_Failure_Invalid_Input;
     }
     }
 
-    // Final layout ==========
-
-    switch (initInfo.pAttachments[i].pSubpassUsages[initInfo.subpassCount - 1])
-    {
-    case Opal_Attachment_Usage_Output:
-    {
-      if (data->pAttachments[i].initialLayout == VK_IMAGE_LAYOUT_UNDEFINED)
-      {
-        data->pAttachments[i].finalLayout = data->pReferences[i].layout;
-      }
-      else
-      {
-        data->pAttachments[i].finalLayout = data->pAttachments[i].initialLayout;
-      }
-    } break;
-    case Opal_Attachment_Usage_Output_Uniform:
-    {
-      data->pAttachments[i].finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-    } break;
-    case Opal_Attachment_Usage_Output_Presented:
-    {
-      data->pAttachments[i].finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-    } break;
-    default: break;
-    }
-
     // Store ==========
 
-    if (initInfo.pAttachments[i].shouldStore)
+    if (initInfo.pAttachments[attachIndex].shouldStore)
     {
-      data->pAttachments[i].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+      data->pAttachments[attachIndex].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
     }
     else
     {
-      data->pAttachments[i].storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+      data->pAttachments[attachIndex].storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
     }
   }
 
@@ -213,6 +228,8 @@ OpalResult BuildSubpasses_Ovk(OpalRenderpassInitInfo initInfo, RenderpassData_Ov
 
     for (int attachIndex = 0; attachIndex < initInfo.attachmentCount; attachIndex++)
     {
+      int refIndex = subIndex * initInfo.attachmentCount + attachIndex;
+
       const OpalAttachmentInfo* att = &initInfo.pAttachments[attachIndex];
 
       switch (att->pSubpassUsages[subIndex])
@@ -224,7 +241,7 @@ OpalResult BuildSubpasses_Ovk(OpalRenderpassInitInfo initInfo, RenderpassData_Ov
       } break;
       case Opal_Attachment_Usage_Input:
       {
-        inputRefs[inputCount] = data->pReferences[attachIndex];
+        inputRefs[inputCount] = data->pReferences[refIndex];
         inputCount++;
       } break;
       case Opal_Attachment_Usage_Output:
@@ -246,25 +263,30 @@ OpalResult BuildSubpasses_Ovk(OpalRenderpassInitInfo initInfo, RenderpassData_Ov
             return Opal_Failure_Invalid_Input;
           }
 
-          sub->pDepthStencilAttachment = &data->pReferences[attachIndex];
+          sub->pDepthStencilAttachment = &data->pReferences[refIndex];
         }
         else
         {
           // Color image
-          colorRefs[colorCount] = data->pReferences[attachIndex];
+          colorRefs[colorCount] = data->pReferences[refIndex];
           colorCount++;
         }
       } break;
-      default: break;
+      case Opal_Attachment_Usage_Unused: break;
+      default:
+      {
+        OpalLogError("Invalid attachment usage '%d' for attachment '%d'", att->pSubpassUsages[subIndex], attachIndex);
+        return Opal_Failure_Invalid_Input;
       }
-
-      sub->colorAttachmentCount = colorCount;
-      sub->pColorAttachments = colorRefs;
-      sub->inputAttachmentCount = inputCount;
-      sub->pInputAttachments = inputRefs;
-      sub->preserveAttachmentCount = preserveCount;
-      sub->pPreserveAttachments = preserveRefs;
+      }
     }
+
+    sub->colorAttachmentCount = colorCount;
+    sub->pColorAttachments = colorRefs;
+    sub->inputAttachmentCount = inputCount;
+    sub->pInputAttachments = inputRefs;
+    sub->preserveAttachmentCount = preserveCount;
+    sub->pPreserveAttachments = preserveRefs;
   }
 
   return Opal_Success;
@@ -294,14 +316,16 @@ OpalResult BuildDependencies_Ovk(OpalRenderpassInitInfo initInfo, RenderpassData
         int exists = 0;
         for (int i = 0; i < count; i++)
         {
-          exists |= data->pDependencies[count].srcSubpass == prevOut
-            && data->pDependencies[count].dstSubpass == subIndex;
+          exists |= data->pDependencies[i].srcSubpass == prevOut
+            && data->pDependencies[i].dstSubpass == subIndex;
         }
 
         if (!exists)
         {
           data->pDependencies[count].srcSubpass = prevOut;
           data->pDependencies[count].dstSubpass = subIndex;
+          data->pDependencies[count].srcStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+          data->pDependencies[count].dstStageMask = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
           count++;
           prevOut = -1;
         }
@@ -346,4 +370,7 @@ void DestroyRenderpassData_Ovk(RenderpassData_Ovk* data)
 
   if (data->pDependencies)
     OpalMemFree(data->pDependencies);
+
+  if (data->pSubpassColorOutputCount)
+    OpalMemFree(data->pSubpassColorOutputCount);
 }

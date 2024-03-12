@@ -47,6 +47,8 @@ typedef struct OpalVulkanImage
 
   VkFormat format;
   VkImageLayout layout;
+
+  VkImageAspectFlags aspectFlags;
 } OpalVulkanImage;
 
 // Rendering
@@ -65,6 +67,7 @@ typedef struct OpalVulkanRenderpass
   VkRenderPass renderpass;
   VkClearValue* pClearValues;
   VkImageLayout* pFinalLayouts;
+  uint32_t* subpassColorOutputCount;
 } OpalVulkanRenderpass;
 
 // Window

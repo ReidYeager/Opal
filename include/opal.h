@@ -68,6 +68,7 @@ OpalResult OpalRenderToWindowBegin        (OpalWindow* pWindow);
 OpalResult OpalRenderToWindowEnd          (OpalWindow* pWindow);
 void       OpalRenderRenderpassBegin      (const OpalRenderpass* pRenderpass, const OpalFramebuffer* pFramebuffer);
 void       OpalRenderRenderpassEnd        (const OpalRenderpass* pRenderpass);
+void       OpalRenderRenderpassNext       (const OpalRenderpass* pRenderpass);
 void       OpalRenderSetViewportDimensions(uint32_t width, uint32_t height);
 void       OpalRenderBindShaderGroup      (const OpalShaderGroup* pGroup);
 void       OpalRenderBindShaderInput      (const OpalShaderInput* pInput, uint32_t setIndex);

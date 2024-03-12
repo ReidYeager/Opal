@@ -67,6 +67,7 @@ OpalState g_OpalState = {0};
 // Rendering - Objects
 //void       OpalRenderRenderpassBegin      (const OpalRenderpass* pRenderpass, const OpalFramebuffer* pFramebuffer)
 //void       OpalRenderRenderpassEnd        (const OpalRenderpass* pRenderpass)
+//void       OpalRenderRenderpassNext       (const OpalRenderpass* pRenderpass)
 //void       OpalRenderBindShaderGroup      (const OpalShaderGroup* pGroup)
 //void       OpalRenderSetViewportDimensions(uint32_t width, uint32_t height)
 //void       OpalRenderSetPushConstant      (const void* data)
@@ -139,6 +140,7 @@ OpalResult OpalInit(OpalInitInfo initInfo)
     // Rendering - objects
     g_OpalState.api.functions.RenderRenderpassBegin       = OpalVulkanRenderRenderpassBegin;
     g_OpalState.api.functions.RenderRenderpassEnd         = OpalVulkanRenderRenderpassEnd;
+    g_OpalState.api.functions.RenderRenderpassNext        = OpalVulkanRenderRenderpassNext;
     g_OpalState.api.functions.RenderBindShaderGroup       = OpalVulkanRenderBindShaderGroup;
     g_OpalState.api.functions.RenderBindShaderInput       = OpalVulkanRenderBindShaderInput;
     g_OpalState.api.functions.RenderSetPushConstant       = OpalVulkanRenderSetPushConstant;
@@ -396,6 +398,11 @@ void OpalRenderRenderpassBegin(const OpalRenderpass* pRenderpass, const OpalFram
 void OpalRenderRenderpassEnd(const OpalRenderpass* pRenderpass)
 {
   g_OpalState.api.functions.RenderRenderpassEnd(pRenderpass);
+}
+
+void OpalRenderRenderpassNext(const OpalRenderpass* pRenderpass)
+{
+  g_OpalState.api.functions.RenderRenderpassNext(pRenderpass);
 }
 
 void OpalRenderBindShaderGroup(const OpalShaderGroup* pGroup)

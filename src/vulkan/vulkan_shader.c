@@ -13,7 +13,7 @@
 //void       OpalVulkanShaderInputLayoutShutdown(OpalShaderInputLayout* pLayout)
 //OpalResult OpalVulkanShaderInputInit          (OpalShaderInput* pShaderInput, OpalShaderInputInitInfo initInfo)
 //void       OpalVulkanShaderInputShutdown      (OpalShaderInput* pShaderInput)
-OpalResult   UpdateDescriptorSet_Ovk            (OpalShaderInput* pInput, OpalShaderInputValue* pValues);
+OpalResult   UpdateDescriptorSet_Ovk            (OpalShaderInput* pInput, const OpalShaderInputValue* pValues);
 
 // ShaderGroup ==========
 //OpalResult OpalVulkanShaderGroupInit          (OpalShaderGroup* pShaderGroup, OpalShaderGroupInitInfo initInfo)
@@ -143,7 +143,7 @@ void OpalVulkanShaderInputShutdown(OpalShaderInput* pShaderInput)
   vkFreeDescriptorSets(g_ovkState->device, g_ovkState->descriptorPool, 1, &pShaderInput->api.vk.set);
 }
 
-OpalResult UpdateDescriptorSet_Ovk(OpalShaderInput* pInput, OpalShaderInputValue* pValues)
+OpalResult UpdateDescriptorSet_Ovk(OpalShaderInput* pInput, const OpalShaderInputValue* pValues)
 {
   if (pInput->layout.elementCount == 0)
   {
@@ -381,28 +381,34 @@ OpalResult InitPipeline_Ovk(OpalShaderGroup* pShaderGroup, OpalShaderGroupInitIn
   depthStateInfo.depthBoundsTestEnable = VK_FALSE;
 
   // Color blend state =====
-  VkPipelineColorBlendAttachmentState blendAttachmentState[4];
-  blendAttachmentState[0].colorWriteMask = VK_COLOR_COMPONENT_R_BIT
+  VkPipelineColorBlendAttachmentState blendAttachmentBase;
+  blendAttachmentBase.colorWriteMask = VK_COLOR_COMPONENT_R_BIT
     | VK_COLOR_COMPONENT_B_BIT
     | VK_COLOR_COMPONENT_G_BIT
     | VK_COLOR_COMPONENT_A_BIT;
-  blendAttachmentState[0].blendEnable = VK_FALSE;
-  blendAttachmentState[0].srcAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
-  blendAttachmentState[0].srcColorBlendFactor = VK_BLEND_FACTOR_ZERO;
-  blendAttachmentState[0].dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
-  blendAttachmentState[0].dstColorBlendFactor = VK_BLEND_FACTOR_ZERO;
-  blendAttachmentState[0].alphaBlendOp = VK_BLEND_OP_ADD;
-  blendAttachmentState[0].colorBlendOp = VK_BLEND_OP_ADD;
-  blendAttachmentState[1] = blendAttachmentState[0];
-  blendAttachmentState[2] = blendAttachmentState[0];
-  blendAttachmentState[3] = blendAttachmentState[0];
+  blendAttachmentBase.blendEnable = VK_FALSE;
+  blendAttachmentBase.srcAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
+  blendAttachmentBase.srcColorBlendFactor = VK_BLEND_FACTOR_ZERO;
+  blendAttachmentBase.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
+  blendAttachmentBase.dstColorBlendFactor = VK_BLEND_FACTOR_ZERO;
+  blendAttachmentBase.alphaBlendOp = VK_BLEND_OP_ADD;
+  blendAttachmentBase.colorBlendOp = VK_BLEND_OP_ADD;
+
+  VkPipelineColorBlendAttachmentState* blendAttachmentState = OpalMemAllocArrayZeroed(
+    VkPipelineColorBlendAttachmentState,
+    initInfo.renderpass.api.vk.subpassColorOutputCount[initInfo.subpassIndex]);
+
+  for (int i = 0; i < initInfo.renderpass.api.vk.subpassColorOutputCount[initInfo.subpassIndex]; i++)
+  {
+    blendAttachmentState[i] = blendAttachmentBase;
+  }
 
   VkPipelineColorBlendStateCreateInfo blendStateInfo = { 0 };
   blendStateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
   blendStateInfo.pNext = NULL;
   blendStateInfo.flags = 0;
   blendStateInfo.logicOpEnable = VK_FALSE;
-  blendStateInfo.attachmentCount = 1;
+  blendStateInfo.attachmentCount = initInfo.renderpass.api.vk.subpassColorOutputCount[initInfo.subpassIndex];
   blendStateInfo.pAttachments = blendAttachmentState;
 
   // Dynamic states =====
