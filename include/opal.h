@@ -25,6 +25,8 @@ OpalResult OpalBufferInit                 (OpalBuffer* pBuffer, OpalBufferInitIn
 void       OpalBufferShutdown             (OpalBuffer* pBuffer);
 OpalResult OpalBufferPushData             (OpalBuffer* pBuffer, const void* data);
 OpalResult OpalBufferPushDataSegment      (OpalBuffer* pBuffer, const void* data, uint64_t size, uint64_t offset);
+OpalResult OpalBufferDumpData             (OpalBuffer* pBuffer, void* outData);
+OpalResult OpalBufferDumpDataSegment      (OpalBuffer* pBuffer, void* outData, uint64_t size, uint64_t offset);
 
 // Image ==========
 OpalResult OpalImageInit                  (OpalImage* pImage, OpalImageInitInfo initInfo);

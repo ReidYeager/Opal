@@ -51,6 +51,8 @@ OpalResult OpalVulkanBufferInit                   (OpalBuffer* pBuffer, OpalBuff
 void       OpalVulkanBufferShutdown               (OpalBuffer* pBuffer);
 OpalResult OpalVulkanBufferPushData               (OpalBuffer* pBuffer, const void* data);
 OpalResult OpalVulkanBufferPushDataSegment        (OpalBuffer* pBuffer, const void* data, uint64_t size, uint64_t offset);
+OpalResult OpalVulkanBufferDumpData               (OpalBuffer* pBuffer, void* outData);
+OpalResult OpalVulkanBufferDumpDataSegment        (OpalBuffer* pBuffer, void* outData, uint64_t size, uint64_t offset);
 
 // Image ==========
 OpalResult OpalVulkanImageInit                    (OpalImage* pImage, OpalImageInitInfo initInfo);

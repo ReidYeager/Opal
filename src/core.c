@@ -109,6 +109,8 @@ OpalResult OpalInit(OpalInitInfo initInfo)
     g_OpalState.api.functions.BufferShutdown              = OpalVulkanBufferShutdown;
     g_OpalState.api.functions.BufferPushData              = OpalVulkanBufferPushData;
     g_OpalState.api.functions.BufferPushDataSegment       = OpalVulkanBufferPushDataSegment;
+    g_OpalState.api.functions.BufferDumpData              = OpalVulkanBufferDumpData;
+    g_OpalState.api.functions.BufferDumpDataSegment       = OpalVulkanBufferDumpDataSegment;
     // Image
     g_OpalState.api.functions.ImageInit                   = OpalVulkanImageInit;
     g_OpalState.api.functions.ImageShutdown               = OpalVulkanImageShutdown;
@@ -213,6 +215,16 @@ OpalResult OpalBufferPushData(OpalBuffer* pBuffer, const void* data)
 OpalResult OpalBufferPushDataSegment(OpalBuffer* pBuffer, const void* data, uint64_t size, uint64_t bufferOffset)
 {
   return g_OpalState.api.functions.BufferPushDataSegment(pBuffer, data, size, bufferOffset);
+}
+
+OpalResult OpalBufferDumpData(OpalBuffer* pBuffer, void* outData)
+{
+  return g_OpalState.api.functions.BufferDumpData(pBuffer, outData);
+}
+
+OpalResult OpalBufferDumpDataSegment(OpalBuffer* pBuffer, void* outData, uint64_t size, uint64_t offset)
+{
+  return g_OpalState.api.functions.BufferDumpDataSegment(pBuffer, outData, size, offset);
 }
 
 // Image

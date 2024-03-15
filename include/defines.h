@@ -497,6 +497,8 @@ typedef struct OpalState
       void       (*BufferShutdown)       (OpalBuffer* pBuffer);
       OpalResult (*BufferPushData)       (OpalBuffer* pBuffer, const void* data);
       OpalResult (*BufferPushDataSegment)(OpalBuffer* pBuffer, const void* data, uint64_t size, uint64_t bufferOffset);
+      OpalResult (*BufferDumpData)       (OpalBuffer* pBuffer, void* outData);
+      OpalResult (*BufferDumpDataSegment)(OpalBuffer* pBuffer, void* outData, uint64_t size, uint64_t offset);
 
       // Image ==========
       OpalResult (*ImageInit)            (OpalImage* pImage, OpalImageInitInfo initInfo);

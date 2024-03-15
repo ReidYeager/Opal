@@ -178,6 +178,54 @@ OpalResult OpalVulkanBufferPushDataSegment(OpalBuffer* pBuffer, const void* data
   return Opal_Success;
 }
 
+OpalResult OpalVulkanBufferDumpData(OpalBuffer* pBuffer, void* outData)
+{
+  return OpalVulkanBufferDumpDataSegment(pBuffer, outData, pBuffer->size, 0);
+}
+
+OpalResult OpalVulkanBufferDumpDataSegment(OpalBuffer* pBuffer, void* outData, uint64_t size, uint64_t offset)
+{
+  if ((pBuffer->usage & Opal_Buffer_Usage_Transfer_Src | Opal_Buffer_Usage_Cpu_Read) == 0)
+  {
+    OpalLogError("Can not dump buffer without Transfer_Src or Cpu_Read usage");
+    return Opal_Failure_Invalid_Input;
+  }
+
+  if (pBuffer->size < size || pBuffer->size < offset + size)
+  {
+    OpalLogError("Trying to dump memory outside of the buffer's limits");
+    return Opal_Failure_Invalid_Input;
+  }
+
+  if (pBuffer->usage & Opal_Buffer_Usage_Cpu_Read)
+  {
+    void* mappedMemory;
+    OPAL_ATTEMPT_VK(vkMapMemory(g_ovkState->device, pBuffer->api.vk.memory, (VkDeviceSize)offset, (VkDeviceSize)size, 0, &mappedMemory));
+    OpalMemCopy(mappedMemory, outData, size);
+    vkUnmapMemory(g_ovkState->device, pBuffer->api.vk.memory);
+    return Opal_Success;
+  }
+
+  VkCommandBuffer cmd;
+  OPAL_ATTEMPT(BeginSingleUseCommandBuffer_Ovk(&cmd, g_ovkState->transientCommandPool));
+
+  VkBufferCopy region = { 0 };
+  region.srcOffset = offset;
+  region.dstOffset = 0;
+  region.size = size;
+
+  vkCmdCopyBuffer(cmd, pBuffer->api.vk.buffer, g_transferBuffer_Ovk.api.vk.buffer, 1, &region);
+
+  OPAL_ATTEMPT(EndSingleUseCommandBuffer_Ovk(cmd, g_ovkState->transientCommandPool, g_ovkState->queueTransfer));
+
+  void* mappedMemory;
+  OPAL_ATTEMPT_VK(vkMapMemory(g_ovkState->device, g_transferBuffer_Ovk.api.vk.memory, (VkDeviceSize)offset, (VkDeviceSize)size, 0, &mappedMemory));
+  OpalMemCopy(mappedMemory, outData, size);
+  vkUnmapMemory(g_ovkState->device, g_transferBuffer_Ovk.api.vk.memory);
+
+  return Opal_Success;
+}
+
 // Tools
 // ============================================================
 
