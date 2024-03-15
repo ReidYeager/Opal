@@ -108,7 +108,7 @@ typedef struct OpalVulkanGpuInfo
   uint32_t queueFamilyPropertiesCount;
   VkQueueFamilyProperties* pQueueFamilyProperties;
 
-  uint32_t queueIndexGraphics;
+  uint32_t queueIndexGraphicsCompute;
   uint32_t queueIndexTransfer;
   uint32_t queueIndexPresent;
 } OpalVulkanGpuInfo;
@@ -127,6 +127,7 @@ typedef struct OpalVulkanState
   } vertex;
 
   VkQueue queueGraphics;
+  VkQueue queueCompute;
   VkQueue queueTransfer;
   VkQueue queuePresent;
 
@@ -135,6 +136,7 @@ typedef struct OpalVulkanState
 
   struct
   {
+    VkPipelineBindPoint bindPoint;
     VkCommandBuffer cmd;
     VkPipelineLayout layout;
     uint32_t pushConstSize;

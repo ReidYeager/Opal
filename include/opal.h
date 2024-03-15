@@ -77,7 +77,7 @@ void       OpalRenderBindShaderInput      (const OpalShaderInput* pInput, uint32
 void       OpalRenderSetPushConstant      (const void* data);
 void       OpalRenderMesh                 (const OpalMesh* pMesh);
 
-void OpalRenderDrawCount_DEBUG(uint32_t vertexCount);
+void       OpalComputeDispatch            (uint32_t x, uint32_t y, uint32_t z);
 
 #ifdef __cplusplus
 }

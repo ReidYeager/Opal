@@ -45,6 +45,11 @@ OpalResult OpalVulkanRenderpassInit(OpalRenderpass* pRenderpass, OpalRenderpassI
 {
   RenderpassData_Ovk data;
 
+  if (initInfo.subpassCount == 0)
+  {
+    initInfo.subpassCount = 1;
+  }
+
   OPAL_ATTEMPT(BuildAttachments_Ovk (initInfo, &data), DestroyRenderpassData_Ovk(&data));
   OPAL_ATTEMPT(BuildSubpasses_Ovk   (initInfo, &data), DestroyRenderpassData_Ovk(&data));
   OPAL_ATTEMPT(BuildDependencies_Ovk(initInfo, &data), DestroyRenderpassData_Ovk(&data));

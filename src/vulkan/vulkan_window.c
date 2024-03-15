@@ -56,7 +56,7 @@ OpalResult SwapchainInit_Ovk(OpalWindow* pWindow)
   createInfo.preTransform = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR;
   createInfo.clipped = VK_TRUE;
 
-  uint32_t queueIndices[2] = { g_ovkState->gpu.queueIndexGraphics, g_ovkState->gpu.queueIndexTransfer };
+  uint32_t queueIndices[2] = { g_ovkState->gpu.queueIndexGraphicsCompute, g_ovkState->gpu.queueIndexTransfer };
   if (queueIndices[0] == queueIndices[1])
   {
     createInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;

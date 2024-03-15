@@ -99,6 +99,8 @@ void       OpalVulkanRenderSetPushConstant        (const void* data);
 void       OpalVulkanRenderBindShaderInput        (const OpalShaderInput* pInput, uint32_t setIndex);
 void       OpalVulkanRenderMesh                   (const OpalMesh* pMesh);
 
+void       OpalVulkanComputeDispatch              (uint32_t x, uint32_t y, uint32_t z);
+
 // Platform
 // ============================================================
 

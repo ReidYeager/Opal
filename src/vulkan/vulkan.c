@@ -198,9 +198,13 @@ OpalVulkanGpuInfo InitGpuInfo_Ovk(VkPhysicalDevice gpu, VkSurfaceKHR surface)
   info.pQueueFamilyProperties = OpalMemAllocArray(VkQueueFamilyProperties, info.queueFamilyPropertiesCount);
   vkGetPhysicalDeviceQueueFamilyProperties(gpu, &info.queueFamilyPropertiesCount, info.pQueueFamilyProperties);
 
-  info.queueIndexGraphics = GetFamilyIndexForQueue_Ovk(&info, VK_QUEUE_GRAPHICS_BIT);
+  info.queueIndexGraphicsCompute = ~0u;
+  info.queueIndexTransfer        = ~0u;
+  info.queueIndexPresent         = ~0u;
+
+  info.queueIndexGraphicsCompute = GetFamilyIndexForQueue_Ovk(&info, VK_QUEUE_GRAPHICS_BIT | VK_QUEUE_COMPUTE_BIT);
   info.queueIndexTransfer = GetFamilyIndexForQueue_Ovk(&info, VK_QUEUE_TRANSFER_BIT);
-  info.queueIndexPresent = GetFamilyIndexForPresent_Ovk(&info, surface);
+  info.queueIndexPresent  = GetFamilyIndexForPresent_Ovk(&info, surface);
 
   return info;
 }
@@ -220,8 +224,12 @@ uint32_t GetFamilyIndexForQueue_Ovk(const OpalVulkanGpuInfo* const gpu, VkQueueF
 
     if ((queueFlag & flags) == flags)
     {
+      bool graphicsComputeQueueUnique =
+        flags & (VK_QUEUE_GRAPHICS_BIT | VK_QUEUE_COMPUTE_BIT) || i != gpu->queueIndexGraphicsCompute;
+      bool transferQueueUnique = flags & VK_QUEUE_TRANSFER_BIT || i != gpu->queueIndexTransfer;
+
       // Try to avoid choosing overlapping queue family indices
-      if (flags & VK_QUEUE_GRAPHICS_BIT || i != gpu->queueIndexGraphics)
+      if (graphicsComputeQueueUnique && transferQueueUnique)
       {
         return i;
       }
@@ -234,8 +242,9 @@ uint32_t GetFamilyIndexForQueue_Ovk(const OpalVulkanGpuInfo* const gpu, VkQueueF
 
   if (bestFit == ~0u)
   {
-    OpalLog("Failed to find a queue family with the flag %u", flags);
+    OpalLogError("Failed to find a queue family with the flag %u", flags);
   }
+
   return bestFit;
 }
 
@@ -250,7 +259,10 @@ uint32_t GetFamilyIndexForPresent_Ovk(const OpalVulkanGpuInfo* const gpu, VkSurf
 
     if (canPresent == VK_TRUE)
     {
-      if (i != gpu->queueIndexGraphics && i != gpu->queueIndexTransfer)
+      bool queueUnique = i != gpu->queueIndexGraphicsCompute
+        && i != gpu->queueIndexTransfer;
+
+      if (queueUnique)
       {
         return i;
       }
@@ -263,7 +275,7 @@ uint32_t GetFamilyIndexForPresent_Ovk(const OpalVulkanGpuInfo* const gpu, VkSurf
 
   if (bestFit == ~0u)
   {
-    OpalLog("Failed to find a queue family for presentation");
+    OpalLogError("Failed to find a queue family for presentation");
   }
 
   return bestFit;
@@ -274,9 +286,12 @@ OpalResult InitDevice_Ovk(bool useDebug)
   // Queues ==============================
 
   uint32_t queueCount = 3;
-  const float queuePriority = 1.0f;
+  const float queuePriorities[2] = {
+    1.0f,
+    1.0f
+  };
   uint32_t* queueIndices = OpalMemAllocArray(uint32_t, queueCount);
-  queueIndices[0] = g_ovkState->gpu.queueIndexGraphics;
+  queueIndices[0] = g_ovkState->gpu.queueIndexGraphicsCompute;
   queueIndices[1] = g_ovkState->gpu.queueIndexTransfer;
   queueIndices[2] = g_ovkState->gpu.queueIndexPresent;
   VkDeviceQueueCreateInfo* queueCreateInfos = OpalMemAllocArray(VkDeviceQueueCreateInfo, queueCount);
@@ -286,9 +301,9 @@ OpalResult InitDevice_Ovk(bool useDebug)
     queueCreateInfos[i].sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
     queueCreateInfos[i].pNext = NULL;
     queueCreateInfos[i].flags = 0;
-    queueCreateInfos[i].queueCount = 1;
+    queueCreateInfos[i].queueCount = (i == 0) ? 2 : 1;
     queueCreateInfos[i].queueFamilyIndex = queueIndices[i];
-    queueCreateInfos[i].pQueuePriorities = &queuePriority;
+    queueCreateInfos[i].pQueuePriorities = queuePriorities;
   }
 
   // Extensions ==============================
@@ -327,9 +342,10 @@ OpalResult InitDevice_Ovk(bool useDebug)
 
   OPAL_ATTEMPT_VK(vkCreateDevice(g_ovkState->gpu.device, &createInfo, NULL, &g_ovkState->device));
 
-  vkGetDeviceQueue(g_ovkState->device, queueIndices[0], 0, &g_ovkState->queueGraphics);
-  vkGetDeviceQueue(g_ovkState->device, queueIndices[1], 0, &g_ovkState->queueTransfer);
-  vkGetDeviceQueue(g_ovkState->device, queueIndices[2], 0, &g_ovkState->queuePresent);
+  vkGetDeviceQueue(g_ovkState->device, g_ovkState->gpu.queueIndexGraphicsCompute, 0, &g_ovkState->queueGraphics);
+  vkGetDeviceQueue(g_ovkState->device, g_ovkState->gpu.queueIndexGraphicsCompute, 1, &g_ovkState->queueCompute);
+  vkGetDeviceQueue(g_ovkState->device, g_ovkState->gpu.queueIndexTransfer,        0, &g_ovkState->queueTransfer);
+  vkGetDeviceQueue(g_ovkState->device, g_ovkState->gpu.queueIndexPresent,         0, &g_ovkState->queuePresent);
 
   // Shutdown ==============================
 
@@ -367,7 +383,7 @@ OpalResult InitCommandPool_Ovk(bool isTransient)
   else
   {
     createInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-    createInfo.queueFamilyIndex = g_ovkState->gpu.queueIndexGraphics;
+    createInfo.queueFamilyIndex = g_ovkState->gpu.queueIndexGraphicsCompute;
     outPool = &g_ovkState->graphicsCommandPool;
   }
 
@@ -380,18 +396,22 @@ OpalResult InitDescriptorPool_Ovk()
 {
   // TODO : Find a good way to determine required resource counts
 
-  VkDescriptorPoolSize sizes[2];
+  VkDescriptorPoolSize sizes[4];
   sizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
   sizes[0].descriptorCount = 1024;
   sizes[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
   sizes[1].descriptorCount = 1024;
+  sizes[2].type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+  sizes[2].descriptorCount = 1024;
+  sizes[3].type = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
+  sizes[3].descriptorCount = 1024;
 
   VkDescriptorPoolCreateInfo createInfo = { 0 };
   createInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
   createInfo.pNext = NULL;
   createInfo.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
   createInfo.maxSets = 1024;
-  createInfo.poolSizeCount = 2;
+  createInfo.poolSizeCount = 4;
   createInfo.pPoolSizes = sizes;
 
   OPAL_ATTEMPT_VK(
@@ -404,27 +424,17 @@ OpalResult InitGlobalResources_Ovk(OpalInitInfo initInfo)
 {
   // Vertex layout ==========
 
-  OpalVertexLayoutInfo* vLayout = &initInfo.vertexLayout;
-
-  uint32_t vertBackupCount = 3;
-  OpalFormat vertBackupFormats[3] = { Opal_Format_RGB32, Opal_Format_RGB32, Opal_Format_RG32 };
-  //if (vLayout->elementCount == 0 || vLayout->pElementFormats == NULL)
-  //{
-  //  OpalLog("Using backup vertex layout");
-  //  vLayout->elementCount = vertBackupCount;
-  //  vLayout->pElementFormats = vertBackupFormats;
-  //}
-
-  VkVertexInputAttributeDescription* pAttribs = OpalMemAllocArray(VkVertexInputAttributeDescription, vLayout->elementCount);
+  VkVertexInputAttributeDescription* pAttribs =
+    OpalMemAllocArray(VkVertexInputAttributeDescription, initInfo.vertexLayout.elementCount);
 
   uint32_t offsetSum = 0;
-  for (uint32_t i = 0; i < vLayout->elementCount; i++)
+  for (uint32_t i = 0; i < initInfo.vertexLayout.elementCount; i++)
   {
     pAttribs[i].binding = 0;
     pAttribs[i].location = i;
     pAttribs[i].offset = offsetSum;
-    pAttribs[i].format = OpalFormatToVkFormat_Ovk(vLayout->pElementFormats[i]);
-    offsetSum += OpalFormatToSize(vLayout->pElementFormats[i]);
+    pAttribs[i].format = OpalFormatToVkFormat_Ovk(initInfo.vertexLayout.pElementFormats[i]);
+    offsetSum += OpalFormatToSize(initInfo.vertexLayout.pElementFormats[i]);
   }
 
   VkVertexInputBindingDescription binding;
@@ -432,7 +442,7 @@ OpalResult InitGlobalResources_Ovk(OpalInitInfo initInfo)
   binding.stride = offsetSum;
   binding.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
 
-  g_ovkState->vertex.attribCount = vLayout->elementCount;
+  g_ovkState->vertex.attribCount = initInfo.vertexLayout.elementCount;
   g_ovkState->vertex.pAttribDescriptions = pAttribs;
   g_ovkState->vertex.bindingDescription = binding;
 

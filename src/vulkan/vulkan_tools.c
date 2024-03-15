@@ -146,14 +146,14 @@ VkShaderStageFlags OpalStagesToVkStages_Ovk(OpalStageFlags stages)
 {
   VkShaderStageFlags flags = 0;
 
-  flags |= VK_SHADER_STAGE_VERTEX_BIT * ((stages & Opal_Stage_Vertex) == Opal_Stage_Vertex);
-  flags |= VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT * ((stages & Opal_Stage_Tesselation) == Opal_Stage_Tesselation);
+  flags |= VK_SHADER_STAGE_VERTEX_BIT                  * ((stages & Opal_Stage_Vertex) == Opal_Stage_Vertex);
+  flags |= VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT    * ((stages & Opal_Stage_Tesselation) == Opal_Stage_Tesselation);
   flags |= VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT * ((stages & Opal_Stage_Tesselation) == Opal_Stage_Tesselation);
-  flags |= VK_SHADER_STAGE_GEOMETRY_BIT * ((stages & Opal_Stage_Geometry) == Opal_Stage_Geometry);
-  flags |= VK_SHADER_STAGE_FRAGMENT_BIT * ((stages & Opal_Stage_Fragment) == Opal_Stage_Fragment);
-  flags |= VK_SHADER_STAGE_COMPUTE_BIT * ((stages & Opal_Stage_Compute) == Opal_Stage_Compute);
-  flags |= VK_SHADER_STAGE_ALL_GRAPHICS * ((stages & Opal_Stage_All_Graphics) == Opal_Stage_All_Graphics);
-  flags |= VK_SHADER_STAGE_ALL * ((stages & Opal_Stage_All) == Opal_Stage_All);
+  flags |= VK_SHADER_STAGE_GEOMETRY_BIT                * ((stages & Opal_Stage_Geometry) == Opal_Stage_Geometry);
+  flags |= VK_SHADER_STAGE_FRAGMENT_BIT                * ((stages & Opal_Stage_Fragment) == Opal_Stage_Fragment);
+  flags |= VK_SHADER_STAGE_COMPUTE_BIT                 * ((stages & Opal_Stage_Compute) == Opal_Stage_Compute);
+  flags |= VK_SHADER_STAGE_ALL_GRAPHICS                * ((stages & Opal_Stage_All_Graphics) == Opal_Stage_All_Graphics);
+  flags |= VK_SHADER_STAGE_ALL                         * ((stages & Opal_Stage_All) == Opal_Stage_All);
 
   return flags;
 }

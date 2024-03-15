@@ -19,7 +19,9 @@ OpalResult   UpdateDescriptorSet_Ovk            (OpalShaderInput* pInput, const 
 //OpalResult OpalVulkanShaderGroupInit          (OpalShaderGroup* pShaderGroup, OpalShaderGroupInitInfo initInfo)
 //void       OpalVulkanShaderGroupShutdown      (OpalShaderGroup* pShaderGroup)
 OpalResult   InitPipelineLayout_Ovk             (OpalShaderGroup* pShaderGroup, OpalShaderGroupInitInfo initInfo);
-OpalResult   InitPipeline_Ovk                   (OpalShaderGroup* pShaderGroup, OpalShaderGroupInitInfo initInfo);
+OpalResult   InitPipelineGraphics_Ovk           (OpalShaderGroup* pShaderGroup, OpalShaderGroupInitInfo initInfo);
+OpalResult   InitPipelineCompute_Ovk            (OpalShaderGroup* pShaderGroup, OpalShaderGroupInitInfo initInfo);
+OpalResult   InitPipelineRaytracing_Ovk         (OpalShaderGroup* pShaderGroup, OpalShaderGroupInitInfo initInfo);
 
 
 // Shader
@@ -38,10 +40,10 @@ OpalResult OpalVulkanShaderInit(OpalShader* pShader, OpalShaderInitInfo initInfo
 
   switch (initInfo.type)
   {
-  case Opal_Shader_Vertex: pShader->api.vk.stage = VK_SHADER_STAGE_VERTEX_BIT; break;
+  case Opal_Shader_Vertex:   pShader->api.vk.stage = VK_SHADER_STAGE_VERTEX_BIT;   break;
   case Opal_Shader_Fragment: pShader->api.vk.stage = VK_SHADER_STAGE_FRAGMENT_BIT; break;
+  case Opal_Shader_Compute:  pShader->api.vk.stage = VK_SHADER_STAGE_COMPUTE_BIT;  break;
   //case Opal_Shader_Geometry: pShader->api.vk.stage = VK_SHADER_STAGE_GEOMETRY_BIT; break;
-  //case Opal_Shader_Compute: pShader->api.vk.stage = VK_SHADER_STAGE_COMPUTE_BIT; break;
   //case Opal_Shader_Mesh: pShader->api.vk.stage = VK_SHADER_STAGE_MESH_BIT_EXT; break;
   default:
   {
@@ -85,6 +87,14 @@ OpalResult OpalVulkanShaderInputLayoutInit(OpalShaderInputLayout* pLayout, OpalS
     case Opal_Shader_Input_Subpass_Product:
     {
       bindings[i].descriptorType = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT;
+    } break;
+    case Opal_Shader_Input_Storage_Buffer:
+    {
+      bindings[i].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+    } break;
+    case Opal_Shader_Input_Storage_Image:
+    {
+      bindings[i].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
     } break;
     default:
     {
@@ -178,6 +188,18 @@ OpalResult UpdateDescriptorSet_Ovk(OpalShaderInput* pInput, const OpalShaderInpu
 
       bufferInfoCount++;
     } break;
+    case Opal_Shader_Input_Storage_Buffer:
+    {
+      pBufferInfos[bufferInfoCount].buffer = pValues[i].buffer->api.vk.buffer;
+      pBufferInfos[bufferInfoCount].offset = 0;
+      pBufferInfos[bufferInfoCount].range = VK_WHOLE_SIZE;
+
+      pWrites[i].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+      pWrites[i].pBufferInfo = &pBufferInfos[bufferInfoCount];
+      pWrites[i].pImageInfo = NULL;
+
+      bufferInfoCount++;
+    } break;
     case Opal_Shader_Input_Image:
     {
       if ((pValues[i].image->usage & Opal_Image_Usage_Uniform) == 0)
@@ -195,6 +217,18 @@ OpalResult UpdateDescriptorSet_Ovk(OpalShaderInput* pInput, const OpalShaderInpu
       pImageInfos[imageInfoCount].sampler     = pValues[i].image->api.vk.sampler;
 
       pWrites[i].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+      pWrites[i].pBufferInfo = NULL;
+      pWrites[i].pImageInfo = &pImageInfos[imageInfoCount];
+
+      imageInfoCount++;
+    } break;
+    case Opal_Shader_Input_Storage_Image:
+    {
+      pImageInfos[imageInfoCount].imageLayout = pValues[i].image->api.vk.layout;
+      pImageInfos[imageInfoCount].imageView   = pValues[i].image->api.vk.view;
+      pImageInfos[imageInfoCount].sampler     = pValues[i].image->api.vk.sampler;
+
+      pWrites[i].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
       pWrites[i].pBufferInfo = NULL;
       pWrites[i].pImageInfo = &pImageInfos[imageInfoCount];
 
@@ -238,8 +272,20 @@ OpalResult UpdateDescriptorSet_Ovk(OpalShaderInput* pInput, const OpalShaderInpu
 OpalResult OpalVulkanShaderGroupInit(OpalShaderGroup* pShaderGroup, OpalShaderGroupInitInfo initInfo)
 {
   OPAL_ATTEMPT(InitPipelineLayout_Ovk(pShaderGroup, initInfo));
-  OPAL_ATTEMPT(InitPipeline_Ovk(pShaderGroup, initInfo));
 
+  switch (initInfo.type)
+  {
+  case Opal_Group_Graphics:   InitPipelineGraphics_Ovk(pShaderGroup, initInfo);   break;
+  case Opal_Group_Compute:    InitPipelineCompute_Ovk(pShaderGroup, initInfo);    break;
+  case Opal_Group_Raytracing: InitPipelineRaytracing_Ovk(pShaderGroup, initInfo); break;
+  default:
+  {
+    OpalLogError("Invalid shader group type : %u", initInfo.type);
+    return Opal_Failure_Invalid_Input;
+  }
+  }
+
+  pShaderGroup->type = initInfo.type;
   pShaderGroup->pushConstSize = initInfo.pushConstantSize;
 
   return Opal_Success;
@@ -266,7 +312,7 @@ OpalResult InitPipelineLayout_Ovk(OpalShaderGroup* pShaderGroup, OpalShaderGroup
   VkPushConstantRange pushRange;
   pushRange.offset = 0;
   pushRange.size = initInfo.pushConstantSize;
-  pushRange.stageFlags = VK_SHADER_STAGE_ALL_GRAPHICS;
+  pushRange.stageFlags = VK_SHADER_STAGE_ALL;
 
   VkPipelineLayoutCreateInfo createInfo = { 0 };
   createInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
@@ -285,7 +331,7 @@ OpalResult InitPipelineLayout_Ovk(OpalShaderGroup* pShaderGroup, OpalShaderGroup
   return Opal_Success;
 }
 
-OpalResult InitPipeline_Ovk(OpalShaderGroup* pShaderGroup, OpalShaderGroupInitInfo initInfo)
+OpalResult InitPipelineGraphics_Ovk(OpalShaderGroup* pShaderGroup, OpalShaderGroupInitInfo initInfo)
 {
   // Shader stages =====
   VkPipelineShaderStageCreateInfo* pShaderStages = NULL;
@@ -339,7 +385,7 @@ OpalResult InitPipeline_Ovk(OpalShaderGroup* pShaderGroup, OpalShaderGroupInitIn
   rasterStateInfo.pNext = NULL;
   rasterStateInfo.flags = 0;
 
-  switch (initInfo.flags & Opal_Pipeline_Cull_BITS)
+  switch (initInfo.graphics.flags & Opal_Pipeline_Cull_BITS)
   {
   case Opal_Pipeline_Cull_None: rasterStateInfo.cullMode = VK_CULL_MODE_NONE; break;
   case Opal_Pipeline_Cull_Front: rasterStateInfo.cullMode = VK_CULL_MODE_FRONT_BIT; break;
@@ -372,7 +418,7 @@ OpalResult InitPipeline_Ovk(OpalShaderGroup* pShaderGroup, OpalShaderGroupInitIn
   depthStateInfo.flags = 0;
   depthStateInfo.depthTestEnable = VK_TRUE;
   depthStateInfo.depthWriteEnable = VK_TRUE;
-  switch (initInfo.flags & Opal_Pipeline_Depth_Compare_BITS)
+  switch (initInfo.graphics.flags & Opal_Pipeline_Depth_Compare_BITS)
   {
   case Opal_Pipeline_Depth_Compare_Less: depthStateInfo.depthCompareOp = VK_COMPARE_OP_LESS; break;
   case Opal_Pipeline_Depth_Compare_LessEqual: depthStateInfo.depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL; break;
@@ -396,9 +442,9 @@ OpalResult InitPipeline_Ovk(OpalShaderGroup* pShaderGroup, OpalShaderGroupInitIn
 
   VkPipelineColorBlendAttachmentState* blendAttachmentState = OpalMemAllocArrayZeroed(
     VkPipelineColorBlendAttachmentState,
-    initInfo.renderpass.api.vk.subpassColorOutputCount[initInfo.subpassIndex]);
+    initInfo.graphics.renderpass.api.vk.subpassColorOutputCount[initInfo.graphics.subpassIndex]);
 
-  for (int i = 0; i < initInfo.renderpass.api.vk.subpassColorOutputCount[initInfo.subpassIndex]; i++)
+  for (int i = 0; i < initInfo.graphics.renderpass.api.vk.subpassColorOutputCount[initInfo.graphics.subpassIndex]; i++)
   {
     blendAttachmentState[i] = blendAttachmentBase;
   }
@@ -408,7 +454,7 @@ OpalResult InitPipeline_Ovk(OpalShaderGroup* pShaderGroup, OpalShaderGroupInitIn
   blendStateInfo.pNext = NULL;
   blendStateInfo.flags = 0;
   blendStateInfo.logicOpEnable = VK_FALSE;
-  blendStateInfo.attachmentCount = initInfo.renderpass.api.vk.subpassColorOutputCount[initInfo.subpassIndex];
+  blendStateInfo.attachmentCount = initInfo.graphics.renderpass.api.vk.subpassColorOutputCount[initInfo.graphics.subpassIndex];
   blendStateInfo.pAttachments = blendAttachmentState;
 
   // Dynamic states =====
@@ -440,8 +486,8 @@ OpalResult InitPipeline_Ovk(OpalShaderGroup* pShaderGroup, OpalShaderGroupInitIn
   createInfo.pStages = pShaderStages;
 
   createInfo.layout = pShaderGroup->api.vk.pipelineLayout;
-  createInfo.renderPass = initInfo.renderpass.api.vk.renderpass;
-  createInfo.subpass = initInfo.subpassIndex;
+  createInfo.renderPass = initInfo.graphics.renderpass.api.vk.renderpass;
+  createInfo.subpass = initInfo.graphics.subpassIndex;
 
   OPAL_ATTEMPT_VK(
     vkCreateGraphicsPipelines(
@@ -464,4 +510,45 @@ OpalResult InitPipeline_Ovk(OpalShaderGroup* pShaderGroup, OpalShaderGroupInitIn
   }
 
   return Opal_Success;
+}
+
+OpalResult InitPipelineCompute_Ovk(OpalShaderGroup* pShaderGroup, OpalShaderGroupInitInfo initInfo)
+{
+  // Shader stage =====
+
+  if (initInfo.shaderCount != 1)
+  {
+    OpalLogError("Invalid number of shaders for compute group: Have %u, but must have 1", initInfo.shaderCount);
+    return Opal_Failure_Invalid_Input;
+  }
+
+  VkPipelineShaderStageCreateInfo shaderStage;
+  shaderStage.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+  shaderStage.pNext = NULL;
+  shaderStage.flags = 0;
+  shaderStage.module = initInfo.pShaders[0].api.vk.module;
+  shaderStage.stage = initInfo.pShaders[0].api.vk.stage;
+  shaderStage.pName = "main";
+
+  // Creation =====
+
+  VkComputePipelineCreateInfo createInfo = { 0 };
+  createInfo.sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
+  createInfo.pNext = NULL;
+  createInfo.flags = 0;
+  createInfo.layout = pShaderGroup->api.vk.pipelineLayout;
+  createInfo.stage = shaderStage;
+  createInfo.basePipelineHandle = VK_NULL_HANDLE;
+  createInfo.basePipelineIndex = 0;
+
+  OPAL_ATTEMPT_VK(
+    vkCreateComputePipelines(g_ovkState->device, VK_NULL_HANDLE, 1, &createInfo, NULL, &pShaderGroup->api.vk.pipeline));
+
+  return Opal_Success;
+}
+
+OpalResult InitPipelineRaytracing_Ovk(OpalShaderGroup* pShaderGroup, OpalShaderGroupInitInfo initInfo)
+{
+  
+  return Opal_Failure_Unknown;
 }

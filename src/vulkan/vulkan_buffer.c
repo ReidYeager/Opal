@@ -77,7 +77,7 @@ void OpalVulkanBufferShutdown(OpalBuffer* pBuffer)
 
 OpalResult InitBuffer_Ovk(OpalVulkanBuffer* pBuffer, OpalBufferInitInfo initInfo)
 {
-  uint32_t queueIndices[2] = { g_ovkState->gpu.queueIndexGraphics, g_ovkState->gpu.queueIndexPresent };
+  uint32_t queueIndices[2] = { g_ovkState->gpu.queueIndexGraphicsCompute, g_ovkState->gpu.queueIndexPresent };
 
   VkBufferCreateInfo createInfo = { 0 };
   createInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
@@ -91,11 +91,12 @@ OpalResult InitBuffer_Ovk(OpalVulkanBuffer* pBuffer, OpalBufferInitInfo initInfo
 
 #define ovusage(opal, vk) ((initInfo.usage & opal) != 0) * vk
   createInfo.usage =
-      ovusage(Opal_Buffer_Usage_Transfer_Dst, VK_BUFFER_USAGE_TRANSFER_DST_BIT)
+    ovusage(Opal_Buffer_Usage_Transfer_Dst, VK_BUFFER_USAGE_TRANSFER_DST_BIT)
     | ovusage(Opal_Buffer_Usage_Transfer_Src, VK_BUFFER_USAGE_TRANSFER_SRC_BIT)
-    | ovusage(Opal_Buffer_Usage_Uniform,      VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT)
-    | ovusage(Opal_Buffer_Usage_Vertex,       VK_BUFFER_USAGE_VERTEX_BUFFER_BIT)
-    | ovusage(Opal_Buffer_Usage_Index,        VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
+    | ovusage(Opal_Buffer_Usage_Uniform, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT)
+    | ovusage(Opal_Buffer_Usage_Vertex, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT)
+    | ovusage(Opal_Buffer_Usage_Index, VK_BUFFER_USAGE_INDEX_BUFFER_BIT)
+    | ovusage(Opal_Buffer_Usage_Storage, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT);
 #undef ovusage
 
   OPAL_ATTEMPT_VK(vkCreateBuffer(g_ovkState->device, &createInfo, NULL, &pBuffer->buffer));

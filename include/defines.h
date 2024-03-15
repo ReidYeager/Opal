@@ -120,10 +120,11 @@ typedef enum OpalBufferUsageFlagBits
   Opal_Buffer_Usage_Undefined    = 0,
   Opal_Buffer_Usage_Transfer_Src = 0x01,
   Opal_Buffer_Usage_Transfer_Dst = 0x02,
-  Opal_Buffer_Usage_Uniform      = 0x04,
+  Opal_Buffer_Usage_Cpu_Read     = 0x04,
   Opal_Buffer_Usage_Vertex       = 0x08,
   Opal_Buffer_Usage_Index        = 0x10,
-  Opal_Buffer_Usage_Cpu_Read     = 0x20
+  Opal_Buffer_Usage_Uniform      = 0x20,
+  Opal_Buffer_Usage_Storage      = 0x40
 } OpalBufferUsageFlagBits;
 typedef uint32_t OpalBufferUsageFlags;
 
@@ -150,12 +151,13 @@ typedef struct OpalBuffer
 
 typedef enum OpalImageUsageFlagBits
 {
-  Opal_Image_Usage_Color           = 0x01,
-  Opal_Image_Usage_Depth           = 0x02,
-  Opal_Image_Usage_Copy_Src        = 0x04,
-  Opal_Image_Usage_Copy_Dst        = 0x08,
-  Opal_Image_Usage_Uniform         = 0x10,
-  Opal_Image_Usage_Subpass_Product = 0x20
+  Opal_Image_Usage_Undefined       = 0,
+  Opal_Image_Usage_Output          = 0x01,
+  Opal_Image_Usage_Transfer_Src    = 0x02,
+  Opal_Image_Usage_Transfer_Dst    = 0x04,
+  Opal_Image_Usage_Uniform         = 0x08,
+  Opal_Image_Usage_Subpass_Product = 0x10,
+  Opal_Image_Usage_Storage         = 0x20
 } OpalImageUsageFlagBits;
 typedef uint32_t OpalImageUsageFlags;
 
@@ -315,9 +317,9 @@ typedef enum OpalShaderType
 {
   Opal_Shader_Vertex,
   Opal_Shader_Fragment,
+  Opal_Shader_Compute,
   //Opal_Shader_Geometry,
   //Opal_Shader_Mesh,
-  //Opal_Shader_Compute
 } OpalShaderType;
 
 typedef struct OpalShaderInitInfo
@@ -345,6 +347,8 @@ typedef enum OpalShaderInputType
   Opal_Shader_Input_Buffer,
   Opal_Shader_Input_Image,
   Opal_Shader_Input_Subpass_Product,
+  Opal_Shader_Input_Storage_Buffer,
+  Opal_Shader_Input_Storage_Image,
 } OpalShaderInputType;
 
 typedef struct OpalShaderInputLayoutInitInfo
@@ -404,11 +408,16 @@ typedef enum OpalPipelineFlagBits
 } OpalPipelineFlagBits;
 typedef uint64_t OpalPipelineFlags;
 
+typedef enum OpalShaderGroupType
+{
+  Opal_Group_Graphics,
+  Opal_Group_Compute,
+  Opal_Group_Raytracing,
+} OpalShaderGroupType;
+
 typedef struct OpalShaderGroupInitInfo
 {
-  OpalRenderpass renderpass;
-  uint32_t subpassIndex;
-  uint8_t pushConstantSize;
+  OpalShaderGroupType type;
 
   uint32_t shaderCount;
   OpalShader* pShaders;
@@ -416,11 +425,22 @@ typedef struct OpalShaderGroupInitInfo
   uint32_t shaderInputLayoutCount;
   OpalShaderInputLayout* pShaderInputLayouts;
 
-  OpalPipelineFlags flags;
+  uint8_t pushConstantSize;
+
+  union
+  {
+    struct
+    {
+      uint32_t subpassIndex;
+      OpalRenderpass renderpass;
+      OpalPipelineFlags flags;
+    } graphics;
+  };
 } OpalShaderGroupInitInfo;
 
 typedef struct OpalShaderGroup
 {
+  OpalShaderGroupType type;
   uint32_t pushConstSize;
 
   union
@@ -544,6 +564,7 @@ typedef struct OpalState
       void       (*RenderBindShaderInput)      (const OpalShaderInput* pInput, uint32_t setIndex);
       void       (*RenderSetPushConstant)      (const void* data);
       void       (*RenderMesh)                 (const OpalMesh* p);
+      void       (*ComputeDispatch)            (uint32_t x, uint32_t y, uint32_t z);
 
     } functions;
 

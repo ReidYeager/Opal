@@ -49,9 +49,9 @@ OpalResult OpalVulkanRenderEnd()
   submitInfo.pNext = NULL;
   submitInfo.commandBufferCount = 1;
   submitInfo.pCommandBuffers = &g_ovkState->renderState.cmd;
-  submitInfo.pWaitDstStageMask = NULL;
   submitInfo.waitSemaphoreCount = 0;
   submitInfo.pWaitSemaphores = NULL;
+  submitInfo.pWaitDstStageMask = NULL;
   submitInfo.signalSemaphoreCount = 0;
   submitInfo.pSignalSemaphores = NULL;
 
@@ -168,7 +168,8 @@ void OpalVulkanRenderRenderpassNext(const OpalRenderpass* pRenderpass)
 
 void OpalVulkanRenderBindShaderGroup(const OpalShaderGroup* pGroup)
 {
-  vkCmdBindPipeline(g_ovkState->renderState.cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pGroup->api.vk.pipeline);
+  g_ovkState->renderState.bindPoint = pGroup->type == Opal_Group_Graphics ? VK_PIPELINE_BIND_POINT_GRAPHICS : VK_PIPELINE_BIND_POINT_COMPUTE;
+  vkCmdBindPipeline(g_ovkState->renderState.cmd, g_ovkState->renderState.bindPoint, pGroup->api.vk.pipeline);
 
   g_ovkState->renderState.layout = pGroup->api.vk.pipelineLayout;
   g_ovkState->renderState.pushConstSize = pGroup->pushConstSize;
@@ -197,7 +198,7 @@ void OpalVulkanRenderSetPushConstant(const void* data)
   vkCmdPushConstants(
     g_ovkState->renderState.cmd,
     g_ovkState->renderState.layout,
-    VK_SHADER_STAGE_ALL_GRAPHICS,
+    VK_SHADER_STAGE_ALL,
     0,
     g_ovkState->renderState.pushConstSize,
     data);
@@ -207,7 +208,7 @@ void OpalVulkanRenderBindShaderInput(const OpalShaderInput* pInput, uint32_t set
 {
   vkCmdBindDescriptorSets(
     g_ovkState->renderState.cmd,
-    VK_PIPELINE_BIND_POINT_GRAPHICS,
+    g_ovkState->renderState.bindPoint,
     g_ovkState->renderState.layout,
     setIndex, 1, &pInput->api.vk.set,
     0, NULL);
@@ -219,4 +220,9 @@ void OpalVulkanRenderMesh(const OpalMesh* pMesh)
   vkCmdBindIndexBuffer(g_ovkState->renderState.cmd, pMesh->indexBuffer.api.vk.buffer, 0, VK_INDEX_TYPE_UINT32);
   vkCmdBindVertexBuffers(g_ovkState->renderState.cmd, 0, 1, &pMesh->vertexBuffer.api.vk.buffer, &offset);
   vkCmdDrawIndexed(g_ovkState->renderState.cmd, pMesh->indexCount, 1, 0, 0, 0);
+}
+
+void OpalVulkanComputeDispatch(uint32_t x, uint32_t y, uint32_t z)
+{
+  vkCmdDispatch(g_ovkState->renderState.cmd, x, y, z);
 }

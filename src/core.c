@@ -148,6 +148,8 @@ OpalResult OpalInit(OpalInitInfo initInfo)
     g_OpalState.api.functions.RenderSetPushConstant       = OpalVulkanRenderSetPushConstant;
     g_OpalState.api.functions.RenderMesh                  = OpalVulkanRenderMesh;
 
+    g_OpalState.api.functions.ComputeDispatch             = OpalVulkanComputeDispatch;
+
     OPAL_ATTEMPT(OpalVulkanInit(initInfo));
   } break;
   default:
@@ -442,9 +444,9 @@ void OpalRenderMesh(const OpalMesh* pMesh)
   g_OpalState.api.functions.RenderMesh(pMesh);
 }
 
-void OpalRenderDrawCount_DEBUG(uint32_t vertexCount)
+void OpalComputeDispatch(uint32_t x, uint32_t y, uint32_t z)
 {
-  vkCmdDraw(g_OpalState.api.vk.renderState.cmd, vertexCount, 1, 0, 0);
+  g_OpalState.api.functions.ComputeDispatch(x, y, z);
 }
 
 // Tools
