@@ -58,10 +58,16 @@ OpalState g_OpalState = {0};
 //OpalResult OpalShaderInputInit            (OpalShaderInput* pShaderInput, OpalShaderInputInitInfo initInfo)
 //void       OpalShaderInputShutdown        (OpalShaderInput* pShaderInput)
 
+// Synchronization ==========
+// OpalResult OpalFenceInit                 (OpalFence* pFence, bool startSignaled)
+// void       OpalFenceShutdown             (OpalFence* pFence)
+// OpalResult OpalSemaphoreInit             (OpalSemaphore* pSemaphore)
+// void       OpalSemaphoreShutdown         (OpalSemaphore* pSemaphore)
+
 // Rendering ==========
 // Rendering - Begin/End
 //OpalResult OpalRenderBegin                ()
-//OpalResult OpalRenderEnd                  ()
+//OpalResult OpalRenderEnd                  (OpalSyncPack syncInfo)
 //OpalResult OpalRenderToWindowBegin        (OpalWindow* pWindow)
 //OpalResult OpalRenderToWindowEnd          (OpalWindow* pWindow)
 // Rendering - Objects
@@ -133,6 +139,11 @@ OpalResult OpalInit(OpalInitInfo initInfo)
     g_OpalState.api.functions.ShaderInputLayoutShutdown   = OpalVulkanShaderInputLayoutShutdown;
     g_OpalState.api.functions.ShaderInputInit             = OpalVulkanShaderInputInit;
     g_OpalState.api.functions.ShaderInputShutdown         = OpalVulkanShaderInputShutdown;
+    // Synchronization
+    g_OpalState.api.functions.FenceInit                   = OpalVulkanFenceInit;
+    g_OpalState.api.functions.FenceShutdown               = OpalVulkanFenceShutdown;
+    g_OpalState.api.functions.SemaphoreInit               = OpalVulkanSemaphoreInit;
+    g_OpalState.api.functions.SemaphoreShutdown           = OpalVulkanSemaphoreShutdown;
     // Rendering
     g_OpalState.api.functions.RenderBegin                 = OpalVulkanRenderBegin;
     g_OpalState.api.functions.RenderEnd                   = OpalVulkanRenderEnd;
@@ -372,6 +383,29 @@ void OpalShaderInputShutdown(OpalShaderInput* pShaderInput)
   g_OpalState.api.functions.ShaderInputShutdown(pShaderInput);
 }
 
+// Synchronization
+// ============================================================
+
+OpalResult OpalFenceInit(OpalFence* pFence, bool startSignaled)
+{
+  return OpalVulkanFenceInit(pFence, startSignaled);
+}
+
+void OpalFenceShutdown(OpalFence* pFence)
+{
+  return OpalVulkanFenceShutdown(pFence);
+}
+
+OpalResult OpalSemaphoreInit(OpalSemaphore* pSemaphore)
+{
+  return OpalVulkanSemaphoreInit(pSemaphore);
+}
+
+void OpalSemaphoreShutdown(OpalSemaphore* pSemaphore)
+{
+  return OpalVulkanSemaphoreShutdown(pSemaphore);
+}
+
 // Rendering
 // ============================================================
 
@@ -382,9 +416,9 @@ OpalResult OpalRenderBegin()
   return g_OpalState.api.functions.RenderBegin();
 }
 
-OpalResult OpalRenderEnd()
+OpalResult OpalRenderEnd(OpalSyncPack syncInfo)
 {
-  return g_OpalState.api.functions.RenderEnd();
+  return g_OpalState.api.functions.RenderEnd(syncInfo);
 }
 
 OpalResult OpalRenderToWindowBegin(OpalWindow* pWindow)

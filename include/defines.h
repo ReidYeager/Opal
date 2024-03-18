@@ -474,6 +474,34 @@ typedef struct OpalWindow
   }api;
 } OpalWindow;
 
+// Synchronization
+// ============================================================
+
+typedef struct OpalFence
+{
+  union
+  {
+    OpalVulkanFence vk;
+  } api;
+} OpalFence;
+
+typedef struct OpalSemaphore
+{
+  union
+  {
+    OpalVulkanSemaphore vk;
+  } api;
+} OpalSemaphore;
+
+typedef struct OpalSyncPack
+{
+  uint32_t waitCount;
+  OpalSemaphore* pWaitSemaphores;
+
+  uint32_t signalCount;
+  OpalSemaphore* pSignalSemaphores;
+} OpalSyncPack;
+
 // State
 // ============================================================
 
@@ -548,12 +576,18 @@ typedef struct OpalState
       OpalResult (*ShaderInputInit)          (OpalShaderInput* pShaderInput, OpalShaderInputInitInfo initInfo);
       void       (*ShaderInputShutdown)      (OpalShaderInput* pShaderInput);
 
+      // Synchronization ==========
+      OpalResult (*FenceInit)                (OpalFence* pFence, bool startSignaled);
+      void       (*FenceShutdown)            (OpalFence* pFence);
+      OpalResult (*SemaphoreInit)            (OpalSemaphore* pSemaphore);
+      void       (*SemaphoreShutdown)        (OpalSemaphore* pSemaphore);
+
       // ==============================
       // Rendering
       // ==============================
 
       OpalResult (*RenderBegin)                ();
-      OpalResult (*RenderEnd)                  ();
+      OpalResult (*RenderEnd)                  (OpalSyncPack syncInfo);
       OpalResult (*RenderToWindowBegin)        (OpalWindow* pWindow);
       OpalResult (*RenderToWindowEnd)          (OpalWindow* pWindow);
       void       (*RenderRenderpassBegin)      (const OpalRenderpass* pRenderpass, const OpalFramebuffer* pFramebuffer);
@@ -574,6 +608,8 @@ typedef struct OpalState
       // Opengl state
       // Directx state
     };
+
+    OpalGraphicsApi currentApi;
   } api;
 
   struct

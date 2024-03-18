@@ -83,10 +83,16 @@ void       OpalVulkanShaderInputLayoutShutdown    (OpalShaderInputLayout* pLayou
 OpalResult OpalVulkanShaderInputInit              (OpalShaderInput* pShaderInput, OpalShaderInputInitInfo initInfo);
 void       OpalVulkanShaderInputShutdown          (OpalShaderInput* pShaderInput);
 
+// Synchronization ==========
+OpalResult  OpalVulkanFenceInit                   (OpalFence* pFence, bool startSignaled);
+void        OpalVulkanFenceShutdown               (OpalFence* pFence);
+OpalResult  OpalVulkanSemaphoreInit               (OpalSemaphore* pSemaphore);
+void        OpalVulkanSemaphoreShutdown           (OpalSemaphore* pSemaphore);
+
 // Rendering ==========
 // Rendering - Begin/End
 OpalResult OpalVulkanRenderBegin                  ();
-OpalResult OpalVulkanRenderEnd                    ();
+OpalResult OpalVulkanRenderEnd                    (OpalSyncPack syncInfo);
 OpalResult OpalVulkanRenderToWindowBegin          (OpalWindow* pWindow);
 OpalResult OpalVulkanRenderToWindowEnd            (OpalWindow* pWindow);
 // Rendering - Objects

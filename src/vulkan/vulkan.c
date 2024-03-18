@@ -452,21 +452,30 @@ OpalResult InitGlobalResources_Ovk(OpalInitInfo initInfo)
 
   // Rendering ==========
 
+  g_ovkState->renderState.cmdCount = 5;
+
   VkCommandBufferAllocateInfo allocInfo = { 0 };
   allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
   allocInfo.pNext = NULL;
-  allocInfo.commandBufferCount = 1;
+  allocInfo.commandBufferCount = g_ovkState->renderState.cmdCount;
   allocInfo.commandPool = g_ovkState->graphicsCommandPool;
   allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+  g_ovkState->renderState.pCmdBuffers = OpalMemAllocArray(VkCommandBuffer, g_ovkState->renderState.cmdCount);
 
-  OPAL_ATTEMPT_VK(vkAllocateCommandBuffers(g_ovkState->device, &allocInfo, &g_ovkState->renderCmd));
+  OPAL_ATTEMPT_VK(vkAllocateCommandBuffers(g_ovkState->device, &allocInfo, g_ovkState->renderState.pCmdBuffers));
 
   VkFenceCreateInfo fenceInfo = { 0 };
   fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
   fenceInfo.pNext = NULL;
   fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
+  g_ovkState->renderState.pCmdAvailableFence = OpalMemAllocArray(VkFence, g_ovkState->renderState.cmdCount);
 
-  OPAL_ATTEMPT_VK(vkCreateFence(g_ovkState->device, &fenceInfo, NULL, &g_ovkState->renderCompleteFence));
+  for (uint32_t i = 0; i < g_ovkState->renderState.cmdCount; i++)
+  {
+    OPAL_ATTEMPT_VK(vkCreateFence(g_ovkState->device, &fenceInfo, NULL, &g_ovkState->renderState.pCmdAvailableFence[i]));
+  }
+
+  g_ovkState->renderState.curIndex = 0;
 
   return Opal_Success;
 }
@@ -480,8 +489,11 @@ void OpalVulkanShutdown()
   TransferBufferShutdown_Ovk();
 
   // Core
-  vkFreeCommandBuffers(g_ovkState->device, g_ovkState->graphicsCommandPool, 1, &g_ovkState->renderCmd);
-  vkDestroyFence(g_ovkState->device, g_ovkState->renderCompleteFence, NULL);
+  for (int i = 0; i < g_ovkState->renderState.cmdCount; i++)
+  {
+    vkDestroyFence(g_ovkState->device, g_ovkState->renderState.pCmdAvailableFence[i], NULL);
+  }
+  vkFreeCommandBuffers(g_ovkState->device, g_ovkState->graphicsCommandPool, g_ovkState->renderState.cmdCount, g_ovkState->renderState.pCmdBuffers);
   vkDestroyDescriptorPool(g_ovkState->device, g_ovkState->descriptorPool, NULL);
   vkDestroyCommandPool(g_ovkState->device, g_ovkState->graphicsCommandPool, NULL);
   vkDestroyCommandPool(g_ovkState->device, g_ovkState->transientCommandPool, NULL);

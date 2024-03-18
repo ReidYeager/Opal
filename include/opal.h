@@ -60,12 +60,20 @@ void       OpalShaderInputLayoutShutdown  (OpalShaderInputLayout* pLayout);
 OpalResult OpalShaderInputInit            (OpalShaderInput* pShaderInput, OpalShaderInputInitInfo initInfo);
 void       OpalShaderInputShutdown        (OpalShaderInput* pShaderInput);
 
+// Synchronization ==========
+
+OpalResult OpalFenceInit                  (OpalFence* pFence, bool startSignaled);
+void       OpalFenceShutdown              (OpalFence* pFence);
+OpalResult OpalSemaphoreInit              (OpalSemaphore* pSemaphore);
+void       OpalSemaphoreShutdown          (OpalSemaphore* pSemaphore);
+
+
 // ==============================
 // Rendering
 // ==============================
 
 OpalResult OpalRenderBegin                ();
-OpalResult OpalRenderEnd                  ();
+OpalResult OpalRenderEnd                  (OpalSyncPack syncInfo);
 OpalResult OpalRenderToWindowBegin        (OpalWindow* pWindow);
 OpalResult OpalRenderToWindowEnd          (OpalWindow* pWindow);
 void       OpalRenderRenderpassBegin      (const OpalRenderpass* pRenderpass, const OpalFramebuffer* pFramebuffer);

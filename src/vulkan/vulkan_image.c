@@ -112,7 +112,7 @@ OpalResult InitView_Ovk(OpalImage* pImage, OpalImageUsageFlags usage, uint32_t m
   vCreateInfo.image = pImage->api.vk.image;
   vCreateInfo.format = pImage->api.vk.format;
   vCreateInfo.subresourceRange.aspectMask = 0;
-  if (usage & Opal_Image_Usage_Output)
+  if (usage & Opal_Image_Usage_Output | Opal_Image_Usage_Uniform)
   {
     if (pImage->format == Opal_Format_D24_S8 || pImage->format == Opal_Format_D32)
     {

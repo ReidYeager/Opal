@@ -89,11 +89,22 @@ typedef struct OpalVulkanWindow
   // Synchronization
   uint32_t         imageIndex;
   uint32_t         syncIndex;
-  VkFence*         pCmdAvailableFences;
   VkSemaphore*     pImageAvailableSems;
   VkSemaphore*     pRenderCompleteSems;
-  VkCommandBuffer* pCommandBuffers;
 } OpalVulkanWindow;
+
+// Synchronization
+// ============================================================
+
+typedef struct OpalVulkanFence
+{
+  VkFence fence;
+} OpalVulkanFence;
+
+typedef struct OpalVulkanSemaphore
+{
+  VkSemaphore semaphore;
+} OpalVulkanSemaphore;
 
 // State
 // ============================================================
@@ -136,14 +147,19 @@ typedef struct OpalVulkanState
 
   struct
   {
+    uint32_t cmdCount;
+    VkCommandBuffer* pCmdBuffers;
+    VkFence* pCmdAvailableFence;
+
+    uint32_t curIndex;
+    VkCommandBuffer curCmd;
+    VkFence curFence;
+
     VkPipelineBindPoint bindPoint;
-    VkCommandBuffer cmd;
+
     VkPipelineLayout layout;
     uint32_t pushConstSize;
   } renderState;
-
-  VkCommandBuffer renderCmd;
-  VkFence renderCompleteFence;
 
   VkDescriptorPool descriptorPool;
 } OpalVulkanState;
