@@ -289,7 +289,9 @@ OpalResult OpalMeshInit(OpalMesh* pMesh, OpalMeshInitInfo initInfo)
   OPAL_ATTEMPT(OpalBufferInit(&pMesh->indexBuffer, bufferInfo));
 
   OPAL_ATTEMPT(OpalBufferPushData(&pMesh->vertexBuffer, (void*)initInfo.pVertices));
+  OpalWaitIdle();
   OPAL_ATTEMPT(OpalBufferPushData(&pMesh->indexBuffer, (void*)initInfo.pIndices));
+  OpalWaitIdle();
 
   pMesh->vertexCount = initInfo.vertexCount;
   pMesh->indexCount = initInfo.indexCount;

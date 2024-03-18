@@ -161,6 +161,19 @@ typedef struct OpalVulkanState
     uint32_t pushConstSize;
   } renderState;
 
+  struct
+  {
+    uint32_t count;
+
+    uint32_t graphicsHead;
+    VkCommandBuffer* pGraphicsCmds;
+    VkFence* pGraphicsFences;
+
+    uint32_t transferHead;
+    VkCommandBuffer* pTransferCmds;
+    VkFence* pTransferFences;
+  } singleUse;
+
   VkDescriptorPool descriptorPool;
 } OpalVulkanState;
 

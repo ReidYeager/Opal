@@ -149,6 +149,9 @@ OpalResult OpalVulkanBufferPushDataSegment(OpalBuffer* pBuffer, const void* data
     return Opal_Success;
   }
 
+  VkCommandBuffer cmd;
+  OPAL_ATTEMPT(SingleUseCmdBeginTransfer_Ovk(&cmd));
+
   if (g_transferBuffer_Ovk.paddedSize < size)
   {
     OpalBufferShutdown(&g_transferBuffer_Ovk);
@@ -164,9 +167,6 @@ OpalResult OpalVulkanBufferPushDataSegment(OpalBuffer* pBuffer, const void* data
   OpalMemCopy(data, mappedMemory, size);
   vkUnmapMemory(g_ovkState->device, g_transferBuffer_Ovk.api.vk.memory);
 
-  VkCommandBuffer cmd;
-  OPAL_ATTEMPT(BeginSingleUseCommandBuffer_Ovk(&cmd, g_ovkState->transientCommandPool));
-
   VkBufferCopy region = { 0 };
   region.srcOffset = 0;
   region.dstOffset = bufferOffset;
@@ -174,7 +174,7 @@ OpalResult OpalVulkanBufferPushDataSegment(OpalBuffer* pBuffer, const void* data
 
   vkCmdCopyBuffer(cmd, g_transferBuffer_Ovk.api.vk.buffer, pBuffer->api.vk.buffer, 1, &region);
 
-  OPAL_ATTEMPT(EndSingleUseCommandBuffer_Ovk(cmd, g_ovkState->transientCommandPool, g_ovkState->queueTransfer));
+  OPAL_ATTEMPT(SingleUseCmdEndTransfer_Ovk(cmd));
 
   return Opal_Success;
 }
@@ -208,7 +208,7 @@ OpalResult OpalVulkanBufferDumpDataSegment(OpalBuffer* pBuffer, void* outData, u
   }
 
   VkCommandBuffer cmd;
-  OPAL_ATTEMPT(BeginSingleUseCommandBuffer_Ovk(&cmd, g_ovkState->transientCommandPool));
+  OPAL_ATTEMPT(SingleUseCmdBeginTransfer_Ovk(&cmd));
 
   VkBufferCopy region = { 0 };
   region.srcOffset = offset;
@@ -217,7 +217,7 @@ OpalResult OpalVulkanBufferDumpDataSegment(OpalBuffer* pBuffer, void* outData, u
 
   vkCmdCopyBuffer(cmd, pBuffer->api.vk.buffer, g_transferBuffer_Ovk.api.vk.buffer, 1, &region);
 
-  OPAL_ATTEMPT(EndSingleUseCommandBuffer_Ovk(cmd, g_ovkState->transientCommandPool, g_ovkState->queueTransfer));
+  OPAL_ATTEMPT(SingleUseCmdEndTransfer_Ovk(cmd));
 
   void* mappedMemory;
   OPAL_ATTEMPT_VK(vkMapMemory(g_ovkState->device, g_transferBuffer_Ovk.api.vk.memory, (VkDeviceSize)offset, (VkDeviceSize)size, 0, &mappedMemory));

@@ -376,7 +376,7 @@ OpalResult InitCommandPool_Ovk(bool isTransient)
 
   if (isTransient)
   {
-    createInfo.flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT;
+    createInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
     createInfo.queueFamilyIndex = g_ovkState->gpu.queueIndexTransfer;
     outPool = &g_ovkState->transientCommandPool;
   }
@@ -450,6 +450,40 @@ OpalResult InitGlobalResources_Ovk(OpalInitInfo initInfo)
 
   OPAL_ATTEMPT(TransferBufferInit_Ovk());
 
+  // Single-use command ==========
+
+  g_ovkState->singleUse.count = 3;
+
+  g_ovkState->singleUse.pGraphicsCmds = OpalMemAllocArray(VkCommandBuffer, g_ovkState->singleUse.count);
+  g_ovkState->singleUse.pTransferCmds = OpalMemAllocArray(VkCommandBuffer, g_ovkState->singleUse.count);
+  g_ovkState->singleUse.pGraphicsFences = OpalMemAllocArray(VkFence, g_ovkState->singleUse.count);
+  g_ovkState->singleUse.pTransferFences = OpalMemAllocArray(VkFence, g_ovkState->singleUse.count);
+  g_ovkState->singleUse.graphicsHead = 0;
+  g_ovkState->singleUse.transferHead = 0;
+
+  VkCommandBufferAllocateInfo cmdAllocInfo;
+  cmdAllocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+  cmdAllocInfo.pNext = NULL;
+  cmdAllocInfo.commandBufferCount = g_ovkState->singleUse.count;
+  cmdAllocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+
+  cmdAllocInfo.commandPool = g_ovkState->graphicsCommandPool;
+  OPAL_ATTEMPT_VK(vkAllocateCommandBuffers(g_ovkState->device, &cmdAllocInfo, g_ovkState->singleUse.pGraphicsCmds));
+
+  cmdAllocInfo.commandPool = g_ovkState->transientCommandPool;
+  OPAL_ATTEMPT_VK(vkAllocateCommandBuffers(g_ovkState->device, &cmdAllocInfo, g_ovkState->singleUse.pTransferCmds));
+
+  VkFenceCreateInfo fenceCreateInfo;
+  fenceCreateInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+  fenceCreateInfo.pNext = NULL;
+  fenceCreateInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
+
+  for (uint32_t i = 0; i < g_ovkState->singleUse.count; i++)
+  {
+    OPAL_ATTEMPT_VK(vkCreateFence(g_ovkState->device, &fenceCreateInfo, NULL, &g_ovkState->singleUse.pGraphicsFences[i]));
+    OPAL_ATTEMPT_VK(vkCreateFence(g_ovkState->device, &fenceCreateInfo, NULL, &g_ovkState->singleUse.pTransferFences[i]));
+  }
+
   // Rendering ==========
 
   g_ovkState->renderState.cmdCount = 5;
@@ -487,6 +521,18 @@ void OpalVulkanShutdown()
 {
   // Global resources
   TransferBufferShutdown_Ovk();
+
+  for (uint32_t i = 0; i < g_ovkState->singleUse.count; i++)
+  {
+    vkDestroyFence(g_ovkState->device, g_ovkState->singleUse.pGraphicsFences[i], NULL);
+    vkDestroyFence(g_ovkState->device, g_ovkState->singleUse.pTransferFences[i], NULL);
+  }
+  vkFreeCommandBuffers(g_ovkState->device, g_ovkState->graphicsCommandPool, g_ovkState->singleUse.count, g_ovkState->singleUse.pGraphicsCmds);
+  vkFreeCommandBuffers(g_ovkState->device, g_ovkState->transientCommandPool, g_ovkState->singleUse.count, g_ovkState->singleUse.pTransferCmds);
+  OpalMemFree(g_ovkState->singleUse.pGraphicsCmds);
+  OpalMemFree(g_ovkState->singleUse.pTransferCmds);
+  OpalMemFree(g_ovkState->singleUse.pGraphicsFences);
+  OpalMemFree(g_ovkState->singleUse.pTransferFences);
 
   // Core
   for (int i = 0; i < g_ovkState->renderState.cmdCount; i++)

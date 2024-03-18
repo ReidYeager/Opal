@@ -161,17 +161,18 @@ VkShaderStageFlags OpalStagesToVkStages_Ovk(OpalStageFlags stages)
 // Commands
 // ============================================================
 
-OpalResult BeginSingleUseCommandBuffer_Ovk(VkCommandBuffer* pCmd, VkCommandPool pool)
+OpalResult SingleUseCmdBeginGraphics_Ovk(VkCommandBuffer* pCmd)
 {
-  VkCommandBufferAllocateInfo allocInfo = { 0 };
-  allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-  allocInfo.pNext = NULL;
-  allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-  allocInfo.commandPool = pool;
-  allocInfo.commandBufferCount = 1;
+  *pCmd = g_ovkState->singleUse.pGraphicsCmds[g_ovkState->singleUse.graphicsHead];
 
-  OPAL_ATTEMPT_VK(vkAllocateCommandBuffers(g_ovkState->device, &allocInfo, pCmd));
-  
+  OPAL_ATTEMPT_VK(vkWaitForFences(
+    g_ovkState->device,
+    1,
+    &g_ovkState->singleUse.pGraphicsFences[g_ovkState->singleUse.graphicsHead],
+    VK_TRUE,
+    UINT64_MAX));
+  OPAL_ATTEMPT_VK(vkResetFences(g_ovkState->device, 1, &g_ovkState->singleUse.pGraphicsFences[g_ovkState->singleUse.graphicsHead]));
+
   VkCommandBufferBeginInfo beginInfo = { 0 };
   beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
   beginInfo.pNext = NULL;
@@ -183,7 +184,7 @@ OpalResult BeginSingleUseCommandBuffer_Ovk(VkCommandBuffer* pCmd, VkCommandPool 
   return Opal_Success;
 }
 
-OpalResult EndSingleUseCommandBuffer_Ovk(VkCommandBuffer cmd, VkCommandPool pool, VkQueue submissionQueue)
+OpalResult SingleUseCmdEndGraphics_Ovk(VkCommandBuffer cmd)
 {
   OPAL_ATTEMPT_VK(vkEndCommandBuffer(cmd));
 
@@ -198,11 +199,62 @@ OpalResult EndSingleUseCommandBuffer_Ovk(VkCommandBuffer cmd, VkCommandPool pool
   submitInfo.pWaitSemaphores = NULL;
   submitInfo.pWaitDstStageMask = NULL;
 
-  OPAL_ATTEMPT_VK(vkQueueSubmit(submissionQueue, 1, &submitInfo, VK_NULL_HANDLE));
+  OPAL_ATTEMPT_VK(vkQueueSubmit(
+    g_ovkState->queueGraphics,
+    1,
+    &submitInfo,
+    g_ovkState->singleUse.pGraphicsFences[g_ovkState->singleUse.graphicsHead]));
 
-  OPAL_ATTEMPT_VK(vkQueueWaitIdle(submissionQueue));
+  g_ovkState->singleUse.graphicsHead = (g_ovkState->singleUse.graphicsHead + 1) % g_ovkState->singleUse.count;
 
-  vkFreeCommandBuffers(g_ovkState->device, pool, 1, &cmd);
+  return Opal_Success;
+}
+
+OpalResult SingleUseCmdBeginTransfer_Ovk(VkCommandBuffer* pCmd)
+{
+  *pCmd = g_ovkState->singleUse.pTransferCmds[g_ovkState->singleUse.transferHead];
+
+  OPAL_ATTEMPT_VK(vkWaitForFences(
+    g_ovkState->device,
+    1,
+    &g_ovkState->singleUse.pTransferFences[g_ovkState->singleUse.transferHead],
+    VK_TRUE,
+    UINT64_MAX));
+  OPAL_ATTEMPT_VK(vkResetFences(g_ovkState->device, 1, &g_ovkState->singleUse.pTransferFences[g_ovkState->singleUse.transferHead]));
+
+  VkCommandBufferBeginInfo beginInfo = { 0 };
+  beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+  beginInfo.pNext = NULL;
+  beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+  beginInfo.pInheritanceInfo = NULL;
+
+  OPAL_ATTEMPT_VK(vkBeginCommandBuffer(*pCmd, &beginInfo));
+
+  return Opal_Success;
+}
+
+OpalResult SingleUseCmdEndTransfer_Ovk(VkCommandBuffer cmd)
+{
+  OPAL_ATTEMPT_VK(vkEndCommandBuffer(cmd));
+
+  VkSubmitInfo submitInfo = { 0 };
+  submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+  submitInfo.pNext = NULL;
+  submitInfo.commandBufferCount = 1;
+  submitInfo.pCommandBuffers = &cmd;
+  submitInfo.signalSemaphoreCount = 0;
+  submitInfo.pSignalSemaphores = NULL;
+  submitInfo.waitSemaphoreCount = 0;
+  submitInfo.pWaitSemaphores = NULL;
+  submitInfo.pWaitDstStageMask = NULL;
+
+  OPAL_ATTEMPT_VK(vkQueueSubmit(
+    g_ovkState->queueTransfer,
+    1,
+    &submitInfo,
+    g_ovkState->singleUse.pTransferFences[g_ovkState->singleUse.transferHead]));
+
+  g_ovkState->singleUse.transferHead = (g_ovkState->singleUse.transferHead + 1) % g_ovkState->singleUse.count;
 
   return Opal_Success;
 }

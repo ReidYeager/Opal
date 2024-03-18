@@ -116,11 +116,13 @@ OpalResult PlatformCreateSurface_Ovk              (OpalPlatformWindowInfo window
 // Tools
 // ============================================================
 
-VkFormat           OpalFormatToVkFormat_Ovk       (OpalFormat _format);
-OpalFormat         VkFormatToOpalFormat_Ovk       (VkFormat _format);
-VkShaderStageFlags OpalStagesToVkStages_Ovk       (OpalStageFlags stages);
-OpalResult         BeginSingleUseCommandBuffer_Ovk(VkCommandBuffer* pCmd, VkCommandPool pool);
-OpalResult         EndSingleUseCommandBuffer_Ovk  (VkCommandBuffer cmd, VkCommandPool pool, VkQueue submissionQueue);
+VkFormat           OpalFormatToVkFormat_Ovk     (OpalFormat _format);
+OpalFormat         VkFormatToOpalFormat_Ovk     (VkFormat _format);
+VkShaderStageFlags OpalStagesToVkStages_Ovk     (OpalStageFlags stages);
+OpalResult         SingleUseCmdBeginGraphics_Ovk(VkCommandBuffer* pCmd);
+OpalResult         SingleUseCmdEndGraphics_Ovk  (VkCommandBuffer  pCmd);
+OpalResult         SingleUseCmdBeginTransfer_Ovk(VkCommandBuffer* pCmd);
+OpalResult         SingleUseCmdEndTransfer_Ovk  (VkCommandBuffer  pCmd);
 
 
 #endif // !OPAL_VULKAN_COMMON_H
