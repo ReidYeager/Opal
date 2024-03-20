@@ -43,7 +43,15 @@ OpalResult OpalVulkanImageInit(OpalImage* pImage, OpalImageInitInfo initInfo)
 
   if (initInfo.usage & Opal_Image_Usage_Uniform)
   {
-    OPAL_ATTEMPT(ImageTransitionLayout_Ovk(pImage, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL));
+    if (initInfo.usage & Opal_Image_Usage_Storage)
+    {
+      OPAL_ATTEMPT(ImageTransitionLayout_Ovk(pImage, VK_IMAGE_LAYOUT_GENERAL));
+    }
+    else
+    {
+      OPAL_ATTEMPT(ImageTransitionLayout_Ovk(pImage, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL));
+    }
+
     OPAL_ATTEMPT(InitSampler_Ovk(pImage, initInfo.filter, initInfo.sampleMode, 0, initInfo.mipCount - 1));
   }
   else if (initInfo.usage & Opal_Image_Usage_Subpass_Product)
@@ -328,72 +336,14 @@ OpalResult ImageTransitionLayout_Ovk(OpalImage* pImage, VkImageLayout newLayout)
   memBarrier.subresourceRange.baseMipLevel = 0;
   memBarrier.subresourceRange.layerCount = 1;
   memBarrier.subresourceRange.baseArrayLayer = 0;
+  memBarrier.srcAccessMask = 0;
+  memBarrier.dstAccessMask = 0;
 
   memBarrier.oldLayout = pImage->api.vk.layout;
   memBarrier.newLayout = newLayout;
 
-  VkPipelineStageFlagBits srcStage, dstStage;
-
-  switch (newLayout)
-  {
-  case VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL:
-  {
-    srcStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
-    memBarrier.srcAccessMask = 0;
-
-    dstStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
-    memBarrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-  } break;
-  case VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL:
-  {
-    srcStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
-    memBarrier.srcAccessMask = 0;
-
-    dstStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
-    memBarrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
-  } break;
-  case VK_IMAGE_LAYOUT_PRESENT_SRC_KHR:
-  {
-    srcStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
-    memBarrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-
-    dstStage = VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT;
-    memBarrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT;
-  } break;
-  case VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL:
-  {
-    srcStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
-    memBarrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-
-    dstStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-    memBarrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-  } break;
-  case VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL:
-  {
-    srcStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
-    memBarrier.srcAccessMask = 0;
-
-    dstStage = VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT;
-    memBarrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT;
-  } break;
-  case VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL:
-  {
-    srcStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
-    memBarrier.srcAccessMask = 0;
-
-    dstStage = VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT;
-    memBarrier.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT;
-  } break;
-  case 0:
-  {
-    return Opal_Success;
-  }
-  default:
-  {
-    OpalLogError("Unknown new image layout %d", newLayout);
-    return Opal_Failure_Invalid_Input;
-  }
-  }
+  VkPipelineStageFlagBits srcStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+  VkPipelineStageFlagBits dstStage = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
 
   VkCommandBuffer cmd;
   OPAL_ATTEMPT(SingleUseCmdBeginGraphics_Ovk(&cmd));
