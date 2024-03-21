@@ -9,21 +9,21 @@
 // ============================================================
 
 // Core ==========
-//OpalResult      OpalVulkanImageInit         (OpalImage* pImage, OpalImageInitInfo initInfo)
-//void            OpalVulkanImageShutdown     (OpalImage* pImage)
-OpalResult        InitImage_Ovk               (OpalImage* pImage, OpalImageInitInfo initInfo);
-OpalResult        InitImageMemory_Ovk         (OpalImage* pImage);
-OpalResult        InitView_Ovk                (OpalImage* pImage, OpalImageUsageFlags usage, uint32_t mipBase, uint32_t mipCount);
-OpalResult        InitSampler_Ovk             (OpalImage* pImage, OpalImageFilterType filter, OpalImageSampleMode sample, uint32_t minLod, uint32_t maxLod);
-//OpalResult      OpalVulkanImagePushData     (OpalImage* pImage, const void* data)
-OpalResult        FillMipmaps_Ovk             (OpalImage* pImage);
+//OpalResult        OpalVulkanImageInit         (OpalImage* pImage, OpalImageInitInfo initInfo)
+//void              OpalVulkanImageShutdown     (OpalImage* pImage)
+OpalResult          InitImage_Ovk               (OpalImage* pImage, OpalImageInitInfo initInfo);
+OpalResult          InitImageMemory_Ovk         (OpalImage* pImage);
+OpalResult          InitView_Ovk                (OpalImage* pImage, OpalImageUsageFlags usage, uint32_t mipBase, uint32_t mipCount);
+OpalResult          InitSampler_Ovk             (OpalImage* pImage, OpalImageFilterType filter, OpalImageSampleMode sample, uint32_t minLod, uint32_t   maxLod);
+//OpalResult        OpalVulkanImagePushData     (OpalImage* pImage, const void* data)
+OpalResult          FillMipmaps_Ovk             (OpalImage* pImage);
 
 // Tools ==========
-//OpalResult      ImageTransitionLayout_Ovk   (OpalImage* pImage, VkImageLayout newLayout)
-VkImageUsageFlags OpalImageUsageToVkFlags_Ovk (OpalImageUsageFlags opalFlags, OpalFormat format);
-uint32_t          GetMemoryTypeIndex_Ovk      (uint32_t _mask, VkMemoryPropertyFlags _flags);
-OpalResult        CopyBufferToImage_Ovk       (OpalBuffer* pBuffer, OpalImage* pImage);
-//OpalResult      OpalVulkanImageGetMipAsImage(OpalImage* pImage, OpalImage* pMipImage, uint32_t mipLevel);
+//OpalResult        ImageTransitionLayout_Ovk   (OpalImage* pImage, VkImageLayout newLayout)
+//VkImageUsageFlags OpalImageUsageToVkFlags_Ovk (OpalImageUsageFlags opalFlags, OpalFormat format);
+uint32_t            GetMemoryTypeIndex_Ovk      (uint32_t _mask, VkMemoryPropertyFlags _flags);
+OpalResult          CopyBufferToImage_Ovk       (OpalBuffer* pBuffer, OpalImage* pImage);
+//OpalResult        OpalVulkanImageGetMipAsImage(OpalImage* pImage, OpalImage* pMipImage, uint32_t mipLevel);
 
 // Core
 // ============================================================
@@ -41,13 +41,14 @@ OpalResult OpalVulkanImageInit(OpalImage* pImage, OpalImageInitInfo initInfo)
   pImage->api.vk.layout = VK_IMAGE_LAYOUT_UNDEFINED;
   pImage->api.vk.sampler = VK_NULL_HANDLE;
 
+  if (initInfo.usage & Opal_Image_Usage_Storage)
+  {
+    OPAL_ATTEMPT(ImageTransitionLayout_Ovk(pImage, VK_IMAGE_LAYOUT_GENERAL));
+  }
+
   if (initInfo.usage & Opal_Image_Usage_Uniform)
   {
-    if (initInfo.usage & Opal_Image_Usage_Storage)
-    {
-      OPAL_ATTEMPT(ImageTransitionLayout_Ovk(pImage, VK_IMAGE_LAYOUT_GENERAL));
-    }
-    else
+    if (!(initInfo.usage & Opal_Image_Usage_Storage))
     {
       OPAL_ATTEMPT(ImageTransitionLayout_Ovk(pImage, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL));
     }
@@ -201,10 +202,10 @@ OpalResult InitSampler_Ovk(OpalImage* pImage, OpalImageFilterType filter, OpalIm
 
 OpalResult OpalVulkanImagePushData(OpalImage* pImage, const void* data)
 {
-  if (pImage->api.vk.layout != VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
+  if (!(pImage->usage & Opal_Image_Usage_Transfer_Dst))
   {
-    // Assume manually pushed data is being read by shaders.
-    OPAL_ATTEMPT(ImageTransitionLayout_Ovk(pImage, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL));
+    OpalLogError("Can not push data to image without Transfer_Dst usage bit");
+    return Opal_Failure_Invalid_Input;
   }
 
   OpalBufferInitInfo bufferInfo = { 0 };
@@ -227,6 +228,103 @@ OpalResult OpalVulkanImagePushData(OpalImage* pImage, const void* data)
   {
     OPAL_ATTEMPT(FillMipmaps_Ovk(pImage));
   }
+
+  return Opal_Success;
+}
+
+OpalResult OpalVulkanImageCopyImage(OpalImage* pImage, OpalImage* pSourceImage, OpalImageFilterType filter)
+{
+  if (!(pImage->usage & Opal_Image_Usage_Transfer_Dst))
+  {
+    OpalLogError("Destination image not setup with Transfer_Dst usage");
+    return Opal_Failure_Invalid_Input;
+  }
+  if (!(pSourceImage->usage & Opal_Image_Usage_Transfer_Src))
+  {
+    OpalLogError("Source image not setup with Transfer_Src usage");
+    return Opal_Failure_Invalid_Input;
+  }
+  if (pSourceImage->format != pImage->format)
+  {
+    OpalLogError("Source and destination images must have the same format for copy");
+    return Opal_Failure_Invalid_Input;
+  }
+
+  VkImageAspectFlags aspect = 0;
+  if (pSourceImage->format == Opal_Format_D24_S8 || pSourceImage->format == Opal_Format_D32)
+  {
+    aspect = VK_IMAGE_ASPECT_DEPTH_BIT;
+  }
+  else
+  {
+    aspect = VK_IMAGE_ASPECT_COLOR_BIT;
+  }
+
+  VkFilter filterVk = VK_FILTER_LINEAR;
+  switch (filter)
+  {
+  case Opal_Image_Filter_Linear:
+  {
+    filterVk = VK_FILTER_LINEAR;
+  } break;
+  case Opal_Image_Filter_Point:
+  default:
+  {
+    filterVk = VK_FILTER_NEAREST;
+  } break;
+  }
+
+  uint32_t mipCount = (pImage->mipCount < pSourceImage->mipCount) ? pImage->mipCount : pSourceImage->mipCount;
+  VkImageLayout srcLayout = pSourceImage->api.vk.layout;
+  VkImageLayout dstLayout = pImage->api.vk.layout;
+
+  OPAL_ATTEMPT(ImageTransitionLayout_Ovk(pSourceImage, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL));
+  OPAL_ATTEMPT(ImageTransitionLayout_Ovk(pImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL));
+
+  VkCommandBuffer cmd;
+  OPAL_ATTEMPT(SingleUseCmdBeginGraphics_Ovk(&cmd));
+
+  int32_t srcMipWidth = (int32_t)pSourceImage->width;
+  int32_t srcMipHeight = (int32_t)pSourceImage->height;
+  int32_t dstMipWidth = (int32_t)pImage->width;
+  int32_t dstMipHeight = (int32_t)pImage->height;
+  for (int i = 0; i < mipCount; i++)
+  {
+    VkImageBlit blit = { 0 };
+    blit.srcOffsets[0] = (VkOffset3D){ 0, 0, 0 };
+    blit.srcOffsets[1] = (VkOffset3D){ srcMipWidth, srcMipHeight, 1 };
+    blit.srcSubresource.aspectMask = aspect;
+    blit.srcSubresource.mipLevel = i;
+    blit.srcSubresource.baseArrayLayer = 0;
+    blit.srcSubresource.layerCount = 1;
+    blit.dstOffsets[0] = (VkOffset3D){ 0, 0, 0 };
+    blit.dstOffsets[1] = (VkOffset3D){ dstMipWidth, dstMipHeight, 1 };
+    blit.dstSubresource.aspectMask = aspect;
+    blit.dstSubresource.mipLevel = i;
+    blit.dstSubresource.baseArrayLayer = 0;
+    blit.dstSubresource.layerCount = 1;
+    vkCmdBlitImage(
+      cmd,
+      pSourceImage->api.vk.image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+      pImage->api.vk.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+      1, &blit, filterVk);
+
+    if (srcMipWidth > 1)
+      srcMipWidth /= 2;
+    if (srcMipHeight > 1)
+      srcMipHeight /= 2;
+
+    if (dstMipWidth > 1)
+      dstMipWidth /= 2;
+    if (dstMipHeight > 1)
+      dstMipHeight /= 2;
+  }
+
+  OPAL_ATTEMPT(SingleUseCmdEndGraphics_Ovk(cmd));
+  OpalWaitIdle();
+
+  OPAL_ATTEMPT(ImageTransitionLayout_Ovk(pSourceImage, srcLayout));
+  OPAL_ATTEMPT(ImageTransitionLayout_Ovk(pImage, dstLayout));
 
   return Opal_Success;
 }

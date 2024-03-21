@@ -6,12 +6,12 @@
 
 // Initialization ==========
 //OpalResult       OpalVulkanWindowInit       (OpalWindowInitInfo initInfo, OpalWindow* pWindow);
-OpalResult         SwapchainInit_Ovk          (OpalWindow* pWindow);
+OpalResult         SwapchainInit_Ovk          (OpalWindow* pWindow, OpalWindowInitInfo initInfo);
 VkExtent2D         GetSurfaceExtents_Ovk      (OpalVulkanWindow* pWindow);
 uint32_t           GetSwapchainImageCount_Ovk (OpalVulkanWindow* pWindow);
-VkSurfaceFormatKHR GetSwapchainFormat_Ovk     (OpalVulkanWindow* pWindow);
+VkSurfaceFormatKHR GetSwapchainFormat_Ovk     (OpalVulkanWindow* pWindow, OpalFormat desiredFormat);
 VkPresentModeKHR   GetSwapchainPresentMode_Ovk(OpalVulkanWindow* pWindow);
-OpalResult         FramesInit_Ovk             (OpalWindow* pWindow);
+OpalResult         FramesInit_Ovk             (OpalWindow* pWindow, OpalWindowInitInfo initInfo);
 
 // Shutdown ==========
 //void             OpalVulkanWindowShutdown   (OpalWindow* pWindow);
@@ -22,8 +22,8 @@ OpalResult         FramesInit_Ovk             (OpalWindow* pWindow);
 OpalResult OpalVulkanWindowInit(OpalWindow* pWindow, OpalWindowInitInfo initInfo)
 {
   OPAL_ATTEMPT(PlatformCreateSurface_Ovk(initInfo.platform, &pWindow->api.vk.surface));
-  OPAL_ATTEMPT(SwapchainInit_Ovk(pWindow));
-  OPAL_ATTEMPT(FramesInit_Ovk(pWindow));
+  OPAL_ATTEMPT(SwapchainInit_Ovk(pWindow, initInfo));
+  OPAL_ATTEMPT(FramesInit_Ovk(pWindow, initInfo));
 
   pWindow->imageCount = pWindow->api.vk.imageCount;
   pWindow->api.vk.imageIndex = pWindow->api.vk.imageCount - 1;
@@ -32,12 +32,14 @@ OpalResult OpalVulkanWindowInit(OpalWindow* pWindow, OpalWindowInitInfo initInfo
   return Opal_Success;
 }
 
-OpalResult SwapchainInit_Ovk(OpalWindow* pWindow)
+OpalResult SwapchainInit_Ovk(OpalWindow* pWindow, OpalWindowInitInfo initInfo)
 {
   VkExtent2D extents = GetSurfaceExtents_Ovk(&pWindow->api.vk);
   uint32_t count = GetSwapchainImageCount_Ovk(&pWindow->api.vk);
   VkPresentModeKHR presentMode = GetSwapchainPresentMode_Ovk(&pWindow->api.vk);
-  VkSurfaceFormatKHR format = GetSwapchainFormat_Ovk(&pWindow->api.vk);
+  VkSurfaceFormatKHR format = GetSwapchainFormat_Ovk(&pWindow->api.vk, initInfo.desiredImageFormat);
+
+  OpalFormat formatOpal = VkFormatToOpalFormat_Ovk(format.format);
 
   VkSwapchainCreateInfoKHR createInfo = { 0 };
   createInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
@@ -52,9 +54,10 @@ OpalResult SwapchainInit_Ovk(OpalWindow* pWindow)
   createInfo.presentMode = presentMode;
   createInfo.imageArrayLayers = 1;
   createInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
-  createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
   createInfo.preTransform = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR;
   createInfo.clipped = VK_TRUE;
+  createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+  createInfo.imageUsage |= OpalImageUsageToVkFlags_Ovk(initInfo.imageUse, formatOpal);
 
   uint32_t queueIndices[2] = { g_ovkState->gpu.queueIndexGraphicsCompute, g_ovkState->gpu.queueIndexTransfer };
   if (queueIndices[0] == queueIndices[1])
@@ -72,6 +75,7 @@ OpalResult SwapchainInit_Ovk(OpalWindow* pWindow)
 
   pWindow->width = extents.width;
   pWindow->height = extents.height;
+  pWindow->imageFormat = formatOpal;
   pWindow->api.vk.format = format.format;
   pWindow->api.vk.presentMode = presentMode;
 
@@ -106,7 +110,7 @@ uint32_t GetSwapchainImageCount_Ovk(OpalVulkanWindow* pWindow)
   return count;
 }
 
-VkSurfaceFormatKHR GetSwapchainFormat_Ovk(OpalVulkanWindow* pWindow)
+VkSurfaceFormatKHR GetSwapchainFormat_Ovk(OpalVulkanWindow* pWindow, OpalFormat desiredFormat)
 {
   uint32_t count;
   VkSurfaceFormatKHR* formats;
@@ -115,17 +119,36 @@ VkSurfaceFormatKHR GetSwapchainFormat_Ovk(OpalVulkanWindow* pWindow)
   formats = (VkSurfaceFormatKHR*)malloc(sizeof(VkSurfaceFormatKHR) * count);
   vkGetPhysicalDeviceSurfaceFormatsKHR(g_ovkState->gpu.device, pWindow->surface, &count, formats);
 
+  VkFormat desiredFormatVk = OpalFormatToVkFormat_Ovk(desiredFormat);
+  bool foundDesired = false;
+
   VkSurfaceFormatKHR finalFormat = formats[0];
+  bool matchFormat = false, matchSpace = false;
   for (int i = 0; i < count; i++)
   {
-    // TODO : Allow client colorspace/format selection on winodw creation
-    //   ex: windowInfo.displayMode = Opal_Display_Hdr10
-    if (formats[i].format == VK_FORMAT_R8G8B8A8_UNORM
-      && formats[i].colorSpace == VK_COLORSPACE_SRGB_NONLINEAR_KHR)
+    matchFormat = formats[i].format == desiredFormatVk;
+    matchSpace = formats[i].colorSpace == VK_COLORSPACE_SRGB_NONLINEAR_KHR;
+
+    if (matchFormat && matchSpace)
     {
+      foundDesired = true;
       finalFormat = formats[i];
       break;
     }
+    else if (matchFormat)
+    {
+      finalFormat = formats[i];
+    }
+    else if (matchSpace)
+    {
+      finalFormat = formats[i];
+    }
+  }
+
+  if (!foundDesired)
+  {
+    OpalLogError("Surface does not support desired format (%d) using %d",
+      desiredFormat, VkFormatToOpalFormat_Ovk(finalFormat.format));
   }
 
   free(formats);
@@ -155,7 +178,7 @@ VkPresentModeKHR GetSwapchainPresentMode_Ovk(OpalVulkanWindow* pWindow)
   return finalMode;
 }
 
-OpalResult FramesInit_Ovk(OpalWindow* pWindow)
+OpalResult FramesInit_Ovk(OpalWindow* pWindow, OpalWindowInitInfo initInfo)
 {
   uint32_t createdCount = 0;
   OpalVulkanWindow* window = &pWindow->api.vk;
@@ -249,6 +272,7 @@ OpalResult FramesInit_Ovk(OpalWindow* pWindow)
     pWindow->pImages[i].height = pWindow->height;
     pWindow->pImages[i].mipCount = 1;
     pWindow->pImages[i].format = VkFormatToOpalFormat_Ovk(pWindow->api.vk.format);
+    pWindow->pImages[i].usage = Opal_Image_Usage_Output | initInfo.imageUse;
     pWindow->pImages[i].api.vk.format = pWindow->api.vk.format;
     pWindow->pImages[i].api.vk.image = pWindow->api.vk.pImages[i];
     pWindow->pImages[i].api.vk.view = pWindow->api.vk.pImageViews[i];

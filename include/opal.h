@@ -32,6 +32,7 @@ OpalResult OpalBufferDumpDataSegment      (OpalBuffer* pBuffer, void* outData, u
 OpalResult OpalImageInit                  (OpalImage* pImage, OpalImageInitInfo initInfo);
 void       OpalImageShutdown              (OpalImage* pImage);
 OpalResult OpalImagePushData              (OpalImage* pImage, const void* data);
+OpalResult OpalImageCopyImage             (OpalImage* pImage, OpalImage* pSourceImage, OpalImageFilterType filter);
 OpalResult OpalImageGetMipAsImage         (OpalImage* pImage, OpalImage* pMipImage, uint32_t mipLevel);
 
 // Mesh ==========

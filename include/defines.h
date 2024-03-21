@@ -457,6 +457,10 @@ typedef struct OpalWindowInitInfo
   OpalPlatformWindowInfo platform;
   uint32_t width;
   uint32_t height;
+  OpalFormat desiredImageFormat;
+  // Uses assigned to swapchain images
+  // Guaranteed to include Opal_Image_Usage_Output
+  OpalImageUsageFlags imageUse;
 } OpalWindowInitInfo;
 
 typedef struct OpalWindow
@@ -552,6 +556,7 @@ typedef struct OpalState
       OpalResult (*ImageInit)            (OpalImage* pImage, OpalImageInitInfo initInfo);
       void       (*ImageShutdown)        (OpalImage* pImage);
       OpalResult (*ImagePushData)        (OpalImage* pImage, const void* data);
+      OpalResult (*ImageCopyImage)       (OpalImage* pImage, OpalImage* pSourceImage, OpalImageFilterType filter);
       OpalResult (*ImageGetMipAsImage)   (OpalImage* pImage, OpalImage* pMipImage, uint32_t mipLevel);
 
       // Renderpass ==========

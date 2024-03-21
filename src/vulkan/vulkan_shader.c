@@ -52,6 +52,8 @@ OpalResult OpalVulkanShaderInit(OpalShader* pShader, OpalShaderInitInfo initInfo
   }
   }
 
+  pShader->type = initInfo.type;
+
   return Opal_Success;
 }
 
@@ -529,6 +531,7 @@ OpalResult InitPipelineCompute_Ovk(OpalShaderGroup* pShaderGroup, OpalShaderGrou
   shaderStage.module = initInfo.pShaders[0].api.vk.module;
   shaderStage.stage = initInfo.pShaders[0].api.vk.stage;
   shaderStage.pName = "main";
+  shaderStage.pSpecializationInfo = NULL;
 
   // Creation =====
 
