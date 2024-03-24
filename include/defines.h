@@ -603,7 +603,7 @@ typedef struct OpalState
       void       (*RenderBindShaderInput)      (const OpalShaderInput* pInput, uint32_t setIndex);
       void       (*RenderSetPushConstant)      (const void* data);
       void       (*RenderMesh)                 (const OpalMesh* p);
-      void       (*ComputeDispatch)            (uint32_t x, uint32_t y, uint32_t z);
+      void       (*RenderComputeDispatch)      (uint32_t x, uint32_t y, uint32_t z);
 
     } functions;
 

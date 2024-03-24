@@ -86,7 +86,7 @@ void       OpalRenderBindShaderInput      (const OpalShaderInput* pInput, uint32
 void       OpalRenderSetPushConstant      (const void* data);
 void       OpalRenderMesh                 (const OpalMesh* pMesh);
 
-void       OpalComputeDispatch            (uint32_t x, uint32_t y, uint32_t z);
+void       OpalRenderComputeDispatch      (uint32_t x, uint32_t y, uint32_t z);
 
 #ifdef __cplusplus
 }

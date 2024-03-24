@@ -486,7 +486,7 @@ OpalResult InitGlobalResources_Ovk(OpalInitInfo initInfo)
 
   // Rendering ==========
 
-  g_ovkState->renderState.cmdCount = 5;
+  g_ovkState->renderState.cmdCount = 32;
 
   VkCommandBufferAllocateInfo allocInfo = { 0 };
   allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;

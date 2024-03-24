@@ -254,7 +254,7 @@ void OpalVulkanRenderMesh(const OpalMesh* pMesh)
   vkCmdDrawIndexed(g_ovkState->renderState.curCmd, pMesh->indexCount, 1, 0, 0, 0);
 }
 
-void OpalVulkanComputeDispatch(uint32_t x, uint32_t y, uint32_t z)
+void OpalVulkanRenderComputeDispatch(uint32_t x, uint32_t y, uint32_t z)
 {
   vkCmdDispatch(g_ovkState->renderState.curCmd, x, y, z);
 }
