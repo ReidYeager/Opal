@@ -1,8 +1,8 @@
 #ifndef OPAL_VULKAN_COMMON_H
 #define OPAL_VULKAN_COMMON_H 1
 
-#include "src/common.h"
-#include "include/vulkan_defines.h"
+#include "common.h"
+#include "vulkan_defines.h"
 
 #include <vulkan/vulkan.h>
 

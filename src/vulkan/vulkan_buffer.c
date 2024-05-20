@@ -1,6 +1,6 @@
 
-#include "src/vulkan/vulkan_common.h"
-#include "include/opal.h"
+#include "vulkan/vulkan_common.h"
+#include "opal.h"
 
 // Global variables
 // ============================================================

@@ -1,5 +1,5 @@
 
-#include "src/vulkan/vulkan_common.h"
+#include "vulkan/vulkan_common.h"
 
 // Local types
 // ============================================================

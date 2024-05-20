@@ -1,6 +1,6 @@
 
-#include "src/vulkan/vulkan_common.h"
-#include "include/opal.h" // Used for OpalVulkanImageFill
+#include "vulkan/vulkan_common.h"
+#include "opal.h" // Used for OpalVulkanImageFill
 
 #include <math.h>
 #include <stdint.h>

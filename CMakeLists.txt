@@ -20,7 +20,8 @@ set_target_properties(opal PROPERTIES LINKER_LANGUAGE C)
 target_compile_definitions(opal PUBLIC "GEM_OPAL")
 
 target_include_directories (opal PUBLIC
-  ./
+  ./src/
+  ./include/Opal/
   ${Vulkan_INCLUDE_DIRS}
 )
 

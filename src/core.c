@@ -1,6 +1,6 @@
 
-#include "src/common.h"
-#include "src/vulkan/vulkan_common.h"
+#include "common.h"
+#include "vulkan/vulkan_common.h"
 
 #include <stdarg.h>
 

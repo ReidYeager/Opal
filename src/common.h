@@ -1,7 +1,7 @@
 #ifndef OPAL_COMMON_H
 #define OPAL_COMMON_H 1
 
-#include "include/defines.h"
+#include "defines.h"
 
 // Global variables
 // ===========================================================
